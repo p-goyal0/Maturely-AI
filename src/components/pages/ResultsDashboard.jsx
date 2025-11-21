@@ -217,7 +217,7 @@ export function ResultsDashboard() {
         />
       </div>
 
-      {/* Header */}
+          {/* Header */}
       <motion.div 
         className="fixed top-0 left-0 right-0 z-50 bg-transparent pt-4"
         initial={{ y: 0 }}
@@ -357,7 +357,7 @@ export function ResultsDashboard() {
                   </div>
                 </div>
               </motion.div>
-            </motion.div>
+          </motion.div>
 
             {/* Right Column - Pie Chart */}
             <motion.div
@@ -477,19 +477,19 @@ export function ResultsDashboard() {
             <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
               <CardTitle className="text-3xl text-gray-900 font-bold">Maturity Profile</CardTitle>
               <CardDescription className="text-gray-600 text-base">Your scores compared to industry benchmarks</CardDescription>
-            </CardHeader>
+              </CardHeader>
             <CardContent className="pt-8">
               <ResponsiveContainer width="100%" height={450}>
-                <RadarChart data={radarData}>
+                  <RadarChart data={radarData}>
                   <PolarGrid stroke="rgba(107, 114, 128, 0.2)" strokeWidth={1.5} />
                   <PolarAngleAxis dataKey="pillar" tick={{ fill: "#374151", fontSize: 13, fontWeight: 500 }} />
                   <PolarRadiusAxis angle={90} domain={[0, 5]} tick={{ fill: "#6b7280" }} />
                   <Radar name="Your Score" dataKey="score" stroke="#46cdc6" fill="#46cdc6" fillOpacity={0.6} strokeWidth={2} />
                   <Radar name="Industry Average" dataKey="industry" stroke="#2a868c" fill="#2a868c" fillOpacity={0.3} strokeWidth={2} />
-                </RadarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+                  </RadarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
         </div>
       </section>
 
@@ -507,10 +507,10 @@ export function ResultsDashboard() {
             initial="hidden"
             animate={animatedSections.has('pillars') ? "visible" : "hidden"}
           >
-                {pillarScores.map((pillar, index) => {
-                  const Icon = pillar.icon;
-                  const percentage = (pillar.score / pillar.maxScore) * 100;
-                  return (
+              {pillarScores.map((pillar, index) => {
+                const Icon = pillar.icon;
+                const percentage = (pillar.score / pillar.maxScore) * 100;
+                return (
                     <motion.div key={index} variants={scaleIn}>
                       <Card className="bg-white border-gray-200 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group h-full">
                         <CardHeader className="relative pb-4">
@@ -537,11 +537,11 @@ export function ResultsDashboard() {
                               </motion.span>
                               <span className="text-sm text-gray-500">/ {pillar.maxScore}</span>
                             </div>
-                          </div>
+                      </div>
                           <CardTitle className="text-lg text-gray-900 font-bold">{pillar.title}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-3">
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
                             <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                               <motion.div 
                                 initial={{ width: 0 }} 
@@ -553,8 +553,8 @@ export function ResultsDashboard() {
                                   "bg-gradient-to-r from-orange-400 to-orange-600"
                                 }`} 
                               />
-                            </div>
-                            <div className="flex justify-between items-center">
+                        </div>
+                        <div className="flex justify-between items-center">
                               <Badge className={`${getStatusBadge(pillar.status)} font-medium`}>
                                 {pillar.status === "strong" ? "Strong" : 
                                  pillar.status === "moderate" ? "Moderate" : "Needs Improvement"}
@@ -569,15 +569,15 @@ export function ResultsDashboard() {
                               >
                                 {pillar.change}
                               </motion.span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                     </motion.div>
-                  );
-                })}
+                );
+              })}
           </motion.div>
-        </div>
+            </div>
       </section>
 
       {/* Strengths and Gaps Section */}
@@ -593,7 +593,7 @@ export function ResultsDashboard() {
                       transition={{ duration: 2, repeat: Infinity }}
                     >
                       <CheckCircle2 className="w-7 h-7 text-green-600" />
-                    </motion.div>
+          </motion.div>
                     <CardTitle className="text-2xl text-gray-900 font-bold">Key Strengths</CardTitle>
                   </div>
                   <CardDescription className="text-gray-600">Areas where you excel compared to industry peers</CardDescription>
@@ -641,7 +641,7 @@ export function ResultsDashboard() {
                       transition={{ duration: 2, repeat: Infinity }}
                     >
                       <AlertCircle className="w-7 h-7 text-orange-600" />
-                    </motion.div>
+            </motion.div>
                     <CardTitle className="text-2xl text-gray-900 font-bold">Improvement Areas</CardTitle>
                   </div>
                   <CardDescription className="text-gray-600">Opportunities to enhance your AI maturity</CardDescription>
@@ -683,7 +683,7 @@ export function ResultsDashboard() {
               </Card>
             </div>
           </div>
-        </div>
+          </div>
       </section>
 
       {/* Recommendations Section */}
@@ -832,9 +832,9 @@ export function ResultsDashboard() {
                     <CheckCircle2 className="w-4 h-4 text-[#46cdc6]" />
                     <span>Actionable Roadmap</span>
                   </div>
-                </motion.div>
-              </div>
-          </div>
+          </motion.div>
+        </div>
+      </div>
         </div>
       </section>
 

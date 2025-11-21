@@ -183,7 +183,7 @@ export function SignUpPage() {
             >
               {authImages[currentImageIndex].subtitle}
             </motion.p>
-          </div>
+      </div>
 
           {/* Carousel Indicators */}
           <div className="absolute bottom-8 right-8 flex gap-2 z-10">
@@ -204,13 +204,13 @@ export function SignUpPage() {
 
       {/* Right Side - Form */}
       <div className="w-full flex items-center justify-center p-4 bg-white overflow-y-auto" style={{ width: '45%' }}>
-        <motion.div 
+              <motion.div
           className="w-full max-w-md py-4"
           initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
+                animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.4, ease: "easeInOut" }}
-        >
+              >
           {/* Logo */}
           {/* <div className="flex justify-center mb-8">
             <img 
@@ -226,24 +226,24 @@ export function SignUpPage() {
             <p className="text-slate-600 text-sm">start for free</p>
           </div>
 
-          {/* Progress Steps */}
+                  {/* Progress Steps */}
           <div className="mb-4">
             <div className="flex gap-2 mb-2">
               {steps.map((_, index) => (
                 <div
-                  key={index}
+                          key={index}
                   className={`flex-1 h-1 rounded-full ${
-                    index < currentStep
+                            index < currentStep
                       ? 'bg-slate-900'
                       : 'bg-slate-200'
-                  }`}
-                />
-              ))}
-            </div>
+                          }`}
+                        />
+                      ))}
+                    </div>
             <p className="text-xs text-slate-500 text-center">
               Step {currentStep} of {steps.length}
-            </p>
-          </div>
+                    </p>
+                  </div>
 
           {/* Form Container */}
           <motion.div 
@@ -266,24 +266,24 @@ export function SignUpPage() {
 
             <form onSubmit={currentStep === 3 ? handleSignUp : handleNextStep} className="space-y-3">
               {/* Step 1: Personal Info */}
-              {currentStep === 1 && (
-                <>
+                        {currentStep === 1 && (
+                          <>
                   <div className="space-y-1">
                     <div className="relative">
                       <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 z-10" style={{ color: '#15ae99' }} />
-                      <Input
-                        name="fullName"
-                        type="text"
+                              <Input
+                                name="fullName"
+                                type="text"
                         placeholder="Full name"
-                        value={formData.fullName}
-                        onChange={handleInputChange}
+                                value={formData.fullName}
+                                onChange={handleInputChange}
                         className="pl-12 h-11 bg-gray-50 !border !border-gray-300 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:!ring-0 focus:!ring-offset-0 focus:bg-gray-50 focus:!border-[#15ae99] focus:!border-2"
                         style={{ 
                           transition: 'all 0.2s ease-in-out',
                           borderWidth: '1px'
                         }}
-                        required
-                      />
+                                required
+                              />
                     </div>
                   </div>
 
@@ -292,65 +292,65 @@ export function SignUpPage() {
                       <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
                         <span className="text-sm font-medium" style={{ color: '#15ae99' }}>@</span>
                       </div>
-                      <Input
+                              <Input
                         name="username"
                         type="text"
                         placeholder="Username"
                         value={formData.username}
-                        onChange={handleInputChange}
+                                onChange={handleInputChange}
                         className="pl-12 h-11 bg-gray-50 !border !border-gray-300 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:!ring-0 focus:!ring-offset-0 focus:bg-gray-50 focus:!border-[#15ae99] focus:!border-2"
                         style={{ 
                           transition: 'all 0.2s ease-in-out',
                           borderWidth: '1px'
                         }}
-                        required
-                      />
+                                required
+                              />
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <div className="relative">
+                              <div className="relative">
                       <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
                         <span className="text-sm font-medium" style={{ color: '#15ae99' }}>✉</span>
                       </div>
-                      <Input
+                                <Input
                         name="email"
                         type="email"
                         placeholder="Email"
                         value={formData.email}
-                        onChange={handleInputChange}
+                                  onChange={handleInputChange}
                         className="pl-12 h-11 bg-gray-50 !border !border-gray-300 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:!ring-0 focus:!ring-offset-0 focus:bg-gray-50 focus:!border-[#15ae99] focus:!border-2"
                         style={{ 
                           transition: 'all 0.2s ease-in-out',
                           borderWidth: '1px'
                         }}
-                        required
-                      />
+                                  required
+                                />
                     </div>
-                  </div>
-                </>
-              )}
+                              </div>
+                          </>
+                        )}
 
-              {/* Step 2: Company Details */}
-              {currentStep === 2 && (
+                        {/* Step 2: Company Details */}
+                        {currentStep === 2 && (
                 <div className="space-y-1">
                   <div className="relative">
                     <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
                       <span className="text-sm font-medium" style={{ color: '#15ae99' }}>🏢</span>
                     </div>
-                    <Input
+                              <Input
                       name="companyName"
-                      type="text"
+                                type="text"
                       placeholder="Company name"
                       value={formData.companyName}
-                      onChange={handleInputChange}
+                                onChange={handleInputChange}
                       className="pl-12 h-11 bg-gray-50 !border !border-gray-300 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:!ring-0 focus:!ring-offset-0 focus:bg-gray-50 focus:!border-[#15ae99] focus:!border-2"
                       style={{ 
                         transition: 'all 0.2s ease-in-out',
                         borderWidth: '1px'
                       }}
-                      required
-                    />
+                                required
+                              />
                   </div>
                 </div>
               )}
@@ -359,30 +359,30 @@ export function SignUpPage() {
               {currentStep === 3 && (
                 <>
                   <div className="space-y-1">
-                    <div className="relative">
+                              <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 z-10" style={{ color: '#15ae99' }} />
-                      <Input
+                                <Input
                         name="password"
-                        type={showPassword ? "text" : "password"}
+                                  type={showPassword ? "text" : "password"}
                         placeholder="Password"
                         value={formData.password}
-                        onChange={handleInputChange}
+                                  onChange={handleInputChange}
                         className="pl-12 pr-12 h-11 bg-gray-50 !border !border-gray-300 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:!ring-0 focus:!ring-offset-0 focus:bg-gray-50 focus:!border-[#15ae99] focus:!border-2"
                         style={{ 
                           transition: 'all 0.2s ease-in-out',
                           borderWidth: '1px'
                         }}
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
+                                  required
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-3 top-1/2 -translate-y-1/2 z-10"
                         style={{ color: '#15ae99' }}
-                      >
-                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                      </button>
-                    </div>
+                                >
+                                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                              </div>
                   </div>
 
                   <div className="space-y-1">
@@ -405,62 +405,62 @@ export function SignUpPage() {
                   </div>
 
                   <div className="flex items-start gap-3 pt-2">
-                    <input
-                      type="checkbox"
-                      name="agreeToTerms"
-                      checked={formData.agreeToTerms}
-                      onChange={handleInputChange}
+                                <input
+                                  type="checkbox"
+                                  name="agreeToTerms"
+                                  checked={formData.agreeToTerms}
+                                  onChange={handleInputChange}
                       className="mt-1 rounded border-slate-300 bg-white text-slate-900"
                       style={{ accentColor: '#15ae99' }}
-                      required
-                    />
+                                  required
+                                />
                     <span className="text-sm text-slate-600">
                       I agree with the{" "}
                       <button type="button" className="underline hover:no-underline" style={{ color: '#15ae99' }}>
                         Terms & Condition
-                      </button>
-                    </span>
+                                  </button>
+                                </span>
                   </div>
-                </>
-              )}
+                          </>
+                        )}
 
-              <Button
-                type="submit"
-                disabled={isLoading}
+                          <Button
+                            type="submit"
+                            disabled={isLoading}
                 className="w-full h-11 rounded-lg text-white font-semibold transition-all hover:opacity-90"
                 style={{ backgroundColor: '#15ae99' }}
-              >
-                {isLoading ? (
+                          >
+                            {isLoading ? (
                   <span className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     {currentStep === 3 ? 'Creating...' : 'Continue...'}
-                  </span>
-                ) : (
+                              </span>
+                            ) : (
                   <span className="flex items-center justify-center gap-2">
                     {currentStep === 3 ? 'Continue' : 'Continue'}
-                    <ArrowRight size={18} />
-                  </span>
-                )}
-              </Button>
+                                <ArrowRight size={18} />
+                              </span>
+                            )}
+                          </Button>
 
               {currentStep > 1 && (
-                <Button
-                  type="button"
+                          <Button
+                            type="button"
                   variant="ghost"
                   onClick={() => setCurrentStep(currentStep - 1)}
                   className="w-full h-11 text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                >
-                  Back
-                </Button>
-              )}
-            </form>
+                          >
+                            Back
+                          </Button>
+                        )}
+                      </form>
 
-            <motion.div 
+              <motion.div
               className="text-center mt-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.3 }}
-            >
+              >
               <p className="text-sm text-slate-500">or</p>
               <Button
                 variant="outline"
@@ -474,14 +474,14 @@ export function SignUpPage() {
                 </svg>
                 Sign Up with Google
               </Button>
-            </motion.div>
+                        </motion.div>
 
-            <motion.div 
+                  <motion.div
               className="text-center mt-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.4 }}
-            >
+                  >
               <p className="text-sm text-slate-500">
                 Already have an account?{" "}
                 <button
@@ -491,10 +491,10 @@ export function SignUpPage() {
                 >
                   Login
                 </button>
-              </p>
-            </motion.div>
+                    </p>
+                  </motion.div>
           </motion.div>
-        </motion.div>
+              </motion.div>
       </div>
     </div>
   );

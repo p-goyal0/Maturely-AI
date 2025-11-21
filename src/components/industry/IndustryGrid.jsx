@@ -56,16 +56,16 @@ export function IndustryGrid({ industries, selectedIndustry, setSelectedIndustry
                 {/* Text content */}
                 <div className="text-center flex-1 flex flex-col justify-center">
                   <h3 className={`mb-1 text-xs font-semibold transition-colors duration-500 leading-tight ${isSelected ? 'text-[#46cdc6]' : 'text-gray-900'}`}>
-                    {industry.name}
-                  </h3>
+                  {industry.name}
+                </h3>
 
                   <p className="text-gray-600 text-xs leading-tight overflow-hidden" style={{ 
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical'
                   }}>
-                    {industry.description}
-                  </p>
+                  {industry.description}
+                </p>
                 </div>
 
                 {/* Selection indicator */}

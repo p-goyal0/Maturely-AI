@@ -41,7 +41,7 @@ export function Navigation() {
 
   // Check if we're on a page that should have the white strip (not landing page)
   const isLandingPage = location.pathname === '/';
-  
+
   return (
     <motion.nav 
       className={isLandingPage ? "fixed top-0 left-0 right-0 z-50 bg-transparent" : "relative z-10 bg-transparent"}
@@ -125,32 +125,32 @@ export function Navigation() {
               </>
             ) : (
               <>
-                <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
-                  <Button
-                    variant="ghost"
+            <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
+              <Button
+                variant="ghost"
                     onClick={() => navigate("/signin")}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Sign In
-                  </Button>
-                </motion.div>
-                <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.22 }}>
-                  <Button
-                    variant="outline"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Sign In
+              </Button>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.22 }}>
+              <Button
+                variant="outline"
                     onClick={() => navigate("/signup")}
-                    className="text-sm border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
-                  >
-                    Sign Up
-                  </Button>
-                </motion.div>
-                <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 }} whileHover={{ scale: 1.05 }}>
-                  <Button
+                className="text-sm border-blue-500/30 text-blue-400 hover:bg-blue-500/10"
+              >
+                Sign Up
+              </Button>
+            </motion.div>
+            <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 }} whileHover={{ scale: 1.05 }}>
+              <Button
                     onClick={() => navigate("/signin")}
-                    className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-sm glow-primary shadow-lg"
-                  >
-                    Get Started
-                  </Button>
-                </motion.div>
+                className="bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-sm glow-primary shadow-lg"
+              >
+                Get Started
+              </Button>
+            </motion.div>
               </>
             )}
           </div>

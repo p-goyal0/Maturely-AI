@@ -67,7 +67,7 @@ export function SignInPage() {
         <div className="w-full h-full relative overflow-hidden">
           {/* Image Carousel */}
           {authImages.map((image, index) => (
-            <motion.div
+              <motion.div
               key={index}
               className="absolute inset-0"
               initial={{ opacity: 0 }}
@@ -77,11 +77,11 @@ export function SignInPage() {
               }}
               transition={{ duration: 1, ease: "easeInOut" }}
             >
-              <img
+                    <img
                 src={image.src}
                 alt={image.title}
-                className="w-full h-full object-cover"
-              />
+                      className="w-full h-full object-cover"
+                    />
               {/* Overlay */}
               <div className="absolute inset-0 bg-black/40" />
             </motion.div>
@@ -107,7 +107,7 @@ export function SignInPage() {
             >
               {authImages[currentImageIndex].subtitle}
             </motion.p>
-          </div>
+                        </div>
 
           {/* Carousel Indicators */}
           <div className="absolute bottom-8 right-8 flex gap-2 z-10">
@@ -122,9 +122,9 @@ export function SignInPage() {
                 }`}
               />
             ))}
-          </div>
-        </div>
-      </div>
+                      </div>
+                    </div>
+                  </div>
 
       {/* Right Side - Form */}
       <div className="w-full flex items-center justify-center p-4 bg-white overflow-y-auto" style={{ width: '45%' }}>
@@ -142,10 +142,10 @@ export function SignInPage() {
           </div>
 
           {/* Form Container */}
-          <motion.div 
+                        <motion.div
             className="space-y-4"
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+                          animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
           >
             {error && (
@@ -180,7 +180,7 @@ export function SignInPage() {
                     required
                   />
                 </div>
-              </div>
+                          </div>
 
               {/* Password Field */}
               <div className="space-y-1">
@@ -206,8 +206,8 @@ export function SignInPage() {
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
-                </div>
-              </div>
+                          </div>
+                  </div>
 
               <Button
                 type="submit"
@@ -250,12 +250,12 @@ export function SignInPage() {
               </Button>
             </motion.div>
 
-            <motion.div 
+                  <motion.div
               className="text-center mt-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
               transition={{ duration: 0.4, delay: 0.4 }}
-            >
+                  >
               <p className="text-sm text-slate-500">
                 Don't have an account?{" "}
                 <button
@@ -265,10 +265,10 @@ export function SignInPage() {
                 >
                   Sign up
                 </button>
-              </p>
-            </motion.div>
+                    </p>
+                  </motion.div>
           </motion.div>
-        </motion.div>
+              </motion.div>
       </div>
     </div>
   );
