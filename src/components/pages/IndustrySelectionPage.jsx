@@ -60,7 +60,10 @@ export function IndustrySelectionPage() {
 
   const handleSignOut = () => {
     signOut();
-    navigate("/");
+    // Use setTimeout to ensure state updates before navigation
+    setTimeout(() => {
+      navigate("/");
+    }, 0);
   };
 
   // Scroll detection for header

@@ -156,7 +156,10 @@ export function UseCaseLibrary() {
                     <DropdownMenuItem
                       onClick={() => {
                         signOut();
-                        navigate("/");
+                        // Use setTimeout to ensure state updates before navigation
+                        setTimeout(() => {
+                          navigate("/");
+                        }, 0);
                       }}
                       className="cursor-pointer"
                     >
@@ -372,7 +375,7 @@ export function UseCaseLibrary() {
                               type="text" 
                               value={formData.useCaseId} 
                               onChange={(e) => handleFormChange('useCaseId', e.target.value)}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
+                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
                               placeholder="UC-001"
                             />
                           </div>
@@ -382,7 +385,7 @@ export function UseCaseLibrary() {
                               type="text" 
                               value={formData.useCaseName} 
                               onChange={(e) => handleFormChange('useCaseName', e.target.value)}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
+                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
                               placeholder="Enter name" 
                             />
                           </div>
@@ -392,7 +395,7 @@ export function UseCaseLibrary() {
                               type="text" 
                               value={formData.processOwner} 
                               onChange={(e) => handleFormChange('processOwner', e.target.value)}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
+                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
                               placeholder="John Doe" 
                             />
                           </div>
@@ -402,7 +405,7 @@ export function UseCaseLibrary() {
                               type="text" 
                               value={formData.lastUpdatedBy} 
                               onChange={(e) => handleFormChange('lastUpdatedBy', e.target.value)}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
+                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
                             />
                           </div>
                           <div>
@@ -411,7 +414,7 @@ export function UseCaseLibrary() {
                               type="date" 
                               value={formData.dateCreated} 
                               onChange={(e) => handleFormChange('dateCreated', e.target.value)}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm [color-scheme:dark]" 
+                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
                             />
                           </div>
                           <div>
@@ -420,7 +423,7 @@ export function UseCaseLibrary() {
                               type="date" 
                               value={formData.dateLastUpdated} 
                               onChange={(e) => handleFormChange('dateLastUpdated', e.target.value)}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm [color-scheme:dark]" 
+                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
                             />
                           </div>
                         </div>
@@ -430,7 +433,7 @@ export function UseCaseLibrary() {
                             type="text" 
                             value={formData.businessUse} 
                             onChange={(e) => handleFormChange('businessUse', e.target.value)}
-                            className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
+                            className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
                             placeholder="Primary business use" 
                           />
                         </div>
@@ -440,7 +443,7 @@ export function UseCaseLibrary() {
                             value={formData.description} 
                             onChange={(e) => handleFormChange('description', e.target.value)} 
                             rows={2}
-                            className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
+                            className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
                             placeholder="Detailed description" 
                           />
                         </div>
@@ -451,7 +454,7 @@ export function UseCaseLibrary() {
                               value={formData.preconditions} 
                               onChange={(e) => handleFormChange('preconditions', e.target.value)} 
                               rows={2}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
+                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
                               placeholder="Required conditions" 
                             />
                           </div>
@@ -461,7 +464,7 @@ export function UseCaseLibrary() {
                               value={formData.postconditions} 
                               onChange={(e) => handleFormChange('postconditions', e.target.value)} 
                               rows={2}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
+                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
                               placeholder="Expected state after" 
                             />
                           </div>
@@ -472,7 +475,7 @@ export function UseCaseLibrary() {
                             type="text" 
                             value={formData.performanceGoal} 
                             onChange={(e) => handleFormChange('performanceGoal', e.target.value)}
-                            className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
+                            className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
                             placeholder="e.g., Reduce time by 50%" 
                           />
                         </div>
@@ -482,7 +485,7 @@ export function UseCaseLibrary() {
                             value={formData.basicWorkflow} 
                             onChange={(e) => handleFormChange('basicWorkflow', e.target.value)} 
                             rows={2}
-                            className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
+                            className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
                             placeholder="Step-by-step workflow" 
                           />
                         </div>
@@ -492,7 +495,7 @@ export function UseCaseLibrary() {
                             value={formData.alternativeWorkflow} 
                             onChange={(e) => handleFormChange('alternativeWorkflow', e.target.value)} 
                             rows={2}
-                            className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
+                            className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
                             placeholder="Alternative approach" 
                           />
                         </div>
@@ -503,7 +506,7 @@ export function UseCaseLibrary() {
                               type="text" 
                               value={formData.category} 
                               onChange={(e) => handleFormChange('category', e.target.value)}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
+                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
                               placeholder="Operations" 
                             />
                           </div>
@@ -513,7 +516,7 @@ export function UseCaseLibrary() {
                               type="text" 
                               value={formData.risks} 
                               onChange={(e) => handleFormChange('risks', e.target.value)}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
+                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
                               placeholder="Potential risks" 
                             />
                           </div>
@@ -523,7 +526,7 @@ export function UseCaseLibrary() {
                               type="text" 
                               value={formData.possibilities} 
                               onChange={(e) => handleFormChange('possibilities', e.target.value)}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
+                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
                               placeholder="Opportunities" 
                             />
                           </div>

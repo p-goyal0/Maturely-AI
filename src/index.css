@@ -137,8 +137,7 @@
 
 
 
-  /* Override for search inputs */
-  input[type="text"]:focus,
+  /* Override for search inputs (not form inputs) */
   input[type="search"]:focus {
     border: none !important;
     outline: none !important;
@@ -162,30 +161,18 @@
     border-color: #15ae99 !important;
   }
 
-  /* Override for UseCaseLibrary form inputs - ensure dark background */
-  .bg-slate-700 {
-    background-color: rgb(51 65 85) !important;
+
+  /* Fix input borders on SignIn and SignUp pages */
+  input[data-slot="input"] {
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: rgb(209 213 219) !important;
   }
 
-  /* Specific override for form inputs in UseCaseLibrary - very aggressive */
-  .use-case-form input,
-  .use-case-form textarea,
-  .use-case-form select {
-    background-color: rgb(51 65 85) !important;
-    color: rgb(255 255 255) !important;
-    border-color: rgb(71 85 105) !important;
-  }
-
-  .use-case-form input:focus,
-  .use-case-form textarea:focus,
-  .use-case-form select:focus {
-    background-color: rgb(51 65 85) !important;
-    color: rgb(255 255 255) !important;
-    border-color: rgb(147 51 234) !important;
-  }
-
-  .use-case-form input::placeholder,
-  .use-case-form textarea::placeholder {
-    color: rgb(203 213 225) !important;
+  input[data-slot="input"]:focus {
+    border-width: 2px !important;
+    border-color: #15ae99 !important;
+    box-shadow: none !important;
+    outline: none !important;
   }
 }

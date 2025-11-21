@@ -111,7 +111,10 @@ export function Navigation() {
                     variant="outline"
                     onClick={() => {
                       signOut();
-                      navigate("/");
+                      // Use setTimeout to ensure state updates before navigation
+                      setTimeout(() => {
+                        navigate("/");
+                      }, 0);
                     }}
                     className="text-sm border-red-500/30 text-red-400 hover:bg-red-500/10"
                   >
@@ -202,8 +205,11 @@ export function Navigation() {
                     variant="outline"
                     onClick={() => {
                       signOut();
-                      navigate("/");
                       setMobileMenuOpen(false);
+                      // Use setTimeout to ensure state updates before navigation
+                      setTimeout(() => {
+                        navigate("/");
+                      }, 0);
                     }}
                     className="w-full border-red-500/30 text-red-400 hover:bg-red-500/10"
                   >

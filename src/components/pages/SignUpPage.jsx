@@ -270,16 +270,17 @@ export function SignUpPage() {
                 <>
                   <div className="space-y-1">
                     <div className="relative">
-                      <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: '#15ae99' }} />
+                      <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 z-10" style={{ color: '#15ae99' }} />
                       <Input
                         name="fullName"
                         type="text"
                         placeholder="Full name"
                         value={formData.fullName}
                         onChange={handleInputChange}
-                        className="pl-12 h-11 bg-gray-50 border-gray-200 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:bg-gray-50 focus:border-[#15ae99]"
+                        className="pl-12 h-11 bg-gray-50 !border !border-gray-300 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:!ring-0 focus:!ring-offset-0 focus:bg-gray-50 focus:!border-[#15ae99] focus:!border-2"
                         style={{ 
-                          transition: 'all 0.2s ease-in-out'
+                          transition: 'all 0.2s ease-in-out',
+                          borderWidth: '1px'
                         }}
                         required
                       />
@@ -288,8 +289,8 @@ export function SignUpPage() {
 
                   <div className="space-y-1">
                     <div className="relative">
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded bg-white/10 flex items-center justify-center">
-                        <span className="text-xs font-bold" style={{ color: '#15ae99' }}>@</span>
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
+                        <span className="text-sm font-medium" style={{ color: '#15ae99' }}>@</span>
                       </div>
                       <Input
                         name="username"
@@ -297,9 +298,10 @@ export function SignUpPage() {
                         placeholder="Username"
                         value={formData.username}
                         onChange={handleInputChange}
-                        className="pl-12 h-11 bg-gray-50 border-gray-200 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:bg-gray-50 focus:border-[#15ae99]"
+                        className="pl-12 h-11 bg-gray-50 !border !border-gray-300 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:!ring-0 focus:!ring-offset-0 focus:bg-gray-50 focus:!border-[#15ae99] focus:!border-2"
                         style={{ 
-                          transition: 'all 0.2s ease-in-out'
+                          transition: 'all 0.2s ease-in-out',
+                          borderWidth: '1px'
                         }}
                         required
                       />
@@ -308,8 +310,8 @@ export function SignUpPage() {
 
                   <div className="space-y-1">
                     <div className="relative">
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded bg-white/10 flex items-center justify-center">
-                        <span className="text-xs font-bold" style={{ color: '#15ae99' }}>✉</span>
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
+                        <span className="text-sm font-medium" style={{ color: '#15ae99' }}>✉</span>
                       </div>
                       <Input
                         name="email"
@@ -317,9 +319,10 @@ export function SignUpPage() {
                         placeholder="Email"
                         value={formData.email}
                         onChange={handleInputChange}
-                        className="pl-12 h-11 bg-gray-50 border-gray-200 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:bg-gray-50 focus:border-[#15ae99]"
+                        className="pl-12 h-11 bg-gray-50 !border !border-gray-300 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:!ring-0 focus:!ring-offset-0 focus:bg-gray-50 focus:!border-[#15ae99] focus:!border-2"
                         style={{ 
-                          transition: 'all 0.2s ease-in-out'
+                          transition: 'all 0.2s ease-in-out',
+                          borderWidth: '1px'
                         }}
                         required
                       />
@@ -332,8 +335,8 @@ export function SignUpPage() {
               {currentStep === 2 && (
                 <div className="space-y-1">
                   <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded bg-white/10 flex items-center justify-center">
-                      <span className="text-xs font-bold" style={{ color: '#15ae99' }}>🏢</span>
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
+                      <span className="text-sm font-medium" style={{ color: '#15ae99' }}>🏢</span>
                     </div>
                     <Input
                       name="companyName"
@@ -341,9 +344,10 @@ export function SignUpPage() {
                       placeholder="Company name"
                       value={formData.companyName}
                       onChange={handleInputChange}
-                      className="pl-12 h-11 bg-gray-50 border-gray-200 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:bg-gray-50 focus:border-[#15ae99]"
+                      className="pl-12 h-11 bg-gray-50 !border !border-gray-300 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:!ring-0 focus:!ring-offset-0 focus:bg-gray-50 focus:!border-[#15ae99] focus:!border-2"
                       style={{ 
-                        transition: 'all 0.2s ease-in-out'
+                        transition: 'all 0.2s ease-in-out',
+                        borderWidth: '1px'
                       }}
                       required
                     />
@@ -356,23 +360,25 @@ export function SignUpPage() {
                 <>
                   <div className="space-y-1">
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: '#15ae99' }} />
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 z-10" style={{ color: '#15ae99' }} />
                       <Input
                         name="password"
                         type={showPassword ? "text" : "password"}
                         placeholder="Password"
                         value={formData.password}
                         onChange={handleInputChange}
-                        className="pl-12 pr-12 h-11 bg-gray-50 border-gray-200 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:bg-gray-50 focus:border-[#15ae99]"
+                        className="pl-12 pr-12 h-11 bg-gray-50 !border !border-gray-300 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:!ring-0 focus:!ring-offset-0 focus:bg-gray-50 focus:!border-[#15ae99] focus:!border-2"
                         style={{ 
-                          transition: 'all 0.2s ease-in-out'
+                          transition: 'all 0.2s ease-in-out',
+                          borderWidth: '1px'
                         }}
                         required
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 z-10"
+                        style={{ color: '#15ae99' }}
                       >
                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                       </button>
@@ -381,16 +387,17 @@ export function SignUpPage() {
 
                   <div className="space-y-1">
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: '#15ae99' }} />
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 z-10" style={{ color: '#15ae99' }} />
                       <Input
                         name="confirmPassword"
                         type={showPassword ? "text" : "password"}
                         placeholder="Confirm Password"
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
-                        className="pl-12 pr-12 h-11 bg-gray-50 border-gray-200 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:bg-gray-50 focus:border-[#15ae99]"
+                        className="pl-12 pr-12 h-11 bg-gray-50 !border !border-gray-300 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:!ring-0 focus:!ring-offset-0 focus:bg-gray-50 focus:!border-[#15ae99] focus:!border-2"
                         style={{ 
-                          transition: 'all 0.2s ease-in-out'
+                          transition: 'all 0.2s ease-in-out',
+                          borderWidth: '1px'
                         }}
                         required
                       />

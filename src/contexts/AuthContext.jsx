@@ -98,10 +98,12 @@ export function AuthProvider({ children }) {
   };
 
   const signOut = () => {
-    setIsAuthenticated(false);
-    setCurrentUser(null);
+    // Clear localStorage first to ensure immediate state change
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("currentUser");
+    // Then update state
+    setIsAuthenticated(false);
+    setCurrentUser(null);
   };
 
   return (

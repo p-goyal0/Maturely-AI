@@ -267,7 +267,10 @@ export function ResultsDashboard() {
                     <DropdownMenuItem
                       onClick={() => {
                         signOut();
-                        navigate("/");
+                        // Use setTimeout to ensure state updates before navigation
+                        setTimeout(() => {
+                          navigate("/");
+                        }, 0);
                       }}
                       className="cursor-pointer"
                     >

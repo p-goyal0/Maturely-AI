@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -26,8 +26,11 @@ export function AssessmentsDashboard() {
     document: null,
     globe: null,
     wings: null,
-    chart: null
+    chart: null,
+    layers: null
   });
+  const [hoveredStepIcon, setHoveredStepIcon] = useState(null);
+  const [hoveredMainIcon, setHoveredMainIcon] = useState(false);
 
   const currentPillar = assessmentPillars[currentPillarIndex];
 
@@ -35,25 +38,28 @@ export function AssessmentsDashboard() {
   useEffect(() => {
     const loadAnimations = async () => {
       try {
-        const [documentRes, globeRes, wingsRes, chartRes] = await Promise.all([
+        const [documentRes, globeRes, wingsRes, chartRes, layersRes] = await Promise.all([
           fetch('/lottieFiles/wired-outline-56-document-hover-swipe.json'),
           fetch('/lottieFiles/wired-outline-27-globe-hover-rotate.json'),
           fetch('/lottieFiles/wired-outline-1145-wings-hover-pinch.json'),
-          fetch('/lottieFiles/wired-outline-153-bar-chart-hover-pinch.json')
+          fetch('/lottieFiles/wired-outline-153-bar-chart-hover-pinch.json'),
+          fetch('/lottieFiles/wired-lineal-12-layers-hover-squeeze.json')
         ]);
 
-        const [documentData, globeData, wingsData, chartData] = await Promise.all([
+        const [documentData, globeData, wingsData, chartData, layersData] = await Promise.all([
           documentRes.json(),
           globeRes.json(),
           wingsRes.json(),
-          chartRes.json()
+          chartRes.json(),
+          layersRes.json()
         ]);
 
         setLottieAnimations({
           document: documentData,
           globe: globeData,
           wings: wingsData,
-          chart: chartData
+          chart: chartData,
+          layers: layersData
         });
       } catch (error) {
         console.error('Error loading Lottie animations:', error);
@@ -119,7 +125,7 @@ export function AssessmentsDashboard() {
       case "completed":
         return "bg-green-500 text-white border-green-500";
       case "current":
-        return "bg-blue-500 text-white border-blue-500 shadow-lg";
+        return "bg-[#46cdc6] text-white border-[#46cdc6] shadow-lg";
       case "waiting":
       default:
         return "bg-slate-100 text-slate-600 border-slate-200";
@@ -165,7 +171,7 @@ export function AssessmentsDashboard() {
               <div className="flex items-center">
                 <button
                   onClick={() => navigate("/industry")}
-                  className="text-sm text-slate-700 hover:text-cyan-600 transition-colors font-medium"
+                  className="text-sm text-slate-700 hover:text-[#46cdc6] transition-colors font-medium"
                 >
                   Industry
                 </button>
@@ -190,7 +196,10 @@ export function AssessmentsDashboard() {
                     <DropdownMenuItem
                       onClick={() => {
                         signOut();
-                        navigate("/");
+                        // Use setTimeout to ensure state updates before navigation
+                        setTimeout(() => {
+                          navigate("/");
+                        }, 0);
                       }}
                       className="cursor-pointer"
                     >
@@ -201,9 +210,9 @@ export function AssessmentsDashboard() {
                 </DropdownMenu>
               </div>
             </div>
-          </div>
-        </div>
-      </motion.div>
+              </div>
+            </div>
+          </motion.div>
 
       {/* SECTION 1: Hero Section */}
       <section className="pt-40 pb-20 relative z-10">
@@ -279,8 +288,8 @@ export function AssessmentsDashboard() {
                   className="bg-gradient-to-r from-[#46cdc6] to-[#15ae99] hover:from-[#15ae99] hover:to-[#46cdc6] text-slate-900 px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 w-full sm:w-auto"
                 >
                   How Its Work
-                </button>
-                
+                  </button>
+
                 {/* Rating */}
                 <div className="flex items-center gap-3">
                   <div className="flex text-yellow-400 text-base sm:text-lg">
@@ -291,7 +300,7 @@ export function AssessmentsDashboard() {
                   </span>
                 </div>
               </div>
-            </motion.div>
+                    </motion.div>
 
             {/* Right Column - Stats Grid */}
             <motion.div
@@ -340,8 +349,8 @@ export function AssessmentsDashboard() {
                   </div>
                 </div>
 
-                {/* Bottom Left - Light Blue with curve */}
-                <div className="relative bg-blue-50 p-6 flex flex-col justify-center items-center overflow-hidden">
+                {/* Bottom Left - Light Teal with curve */}
+                <div className="relative bg-[#46cdc6]/10 p-6 flex flex-col justify-center items-center overflow-hidden">
                   {/* Big background curve */}
                   <div className="absolute -bottom-30 -left-30 w-80 h-80 bg-[#e1eae8] rounded-full"></div>
 
@@ -354,10 +363,10 @@ export function AssessmentsDashboard() {
                         />
                       )}
                     </div>
-                    <div className="text-sm text-blue-800 font-medium mb-2">Users Active</div>
+                    <div className="text-sm text-[#15ae99] font-medium mb-2">Users Active</div>
                     <div className="flex items-center justify-center">
                       <div className="flex -space-x-2">
-                        <div className="w-6 h-6 bg-blue-400 rounded-full border-2 border-white"></div>
+                        <div className="w-6 h-6 bg-[#46cdc6] rounded-full border-2 border-white"></div>
                         <div className="w-6 h-6 bg-green-400 rounded-full border-2 border-white"></div>
                         <div className="w-6 h-6 bg-purple-400 rounded-full border-2 border-white"></div>
                         <div className="w-6 h-6 bg-teal-400 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-white">
@@ -378,12 +387,12 @@ export function AssessmentsDashboard() {
                           animationData={lottieAnimations.chart}
                           loop={true}
                         />
-                      )}
-                    </div>
+                  )}
+                </div>
                   </div>
                 </div>
               </div>
-            </motion.div>
+          </motion.div>
           </div>
         </div>
       </section>
@@ -396,10 +405,10 @@ export function AssessmentsDashboard() {
             {/* Left Sidebar - Compact Steps */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <div className="mb-6">
+            <div className="mb-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Assessment Steps</h3>
                   <p className="text-sm text-gray-600">Track your progress</p>
-                </div>
+            </div>
 
                 {/* Custom Ant Design Style Steps */}
                 <div className="space-y-0">
@@ -408,14 +417,14 @@ export function AssessmentsDashboard() {
                     const isCurrent = index === currentPillarIndex;
                     const isWaiting = index > currentPillarIndex;
                     
-                    return (
+                return (
                       <div key={pillar.id} className="relative flex items-start">
                         {/* Connecting Line */}
                         {index < assessmentPillars.length - 1 && (
                           <div 
                             className={`absolute left-4 top-8 w-px h-12 ${
                               isCompleted || (isCurrent && Object.keys(answers).length > 0)
-                                ? 'bg-blue-500' 
+                                ? 'bg-[#46cdc6]' 
                                 : 'bg-gray-300'
                             }`}
                           />
@@ -425,16 +434,34 @@ export function AssessmentsDashboard() {
                           {/* Step Icon */}
                           <div className="relative z-10 flex items-center justify-center">
                             <div 
-                              className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-semibold ${
+                              className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-semibold group ${
                                 isCompleted
                                   ? 'bg-green-500 border-green-500 text-white'
                                   : isCurrent
-                                    ? 'bg-blue-500 border-blue-500 text-white'
+                                    ? 'bg-[#46cdc6] border-[#46cdc6] text-white'
                                     : 'bg-white border-gray-300 text-gray-400'
                               }`}
                             >
                               {isCompleted ? (
                                 <CheckCircle2 className="w-4 h-4" />
+                              ) : lottieAnimations.layers ? (
+                                <div 
+                                  className="w-6 h-6"
+                                  onMouseEnter={() => setHoveredStepIcon(index)}
+                                  onMouseLeave={() => setHoveredStepIcon(null)}
+                                >
+                                  <Lottie 
+                                    key={hoveredStepIcon === index ? `hover-${index}` : `idle-${index}`}
+                                    animationData={lottieAnimations.layers}
+                                    loop={false}
+                                    autoplay={hoveredStepIcon === index}
+                                    style={{ 
+                                      width: '100%', 
+                                      height: '100%',
+                                      cursor: 'pointer'
+                                    }}
+                                  />
+                                </div>
                               ) : (
                                 <span>{index + 1}</span>
                               )}
@@ -458,17 +485,17 @@ export function AssessmentsDashboard() {
                               isCompleted 
                                 ? 'text-green-600' 
                                 : isCurrent 
-                                  ? 'text-blue-600' 
+                                  ? 'text-[#46cdc6]' 
                                   : 'text-gray-400'
                             }`}>
                               {isCompleted ? 'Finished' : isCurrent ? 'In Progress' : 'Waiting'}
                             </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                        </div>
+                );
+              })}
+            </div>
               </div>
             </div>
 
@@ -477,18 +504,38 @@ export function AssessmentsDashboard() {
               {/* Step Information - No Image */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center">
-                    <Target className="w-6 h-6 text-white" />
+                  <div 
+                    className="w-12 h-12 bg-gradient-to-br from-[#46cdc6] to-[#15ae99] rounded-2xl flex items-center justify-center group"
+                    onMouseEnter={() => setHoveredMainIcon(true)}
+                    onMouseLeave={() => setHoveredMainIcon(false)}
+                  >
+                    {lottieAnimations.layers ? (
+                      <div className="w-8 h-8">
+                        <Lottie 
+                          key={hoveredMainIcon ? 'hover-main' : 'idle-main'}
+                          animationData={lottieAnimations.layers}
+                          loop={false}
+                          autoplay={hoveredMainIcon}
+                          style={{ 
+                            width: '100%', 
+                            height: '100%',
+                            cursor: 'pointer'
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <Target className="w-6 h-6 text-white" />
+                    )}
                   </div>
                   <div>
-                    <div className="text-sm font-medium text-cyan-600 mb-1">
+                    <div className="text-sm font-medium text-[#46cdc6] mb-1">
                       STEP {currentPillarIndex + 1}
                     </div>
                     <h2 className="text-xl font-bold text-gray-900">{currentPillar.title}</h2>
                   </div>
                   <div className="ml-auto bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 border">
                     <div className="text-xs text-gray-600">Section {currentPillarIndex + 1}/{assessmentPillars.length}</div>
-                    <div className="text-sm font-semibold text-cyan-600">
+                    <div className="text-sm font-semibold text-[#46cdc6]">
                       {currentPillar.questions.filter((_, qIndex) => 
                         answers[`${currentPillar.id}-${qIndex}`]
                       ).length}/{currentPillar.questions.length} Complete
@@ -498,13 +545,13 @@ export function AssessmentsDashboard() {
                 
                 <p className="text-gray-600 mb-4">{currentPillar.description}</p>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="bg-[#46cdc6]/10 border border-[#46cdc6]/20 rounded-lg p-4">
                   <div className="flex items-start gap-3">
-                    <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center mt-0.5">
+                    <div className="w-5 h-5 bg-[#46cdc6] rounded-full flex items-center justify-center mt-0.5">
                       <div className="w-2 h-2 bg-white rounded-full"></div>
                     </div>
                     <div>
-                      <p className="text-sm text-blue-800">
+                      <p className="text-sm text-[#15ae99]">
                         Rate each statement using options A through E based on your organization's current state.
                       </p>
                     </div>
@@ -536,7 +583,7 @@ export function AssessmentsDashboard() {
                         <div className="flex items-start gap-3 mb-4">
                           <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
                             selectedAnswer 
-                              ? 'bg-cyan-500 text-white' 
+                              ? 'bg-[#46cdc6] text-white' 
                               : 'bg-gray-100 text-gray-600'
                           }`}>
                             {questionIndex + 1}
@@ -553,7 +600,7 @@ export function AssessmentsDashboard() {
                               className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center"
                             >
                               <CheckCircle2 className="w-3 h-3 text-white" />
-                            </motion.div>
+          </motion.div>
                           )}
                         </div>
                         
@@ -572,8 +619,8 @@ export function AssessmentsDashboard() {
                                 }}
                                 className={`flex flex-col items-center justify-center p-3 rounded-lg text-sm font-medium border cursor-pointer relative z-10 overflow-hidden ${
                                   isSelected 
-                                    ? 'bg-cyan-100 text-cyan-800 border-cyan-400 shadow-md' 
-                                    : 'bg-white text-gray-700 hover:bg-cyan-50 hover:text-cyan-700 border-gray-300 hover:border-cyan-300 shadow-sm'
+                                    ? 'bg-[#46cdc6]/10 text-[#15ae99] border-[#46cdc6] shadow-md' 
+                                    : 'bg-white text-gray-700 hover:bg-[#46cdc6]/10 hover:text-[#46cdc6] border-gray-300 hover:border-[#46cdc6] shadow-sm'
                                 }`}
                                 type="button"
                                 whileHover={{ 
@@ -609,7 +656,7 @@ export function AssessmentsDashboard() {
                                   }}
                                 >
                                   {option}
-                                </motion.div>
+          </motion.div>
                                 {isSelected && (
                                   <motion.div
                                     initial={{ scale: 0, opacity: 0 }}
@@ -619,7 +666,7 @@ export function AssessmentsDashboard() {
                                       duration: 0.2,
                                       ease: "easeOut"
                                     }}
-                                    className="absolute inset-0 bg-cyan-200/30 rounded-lg"
+                                    className="absolute inset-0 bg-[#46cdc6]/30 rounded-lg"
                                   />
                                 )}
                               </motion.button>
@@ -645,21 +692,21 @@ export function AssessmentsDashboard() {
           exit={{ y: 100 }}
           transition={{ duration: 0.3, ease: "easeOut" }}
         >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-between">
+          <div className="mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center justify-between w-full">
               <div className="flex items-center gap-4">
                 <div className="text-sm text-gray-600">
                   Progress: {Object.keys(answers).length} of {assessmentPillars.reduce((total, pillar) => total + pillar.questions.length, 0)} questions
-                </div>
+                  </div>
                 <div className="w-32 bg-gray-200 rounded-full h-2">
                   <div 
-                    className="bg-gradient-to-r from-cyan-500 to-blue-600 h-2 rounded-full transition-all duration-300"
+                    className="bg-gradient-to-r from-[#46cdc6] to-[#15ae99] h-2 rounded-full transition-all duration-300"
                     style={{ 
                       width: `${(Object.keys(answers).length / assessmentPillars.reduce((total, pillar) => total + pillar.questions.length, 0)) * 100}%` 
                     }}
                   ></div>
+                  </div>
                 </div>
-              </div>
               
               <div className="flex items-center gap-3">
                 {currentPillarIndex > 0 && (
@@ -675,19 +722,19 @@ export function AssessmentsDashboard() {
                 
                 <motion.button
                   onClick={handleNextStep}
-                  className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
+                  className="bg-gradient-to-r from-[#46cdc6] to-[#15ae99] hover:from-[#15ae99] hover:to-[#46cdc6] text-white px-6 py-2 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   {currentPillarIndex === assessmentPillars.length - 1 ? 'View Results' : 'Continue'}
                   {currentPillarIndex < assessmentPillars.length - 1 && (
                     <span className="ml-2">
-                      ({currentPillarIndex + 2}/{assessmentPillars.length})
+                      ({currentPillarIndex + 1}/{assessmentPillars.length})
                     </span>
                   )}
                 </motion.button>  
-              </div>
-            </div>
+        </div>
+      </div>
           </div>
         </motion.div>
       )}
