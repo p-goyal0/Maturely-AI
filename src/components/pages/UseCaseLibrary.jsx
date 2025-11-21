@@ -29,7 +29,7 @@ const industryUseCases = {
   ],
 };
 
-const industries = [
+  const industries = [
   { id: 'healthcare', name: 'Healthcare', icon: Shield },
   { id: 'finance', name: 'Finance', icon: TrendingUp },
   { id: 'retail', name: 'Retail', icon: Building2 },
@@ -111,7 +111,7 @@ export function UseCaseLibrary() {
         animate={{ y: isScrolled ? -100 : 0 }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
       >
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 px-6 py-3">
             <div className="flex items-center justify-between">
               {/* Logo - Left */}
@@ -128,12 +128,13 @@ export function UseCaseLibrary() {
                 >
                   Industry
                 </button>
-                <span className="text-sm text-cyan-600 font-semibold">Use Cases</span>
                 <button
+                  onClick={() => navigate("/assessments")}
                   className="text-sm text-slate-700 hover:text-cyan-600 transition-colors font-medium"
                 >
-                  Roadmap
+                  Assessment
                 </button>
+                <span className="text-sm text-cyan-600 font-semibold">Use Cases</span>
               </div>
 
               {/* Right - User Avatar with Dropdown */}
@@ -167,12 +168,12 @@ export function UseCaseLibrary() {
               </div>
             </div>
           </div>
-        </div>
-      </motion.div>
+            </div>
+          </motion.div>
 
       {/* Hero */}
       <section className="pt-32 pb-12 relative z-10">
-        <div className="max-w-4xl mx-auto text-center px-4">
+        <div className="mx-auto text-center px-4">
           <div className="inline-block bg-[#46cdc6]/10 text-[#46cdc6] px-4 py-2 rounded-full text-xs font-medium border border-[#46cdc6]/20 shadow-sm mb-4">
             ✨ AI USE CASES LIBRARY
           </div>
@@ -185,7 +186,7 @@ export function UseCaseLibrary() {
 
       {/* Mode Selection */}
       <section className="pb-8 relative z-10">
-        <div className="max-w-4xl mx-auto px-4">
+        <div className="mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-4">
             <motion.div 
               onClick={() => setActiveMode('inspire')}
@@ -212,15 +213,15 @@ export function UseCaseLibrary() {
                     <span>Explore</span><ChevronRight className="w-4 h-4" />
                   </div>
                 </div>
-              </div>
-            </motion.div>
+            </div>
+          </motion.div>
 
             <motion.div 
               onClick={() => setActiveMode('build')}
               className={`cursor-pointer rounded-2xl p-5 border-2 transition-all ${
                 activeMode === 'build' 
-                  ? 'bg-purple-50 border-purple-400 shadow-lg' 
-                  : 'bg-white border-gray-200 hover:border-purple-300 hover:shadow'
+                  ? 'bg-[#46cdc6]/10 border-[#46cdc6] shadow-lg' 
+                  : 'bg-white border-gray-200 hover:border-[#46cdc6]/50 hover:shadow'
               }`}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -228,20 +229,20 @@ export function UseCaseLibrary() {
               <div className="flex items-start gap-4">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
                   activeMode === 'build' 
-                    ? 'bg-gradient-to-br from-purple-500 to-indigo-500' 
-                    : 'bg-purple-100'
+                    ? 'bg-gradient-to-br from-[#46cdc6] to-[#15ae99]' 
+                    : 'bg-[#46cdc6]/10'
                 }`}>
-                  <PenTool className={`w-6 h-6 ${activeMode === 'build' ? 'text-white' : 'text-purple-600'}`} />
+                  <PenTool className={`w-6 h-6 ${activeMode === 'build' ? 'text-white' : 'text-[#46cdc6]'}`} />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-bold text-gray-900 mb-1">Build My Own</h3>
                   <p className="text-gray-600 text-sm mb-2">Create custom use cases for your needs</p>
-                  <div className="flex items-center gap-1 text-purple-600 font-medium text-sm">
+                  <div className="flex items-center gap-1 text-[#46cdc6] font-medium text-sm">
                     <span>Start building</span><ChevronRight className="w-4 h-4" />
                   </div>
                 </div>
-              </div>
-            </motion.div>
+                        </div>
+                  </motion.div>
           </div>
         </div>
       </section>
@@ -249,7 +250,7 @@ export function UseCaseLibrary() {
       {/* Content */}
       {activeMode && (
         <section className="pb-16 relative z-10">
-          <div className="max-w-6xl mx-auto px-4">
+          <div className="mx-auto px-4">
             {activeMode === 'inspire' ? (
               <div className="grid lg:grid-cols-4 gap-6">
                 {/* Industry Sidebar */}
@@ -272,11 +273,11 @@ export function UseCaseLibrary() {
                             <Icon className="w-5 h-5" />
                             <span className="font-medium text-sm">{ind.name}</span>
                           </button>
-                        );
-                      })}
+                );
+              })}
                     </div>
                   </div>
-                </div>
+            </div>
 
                 {/* Use Cases Grid */}
                 <div className="lg:col-span-3">
@@ -308,7 +309,7 @@ export function UseCaseLibrary() {
                           <h4 className="font-semibold text-gray-900 mt-2 mb-1">{uc.name}</h4>
                           <p className="text-sm text-gray-600 mb-2">{uc.description}</p>
                           <span className="px-2 py-1 bg-white rounded text-xs text-gray-500">{uc.category}</span>
-                        </motion.div>
+          </motion.div>
                       ))}
                     </div>
                   </div>
@@ -321,13 +322,13 @@ export function UseCaseLibrary() {
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sticky top-20">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="text-base font-semibold text-gray-900">My Use Cases</h3>
-                      <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full text-xs font-medium">
+                      <span className="bg-[#46cdc6]/10 text-[#15ae99] px-2 py-0.5 rounded-full text-xs font-medium">
                         {customUseCases.length}
                       </span>
                     </div>
                     <button 
                       onClick={() => setIsFormOpen(true)}
-                      className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-medium hover:shadow-lg transition-all mb-3"
+                      className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-gradient-to-r from-[#46cdc6] to-[#15ae99] text-white font-medium hover:shadow-lg transition-all mb-3"
                     >
                       <Plus className="w-5 h-5" /> New Use Case
                     </button>
@@ -340,15 +341,15 @@ export function UseCaseLibrary() {
                       ) : customUseCases.map((uc) => (
                         <div 
                           key={uc.id} 
-                          className="p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-purple-50"
+                          className="p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-[#46cdc6]/10"
                         >
                           <h4 className="font-medium text-gray-900 text-sm truncate">{uc.useCaseName}</h4>
                           <p className="text-xs text-gray-500">{uc.category || 'Uncategorized'}</p>
                         </div>
                       ))}
                     </div>
-                  </div>
-                </div>
+        </div>
+      </div>
 
                 {/* Form / Empty State */}
                 <div className="lg:col-span-3">
@@ -371,7 +372,7 @@ export function UseCaseLibrary() {
                               type="text" 
                               value={formData.useCaseId} 
                               onChange={(e) => handleFormChange('useCaseId', e.target.value)}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" 
+                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
                               placeholder="UC-001"
                             />
                           </div>
@@ -381,7 +382,7 @@ export function UseCaseLibrary() {
                               type="text" 
                               value={formData.useCaseName} 
                               onChange={(e) => handleFormChange('useCaseName', e.target.value)}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" 
+                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
                               placeholder="Enter name" 
                             />
                           </div>
@@ -391,7 +392,7 @@ export function UseCaseLibrary() {
                               type="text" 
                               value={formData.processOwner} 
                               onChange={(e) => handleFormChange('processOwner', e.target.value)}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" 
+                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
                               placeholder="John Doe" 
                             />
                           </div>
@@ -401,7 +402,7 @@ export function UseCaseLibrary() {
                               type="text" 
                               value={formData.lastUpdatedBy} 
                               onChange={(e) => handleFormChange('lastUpdatedBy', e.target.value)}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" 
+                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
                             />
                           </div>
                           <div>
@@ -410,7 +411,7 @@ export function UseCaseLibrary() {
                               type="date" 
                               value={formData.dateCreated} 
                               onChange={(e) => handleFormChange('dateCreated', e.target.value)}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm [color-scheme:dark]" 
+                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm [color-scheme:dark]" 
                             />
                           </div>
                           <div>
@@ -419,7 +420,7 @@ export function UseCaseLibrary() {
                               type="date" 
                               value={formData.dateLastUpdated} 
                               onChange={(e) => handleFormChange('dateLastUpdated', e.target.value)}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm [color-scheme:dark]" 
+                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm [color-scheme:dark]" 
                             />
                           </div>
                         </div>
@@ -429,7 +430,7 @@ export function UseCaseLibrary() {
                             type="text" 
                             value={formData.businessUse} 
                             onChange={(e) => handleFormChange('businessUse', e.target.value)}
-                            className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" 
+                            className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
                             placeholder="Primary business use" 
                           />
                         </div>
@@ -439,7 +440,7 @@ export function UseCaseLibrary() {
                             value={formData.description} 
                             onChange={(e) => handleFormChange('description', e.target.value)} 
                             rows={2}
-                            className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" 
+                            className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
                             placeholder="Detailed description" 
                           />
                         </div>
@@ -450,7 +451,7 @@ export function UseCaseLibrary() {
                               value={formData.preconditions} 
                               onChange={(e) => handleFormChange('preconditions', e.target.value)} 
                               rows={2}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" 
+                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
                               placeholder="Required conditions" 
                             />
                           </div>
@@ -460,7 +461,7 @@ export function UseCaseLibrary() {
                               value={formData.postconditions} 
                               onChange={(e) => handleFormChange('postconditions', e.target.value)} 
                               rows={2}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" 
+                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
                               placeholder="Expected state after" 
                             />
                           </div>
@@ -471,7 +472,7 @@ export function UseCaseLibrary() {
                             type="text" 
                             value={formData.performanceGoal} 
                             onChange={(e) => handleFormChange('performanceGoal', e.target.value)}
-                            className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" 
+                            className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
                             placeholder="e.g., Reduce time by 50%" 
                           />
                         </div>
@@ -481,7 +482,7 @@ export function UseCaseLibrary() {
                             value={formData.basicWorkflow} 
                             onChange={(e) => handleFormChange('basicWorkflow', e.target.value)} 
                             rows={2}
-                            className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" 
+                            className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
                             placeholder="Step-by-step workflow" 
                           />
                         </div>
@@ -491,7 +492,7 @@ export function UseCaseLibrary() {
                             value={formData.alternativeWorkflow} 
                             onChange={(e) => handleFormChange('alternativeWorkflow', e.target.value)} 
                             rows={2}
-                            className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" 
+                            className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
                             placeholder="Alternative approach" 
                           />
                         </div>
@@ -502,7 +503,7 @@ export function UseCaseLibrary() {
                               type="text" 
                               value={formData.category} 
                               onChange={(e) => handleFormChange('category', e.target.value)}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" 
+                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
                               placeholder="Operations" 
                             />
                           </div>
@@ -512,7 +513,7 @@ export function UseCaseLibrary() {
                               type="text" 
                               value={formData.risks} 
                               onChange={(e) => handleFormChange('risks', e.target.value)}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" 
+                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
                               placeholder="Potential risks" 
                             />
                           </div>
@@ -522,7 +523,7 @@ export function UseCaseLibrary() {
                               type="text" 
                               value={formData.possibilities} 
                               onChange={(e) => handleFormChange('possibilities', e.target.value)}
-                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm" 
+                              className="w-full px-3 py-2 bg-slate-700 text-white placeholder:text-gray-300 border border-slate-600 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent text-sm" 
                               placeholder="Opportunities" 
                             />
                           </div>
@@ -536,7 +537,7 @@ export function UseCaseLibrary() {
                           </button>
                           <button 
                             onClick={handleSaveUseCase} 
-                            className="px-5 py-2 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg font-semibold hover:shadow-lg flex items-center gap-2"
+                            className="px-5 py-2 bg-gradient-to-r from-[#46cdc6] to-[#15ae99] text-white rounded-lg font-semibold hover:shadow-lg flex items-center gap-2"
                           >
                             <Save className="w-4 h-4" /> Save
                           </button>
@@ -545,8 +546,8 @@ export function UseCaseLibrary() {
                     </div>
                   ) : (
                     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
-                      <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <PenTool className="w-8 h-8 text-purple-500" />
+                      <div className="w-16 h-16 bg-[#46cdc6]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <PenTool className="w-8 h-8 text-[#46cdc6]" />
                       </div>
                       <h3 className="text-xl font-bold text-gray-900 mb-2">Create Your First Use Case</h3>
                       <p className="text-gray-600 max-w-md mx-auto mb-6">
@@ -554,7 +555,7 @@ export function UseCaseLibrary() {
                       </p>
                       <button 
                         onClick={() => setIsFormOpen(true)}
-                        className="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-xl font-semibold hover:shadow-lg inline-flex items-center gap-2"
+                        className="px-6 py-3 bg-gradient-to-r from-[#46cdc6] to-[#15ae99] text-white rounded-xl font-semibold hover:shadow-lg inline-flex items-center gap-2"
                       >
                         <Plus className="w-5 h-5" /> Create Use Case
                       </button>
@@ -584,7 +585,7 @@ export function UseCaseLibrary() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">
-              <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start justify-between mb-4">
                 <div>
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                     selectedUseCase.impact === 'High' 
@@ -637,11 +638,11 @@ export function UseCaseLibrary() {
                 >
                   <Plus className="w-4 h-4" /> Use Template
                 </button>
-              </div>
-            </div>
+                  </div>
+                  </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
+        )}
     </div>
   );
 }

@@ -224,7 +224,7 @@ export function ResultsDashboard() {
         animate={{ y: isScrolled ? -100 : 0 }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
       >
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 ">
           <motion.div 
             className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 px-6 py-3"
             initial={{ y: -20, opacity: 0 }}
@@ -284,7 +284,7 @@ export function ResultsDashboard() {
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 relative z-10">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 ">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left Column */}
             <motion.div 
@@ -469,7 +469,7 @@ export function ResultsDashboard() {
 
       {/* Radar Chart Section */}
       <section className="py-20 relative">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 ">
           <Card className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-2xl overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
               <CardTitle className="text-3xl text-gray-900 font-bold">Maturity Profile</CardTitle>
@@ -492,7 +492,7 @@ export function ResultsDashboard() {
 
       {/* Pillar Scores Section */}
       <section className="py-20 bg-gradient-to-b from-transparent via-gray-50 to-transparent">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 ">
           <h2 className="text-4xl mb-12 font-black text-gray-900 text-center">
             Pillar-wise <span className="bg-gradient-to-r from-[#46cdc6] to-[#15ae99] bg-clip-text text-transparent">Performance</span>
           </h2>
@@ -579,7 +579,7 @@ export function ResultsDashboard() {
 
       {/* Strengths and Gaps Section */}
       <section className="py-20">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 ">
           <div className="grid lg:grid-cols-2 gap-8">
             <div ref={strengthsRef}>
               <Card className="bg-gradient-to-br from-green-50 to-white border-green-200 shadow-xl h-full overflow-hidden">
@@ -685,7 +685,7 @@ export function ResultsDashboard() {
 
       {/* Recommendations Section */}
       <section className="py-20 bg-gradient-to-b from-transparent via-blue-50/30 to-transparent">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 ">
           <div ref={recommendationsRef}>
             <Card className="bg-white/80 backdrop-blur-sm border-blue-200 shadow-2xl overflow-hidden">
               <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 border-b border-blue-100">
@@ -754,7 +754,7 @@ export function ResultsDashboard() {
           style={{ backgroundSize: '200% 200%' }}
         />
         
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative z-10">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8  relative z-10">
           <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-3xl p-12 shadow-2xl border border-gray-700 relative overflow-hidden">
               <motion.div
                 className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#46cdc6]/20 to-purple-500/20 rounded-full blur-3xl"
@@ -837,7 +837,7 @@ export function ResultsDashboard() {
 
       {/* Footer */}
       <footer className="py-12 border-t border-gray-200 bg-white">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 ">
           <motion.div 
             className="flex flex-col md:flex-row items-center justify-between gap-6"
             initial={{ opacity: 0, y: 20 }}

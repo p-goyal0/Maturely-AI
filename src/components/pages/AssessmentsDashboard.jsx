@@ -545,9 +545,6 @@ export function AssessmentsDashboard() {
                             <h4 className="text-sm font-medium text-gray-900 mb-1">
                               {question}
                             </h4>
-                            <div className="text-xs text-gray-500">
-                              Question {questionIndex + 1} of {currentPillar.questions.length}
-                            </div>
                           </div>
                           {selectedAnswer && (
                             <motion.div
