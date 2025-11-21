@@ -1,0 +1,191 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Font family */
+  font-family: 'Segoe UI', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  
+  /* Premium color palette */
+  --bg-primary: #0f172a;
+  --bg-secondary: #1a202c;
+  --bg-tertiary: #2d3748;
+  --bg-light: #f8fafc;
+  --bg-light-secondary: #f1f5f9;
+  
+  /* Text colors */
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  
+  /* Accent colors */
+  --accent-blue: #0ea5e9;
+  --accent-cyan: #06b6d4;
+  --accent-purple: #a855f7;
+  --accent-green: #10b981;
+  
+  /* Input styling */
+  --input-bg: #1e293b;
+  --input-bg-focus: #334155;
+  --input-border: rgba(203, 213, 225, 0.15);
+  --input-text: #f1f5f9;
+  --input-placeholder: #64748b;
+  
+  /* Border and shadow */
+  --border-color: rgba(148, 163, 184, 0.1);
+  --border-light: rgba(148, 163, 184, 0.2);
+  
+  /* Shadcn variables */
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.145 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.145 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.267 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.267 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.267 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.267 0 0);
+  --input: oklch(0.267 0 0);
+  --ring: oklch(0.708 0 0);
+  --radius: 0.625rem;
+}
+
+@layer base {
+  * {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+    font-family: inherit;
+  }
+
+  html {
+    font-family: 'Segoe UI', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  }
+
+  body {
+    background-color: rgb(2 6 23);
+    color: rgb(241 245 249);
+    font-family: inherit;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+  .premium-gradient-text {
+    background-image: linear-gradient(to right, rgb(96 165 250), rgb(34 211 238), rgb(168 85 247));
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .premium-card {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+  }
+
+  .premium-card:hover {
+    transform: translateY(-0.25rem);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  }
+
+  .premium-bg {
+    background-image: linear-gradient(to bottom right, rgb(2 6 23), rgb(15 23 42 / 0.9), rgb(2 6 23));
+  }
+
+  .premium-divider {
+    position: relative;
+    height: 1px;
+    margin-top: 3rem;
+    margin-bottom: 3rem;
+    overflow: hidden;
+  }
+
+  .focus-premium:focus-visible {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px rgb(96 165 250), 0 0 0 4px rgb(15 23 42);
+  }
+
+  .bg-card-dark {
+    background-color: rgb(15 23 42 / 0.9);
+  }
+
+  .scrollbar-premium::-webkit-scrollbar {
+    width: 0.5rem;
+    background-color: rgb(15 23 42);
+  }
+
+  .scrollbar-premium::-webkit-scrollbar-thumb {
+    background-color: rgb(51 65 85);
+    border-radius: 9999px;
+  }
+
+  .scrollbar-premium::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(71 85 105);
+  }
+
+
+
+  /* Override for search inputs */
+  input[type="text"]:focus,
+  input[type="search"]:focus {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+  }
+
+  /* Prevent browser autocomplete styling */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #f9fafb inset !important;
+    -webkit-text-fill-color: #0f172a !important;
+    background-color: #f9fafb !important;
+    border-color: #d1d5db !important;
+  }
+
+  input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 30px #f9fafb inset !important;
+    border-color: #15ae99 !important;
+  }
+
+  /* Override for UseCaseLibrary form inputs - ensure dark background */
+  .bg-slate-700 {
+    background-color: rgb(51 65 85) !important;
+  }
+
+  /* Specific override for form inputs in UseCaseLibrary - very aggressive */
+  .use-case-form input,
+  .use-case-form textarea,
+  .use-case-form select {
+    background-color: rgb(51 65 85) !important;
+    color: rgb(255 255 255) !important;
+    border-color: rgb(71 85 105) !important;
+  }
+
+  .use-case-form input:focus,
+  .use-case-form textarea:focus,
+  .use-case-form select:focus {
+    background-color: rgb(51 65 85) !important;
+    color: rgb(255 255 255) !important;
+    border-color: rgb(147 51 234) !important;
+  }
+
+  .use-case-form input::placeholder,
+  .use-case-form textarea::placeholder {
+    color: rgb(203 213 225) !important;
+  }
+}

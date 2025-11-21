@@ -1,0 +1,126 @@
+{
+  "assessmentPillars": [
+    {
+      "id": "strategy-governance",
+      "title": "Strategy & Governance",
+      "weight": 20,
+      "description": "Assess how AI aligns with your business vision and strategic objectives",
+      "image": "Strategy & Governance.png",
+      "questions": [
+        "How mature is your organization's AI strategy and governance?",
+        "What level of AI leadership exists in your organization?",
+        "How aligned is your AI roadmap with clinical and business priorities?",
+        "How often does leadership review AI program progress?",
+        "Are AI responsibilities clearly defined across departments?"
+      ]
+    },
+    {
+      "id": "organization-workforce",
+      "title": "Organization & Workforce",
+      "weight": 20,
+      "description": "Understand your culture, adaptability, and readiness for transformation",
+      "image": "Organization & Workforce.png",
+      "questions": [
+        "How prepared is the workforce to adopt AI tools?",
+        "Are clinicians trained to understand AI-generated insights?",
+        "Are there AI literacy programs for operational staff?",
+        "Do cross-functional teams exist (clinical + data science)?",
+        "Is there a defined AI Center of Excellence?",
+        "How well are change-management processes established?"
+      ]
+    },
+    {
+      "id": "data-technology",
+      "title": "Data & Technology",
+      "weight": 20,
+      "description": "Evaluate your data infrastructure and technology capabilities",
+      "image": "Data and Technology.png",
+      "questions": [
+        "How standardized and interoperable is clinical data?",
+        "How mature are data quality processes?",
+        "How well integrated are EHR, LIS, RIS, and PACS systems?",
+        "Does the organization maintain a centralized clinical data lake?",
+        "Are imaging datasets stored in AI-ready formats?"
+      ]
+    },
+    {
+      "id": "performance-impact",
+      "title": "Performance & Impact",
+      "weight": 20,
+      "description": "Measuring and demonstrating AI value and outcomes",
+      "image": "Strategy & Governance.png",
+      "questions": [
+        "Is there a framework for measuring AI project outcomes?",
+        "Is AI used for clinical performance improvement?",
+        "Does AI reduce operational burden (wait times, triage)?",
+        "Are outcome dashboards available for leadership?",
+        "Is predictive analytics used for risk reduction?"
+      ]
+    },
+    {
+      "id": "trust-ethics",
+      "title": "Trust, Ethics & Responsible AI",
+      "weight": 10,
+      "description": "Ethical AI practices and responsible deployment",
+      "image": "Trst Ethics and responsive AI.png",
+      "questions": [
+        "Are AI models tested for clinical fairness?",
+        "Is patient consent obtained where required?",
+        "Is AI use transparent to patients?",
+        "Are ethical risks assessed before deployment?",
+        "Are explainability tools used for decision support?"
+      ]
+    },
+    {
+      "id": "security-risk",
+      "title": "Security & Risk",
+      "weight": 10,
+      "description": "AI security and risk management practices",
+      "image": "Security & risk.png",
+      "questions": [
+        "Are AI systems protected under cybersecurity policies?",
+        "Is access to AI systems role-based?",
+        "Are AI pipelines monitored for vulnerabilities?",
+        "Is sensitive data encrypted end-to-end?",
+        "Is there a risk register for AI deployments?"
+      ]
+    }
+  ],
+  "maturityLevels": [
+    {
+      "level": 1,
+      "name": "Initial",
+      "description": "Ad-hoc or absent",
+      "color": "red",
+      "gradient": "from-red-500 to-orange-500"
+    },
+    {
+      "level": 2,
+      "name": "Developing", 
+      "description": "Basic awareness",
+      "color": "orange",
+      "gradient": "from-orange-500 to-yellow-500"
+    },
+    {
+      "level": 3,
+      "name": "Defined",
+      "description": "Documented processes", 
+      "color": "yellow",
+      "gradient": "from-yellow-500 to-green-400"
+    },
+    {
+      "level": 4,
+      "name": "Managed",
+      "description": "Measured & controlled",
+      "color": "green", 
+      "gradient": "from-green-400 to-green-600"
+    },
+    {
+      "level": 5,
+      "name": "Optimized",
+      "description": "Continuous improvement",
+      "color": "emerald",
+      "gradient": "from-green-600 to-emerald-600"
+    }
+  ]
+}
