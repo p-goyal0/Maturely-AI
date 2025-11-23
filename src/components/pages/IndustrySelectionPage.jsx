@@ -2,59 +2,44 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { 
-  Factory, 
-  ShoppingBag, 
-  Landmark, 
-  Stethoscope, 
-  GraduationCap, 
-  Cpu,
-  Truck,
-  Building2,
-  Plane,
-  Wheat,
-  Zap,
-  Radio,
-  LogOut
-} from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
-import { SearchBar } from '../industry/SearchBar.jsx';
-import { IndustryGrid } from '../industry/IndustryGrid.jsx';
 import { StickyActionBar } from '../industry/StickyActionBar.jsx';
 
 const industries = [
-  { id: 'manufacturing', name: 'Manufacturing', description: 'Production & industrial operations', icon: Factory },
-  { id: 'retail', name: 'Retail & E-commerce', description: 'Consumer goods & online sales', icon: ShoppingBag },
-  { id: 'finance', name: 'Financial Services', description: 'Banking, insurance & investments', icon: Landmark },
-  { id: 'healthcare', name: 'Healthcare', description: 'Medical services & pharmaceuticals', icon: Stethoscope },
-  { id: 'education', name: 'Education', description: 'Learning institutions & EdTech', icon: GraduationCap },
-  { id: 'technology', name: 'Technology', description: 'Software & IT services', icon: Cpu },
-  { id: 'logistics', name: 'Logistics & Supply Chain', description: 'Transportation & warehousing', icon: Truck },
-  { id: 'realestate', name: 'Real Estate', description: 'Property & construction', icon: Building2 },
-  { id: 'travel', name: 'Travel & Hospitality', description: 'Tourism & accommodation', icon: Plane },
-  { id: 'agriculture', name: 'Agriculture', description: 'Farming & food production', icon: Wheat },
-  { id: 'energy', name: 'Energy & Utilities', description: 'Power generation & distribution', icon: Zap },
-  { id: 'telecom', name: 'Telecommunications', description: 'Network & communication services', icon: Radio },
+  { id: 'manufacturing', name: 'Manufacturing', description: 'Production & industrial operations' },
+  { id: 'retail', name: 'Retail & E-commerce', description: 'Consumer goods & online sales' },
+  { id: 'finance', name: 'Financial Services', description: 'Banking, insurance & investments' },
+  { id: 'healthcare', name: 'Healthcare', description: 'Medical services & pharmaceuticals' },
+  { id: 'education', name: 'Education', description: 'Learning institutions & EdTech' },
+  { id: 'technology', name: 'Technology', description: 'Software & IT services' },
+  { id: 'logistics', name: 'Logistics & Supply Chain', description: 'Transportation & warehousing' },
+  { id: 'realestate', name: 'Real Estate', description: 'Property & construction' },
+  { id: 'construction', name: 'Construction', description: 'Building & infrastructure development' },
+  { id: 'travel', name: 'Travel & Hospitality', description: 'Tourism & accommodation' },
+  { id: 'agriculture', name: 'Agriculture', description: 'Farming & food production' },
+  { id: 'energy', name: 'Energy & Utilities', description: 'Power generation & distribution' },
+  { id: 'telecom', name: 'Telecommunications', description: 'Network & communication services' },
 ];
 
 export function IndustrySelectionPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut, currentUser } = useAuth();
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndustry, setSelectedIndustry] = useState(null);
+  const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  const filteredIndustries = industries.filter(industry =>
-    industry.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    industry.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleIndustrySelect = (industry) => {
+    setSelectedIndustry(industry);
+    setIsOpen(false);
+  };
 
   const handleContinue = () => {
     if (selectedIndustry) {
-      navigate("/assessments", { state: { industry: selectedIndustry } });
+      navigate("/company-type", { state: { industry: selectedIndustry } });
     }
   };
 
@@ -84,13 +69,22 @@ export function IndustrySelectionPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isOpen && !event.target.closest('.dropdown-container')) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen]);
+
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900 relative overflow-hidden">
-      {/* Background gradients */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#46cdc6]/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-[#46cdc6]/5 rounded-full blur-[100px]" />
-      </div>
+    <div className="min-h-screen bg-[#f3f2ed] text-gray-900 relative overflow-hidden">
 
       {/* Header */}
       <motion.div
@@ -140,53 +134,68 @@ export function IndustrySelectionPage() {
       </motion.div>
 
       {/* Main content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-12 pt-32">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-12 relative"
-        >
-          <h1 className="text-4xl lg:text-6xl font-black mb-4 bg-gradient-to-r from-gray-900 to-[#46cdc6] bg-clip-text text-transparent">
-            Select Your Industry
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-10 sm:py-12 md:py-16 min-h-screen pt-24 pb-24">
+        <div className="text-center mx-auto w-full px-2 sm:px-4 md:px-6">
+          <h1 className="text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] xl:text-[4rem] tracking-[-0.05rem] font-regular leading-[1] mb-8 text-[#1a1a1a] mx-auto w-[90%] sm:w-[80%] md:w-[70%] lg:w-[60%]">
+            Which industry your<br />
+            company operates in?
           </h1>
-          <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-            Choose the industry that best represents your business to receive tailored AI recommendations and insights
-          </p>
-          
-          {/* Animation Video - Top Right - Hidden for now */}
-          {/* <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="absolute top-0 right-0 w-32 h-32 lg:w-40 lg:h-40 overflow-hidden rounded-2xl"
-          >
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="w-full h-full object-cover bg-transparent"
-              style={{ backgroundColor: 'transparent' }}
+
+          {/* Dropdown */}
+          <div className="relative w-[75%] sm:w-[65%] md:w-[55%] lg:w-[45%] xl:w-[35%] mx-auto dropdown-container">
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className={`
+                w-full px-4 py-3
+                bg-white
+                text-left
+                rounded
+                shadow-sm
+                tracking-[0.05rem]
+                border border-gray-100
+                flex justify-between items-center
+                transition-all duration-200
+                ${isOpen ? 'ring-2 ring-[#46cdc6]' : 'hover:border-[#46cdc6]'}
+              `}
             >
-              <source src="/lottieFiles/industry.mp4" type="video/mp4" />
-              <source src="/lottieFiles/industry.webm" type="video/webm" />
-              Your browser does not support the video tag.
-            </video>
-          </motion.div> */}
-        </motion.div>
-
-        <SearchBar 
-          searchQuery={searchQuery} 
-          setSearchQuery={setSearchQuery} 
-        />
-
-        <IndustryGrid
-          industries={filteredIndustries}
-          selectedIndustry={selectedIndustry}
-          setSelectedIndustry={setSelectedIndustry}
-        />
-      </div>
+              <span className={selectedIndustry ? 'text-[#1a1a1a]' : 'text-gray-400'}>
+                {selectedIndustry ? selectedIndustry.name : 'Select Industry'}
+              </span>
+              <div className="bg-[#46cdc6] px-1.5 py-1 rounded">
+                <svg 
+                  className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                  fill="none" 
+                  stroke="white"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </button>
+            {isOpen && (
+              <div className="absolute w-full mt-1 bg-gradient-to-b from-white via-white to-transparent rounded shadow-sm border border-gray-100 overflow-hidden z-[60]">
+                <div className="max-h-48 overflow-y-auto scrollbar-hide">
+                  {[...industries].sort((a, b) => a.name.localeCompare(b.name)).map((industry) => (
+                    <button
+                      key={industry.id}
+                      className={`
+                        w-full px-4 py-3
+                        text-left
+                        hover:bg-gray-50
+                        transition-colors
+                        ${selectedIndustry?.id === industry.id ? 'text-[#46cdc6]' : 'text-[#1a1a1a]'}
+                      `}
+                      onClick={() => handleIndustrySelect(industry)}
+                    >
+                      {industry.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
 
       <StickyActionBar 
         selectedIndustry={selectedIndustry}

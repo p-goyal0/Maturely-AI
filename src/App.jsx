@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState } from "react";
 import HomePage from "./components/pages/HomePage";
 import { IndustrySelectionPage } from "./components/pages/IndustrySelectionPage";
+import { CompanyTypePage } from "./components/pages/CompanyTypePage";
+import { CompanyInfoPage } from "./components/pages/CompanyInfoPage";
 import { AssessmentsDashboard } from "./components/pages/AssessmentsDashboard";
 import { ResultsDashboard } from "./components/pages/ResultsDashboard";
 import { RoadmapGenerator } from "./components/pages/RoadmapGenerator";
@@ -59,6 +61,22 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <IndustrySelectionPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/company-type"
+            element={
+              <ProtectedRoute>
+                <CompanyTypePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/company-info"
+            element={
+              <ProtectedRoute>
+                <CompanyInfoPage />
               </ProtectedRoute>
             }
           />

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/button';
-import { CheckCircle2, Target, ArrowRight, ArrowLeft, LogOut } from 'lucide-react';
+import { CheckCircle2, Target, ArrowRight, ArrowLeft, LogOut, Info } from 'lucide-react';
 import Lottie from 'lottie-react';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
@@ -31,6 +31,7 @@ export function AssessmentsDashboard() {
   });
   const [hoveredStepIcon, setHoveredStepIcon] = useState(null);
   const [hoveredMainIcon, setHoveredMainIcon] = useState(false);
+  const [hoveredTooltip, setHoveredTooltip] = useState(null);
 
   const currentPillar = assessmentPillars[currentPillarIndex];
 
@@ -552,7 +553,7 @@ export function AssessmentsDashboard() {
                     </div>
                     <div>
                       <p className="text-sm text-[#15ae99]">
-                        Rate each statement using options A through E based on your organization's current state.
+                        Rate each statement using the maturity levels below based on your organization's current state.
                       </p>
                     </div>
                   </div>
@@ -605,71 +606,112 @@ export function AssessmentsDashboard() {
                         </div>
                         
                         <div className="grid grid-cols-5 gap-2 ml-9">
-                          {['A', 'B', 'C', 'D', 'E'].map((option, index) => {
+                          {['Initial', 'Adopting', 'Established', 'Advanced', 'Transformational'].map((option, index) => {
                             const isSelected = selectedAnswer === option;
+                            const isFirstStep = currentPillarIndex === 0;
+                            const tooltipKey = `${questionKey}-${option}`;
+                            
+                            // Tooltip descriptions for each maturity level
+                            const tooltipDescriptions = {
+                              'Initial': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                              'Adopting': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                              'Established': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                              'Advanced': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                              'Transformational': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'
+                            };
                             
                             return (
-                              <motion.button 
-                                key={option}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  console.log('Button clicked:', questionKey, option);
-                                  handleAnswerSelect(questionKey, option);
-                                }}
-                                className={`flex flex-col items-center justify-center p-3 rounded-lg text-sm font-medium border cursor-pointer relative z-10 overflow-hidden ${
-                                  isSelected 
-                                    ? 'bg-[#46cdc6]/10 text-[#15ae99] border-[#46cdc6] shadow-md' 
-                                    : 'bg-white text-gray-700 hover:bg-[#46cdc6]/10 hover:text-[#46cdc6] border-gray-300 hover:border-[#46cdc6] shadow-sm'
-                                }`}
-                                type="button"
-                                whileHover={{ 
-                                  scale: 1.05
-                                }}
-                                whileTap={{ 
-                                  scale: 0.95 
-                                }}
-                                animate={isSelected ? {
-                                  scale: 1,
-                                  backgroundColor: 'rgb(207, 250, 254)'
-                                } : {
-                                  scale: 1,
-                                  backgroundColor: 'rgb(255, 255, 255)'
-                                }}
-                                transition={{ 
-                                  duration: 0.1,
-                                  ease: "easeOut"
-                                }}
-                              >
-                                <motion.div 
-                                  className="font-bold text-lg pointer-events-none"
-                                  animate={isSelected ? { 
-                                    scale: 1.15,
-                                    color: 'rgb(14, 116, 144)'
+                              <div key={option} className="relative min-w-0">
+                                <motion.button 
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    console.log('Button clicked:', questionKey, option);
+                                    handleAnswerSelect(questionKey, option);
+                                  }}
+                                  className={`flex flex-col items-center justify-center p-2 sm:p-3 rounded-lg text-xs sm:text-sm font-medium border cursor-pointer relative z-10 overflow-visible w-full ${
+                                    isSelected 
+                                      ? 'bg-[#46cdc6]/10 text-[#15ae99] border-[#46cdc6] shadow-md' 
+                                      : 'bg-white text-gray-700 hover:bg-[#46cdc6]/10 hover:text-[#46cdc6] border-gray-300 hover:border-[#46cdc6] shadow-sm'
+                                  }`}
+                                  type="button"
+                                  whileHover={{ 
+                                    scale: 1.05
+                                  }}
+                                  whileTap={{ 
+                                    scale: 0.95 
+                                  }}
+                                  animate={isSelected ? {
+                                    scale: 1,
+                                    backgroundColor: 'rgb(207, 250, 254)'
                                   } : {
                                     scale: 1,
-                                    color: 'rgb(55, 65, 81)'
+                                    backgroundColor: 'rgb(255, 255, 255)'
                                   }}
                                   transition={{ 
-                                    duration: 0.15,
+                                    duration: 0.1,
                                     ease: "easeOut"
                                   }}
                                 >
-                                  {option}
-          </motion.div>
-                                {isSelected && (
-                                  <motion.div
-                                    initial={{ scale: 0, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    exit={{ scale: 0, opacity: 0 }}
-                                    transition={{ 
-                                      duration: 0.2,
-                                      ease: "easeOut"
-                                    }}
-                                    className="absolute inset-0 bg-[#46cdc6]/30 rounded-lg"
-                                  />
-                                )}
-                              </motion.button>
+                                  <div className="flex items-center justify-center w-full relative pr-4">
+                                    <motion.div 
+                                      className="font-bold text-xs sm:text-sm pointer-events-none text-center leading-tight w-full"
+                                      animate={isSelected ? { 
+                                        scale: 1.1,
+                                        color: 'rgb(14, 116, 144)'
+                                      } : {
+                                        scale: 1,
+                                        color: 'rgb(55, 65, 81)'
+                                      }}
+                                      transition={{ 
+                                        duration: 0.15,
+                                        ease: "easeOut"
+                                      }}
+                                    >
+                                      {option}
+                                    </motion.div>
+                                    {isFirstStep && (
+                                      <div 
+                                        className="absolute right-0 top-0 z-30 flex items-center justify-center h-full"
+                                        onMouseEnter={() => setHoveredTooltip(tooltipKey)}
+                                        onMouseLeave={() => setHoveredTooltip(null)}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          e.preventDefault();
+                                        }}
+                                      >
+                                        <Info className="w-3 h-3 text-gray-400 hover:text-[#46cdc6] transition-colors cursor-help flex-shrink-0" />
+                                        <AnimatePresence>
+                                          {hoveredTooltip === tooltipKey && (
+                                            <motion.div
+                                              initial={{ opacity: 0, y: 5, scale: 0.95 }}
+                                              animate={{ opacity: 1, y: 0, scale: 1 }}
+                                              exit={{ opacity: 0, y: 5, scale: 0.95 }}
+                                              transition={{ duration: 0.2 }}
+                                              className="absolute bottom-full right-0 mb-2 w-56 p-2.5 bg-gray-900 text-white text-xs rounded-lg shadow-xl z-[100] pointer-events-none whitespace-normal"
+                                            >
+                                              {tooltipDescriptions[option]}
+                                              <div className="absolute top-full right-3 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-gray-900"></div>
+                                            </motion.div>
+                                          )}
+                                        </AnimatePresence>
+                                      </div>
+                                    )}
+                                  </div>
+                                  {isSelected && (
+                                    <motion.div
+                                      initial={{ scale: 0, opacity: 0 }}
+                                      animate={{ scale: 1, opacity: 1 }}
+                                      exit={{ scale: 0, opacity: 0 }}
+                                      transition={{ 
+                                        duration: 0.2,
+                                        ease: "easeOut"
+                                      }}
+                                      className="absolute inset-0 bg-[#46cdc6]/30 rounded-lg"
+                                    />
+                                  )}
+                                </motion.button>
+                              </div>
                             );
                           })}
                         </div>

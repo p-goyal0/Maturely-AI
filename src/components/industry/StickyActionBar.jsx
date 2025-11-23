@@ -16,17 +16,17 @@ export function StickyActionBar({ selectedIndustry, onContinue }) {
           <div className="absolute inset-0 backdrop-blur-2xl bg-gradient-to-t from-gray-50/95 via-gray-50/90 to-transparent border-t border-gray-200" />
           
           {/* Content */}
-          <div className="relative max-w-7xl mx-auto px-6 py-6">
+          <div className="relative w-full mx-auto px-4 sm:px-6 lg:px-8 py-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm mb-1">Selected Industry</p>
-                <p className="text-gray-900 font-medium">Ready to continue</p>
+                <p className="text-gray-500 text-sm mb-0.5">Selected Industry</p>
+                <p className="text-gray-900 font-medium text-sm">Ready to continue</p>
               </div>
               <motion.button
                 onClick={onContinue}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
-                className="relative group px-8 py-4 rounded-2xl overflow-hidden"
+                className="relative group px-6 py-2.5 rounded-xl overflow-hidden"
               >
                 {/* Animated gradient background */}
                 <div className="absolute inset-0 bg-gradient-to-r from-[#46cdc6] to-[#46cdc6]/80" />
