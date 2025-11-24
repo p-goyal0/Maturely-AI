@@ -17,6 +17,7 @@ export function AssessmentsDashboard() {
   const navigate = useNavigate();
   const { isAuthenticated, currentUser, signOut } = useAuth();
   const [currentPillarIndex, setCurrentPillarIndex] = useState(0);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [completedPillars, setCompletedPillars] = useState(new Set());
   const [isProcessing, setIsProcessing] = useState(false);
@@ -70,6 +71,11 @@ export function AssessmentsDashboard() {
     loadAnimations();
   }, []);
 
+  // Reset question index when pillar changes
+  useEffect(() => {
+    setCurrentQuestionIndex(0);
+  }, [currentPillarIndex]);
+
   // Scroll detection for header animation
   useEffect(() => {
     const handleScroll = () => {
@@ -98,6 +104,13 @@ export function AssessmentsDashboard() {
       ...prev,
       [questionKey]: level
     }));
+    
+    // Auto-advance to next question after a short delay
+    setTimeout(() => {
+      if (currentQuestionIndex < currentPillar.questions.length - 1) {
+        setCurrentQuestionIndex(prev => prev + 1);
+      }
+    }, 300);
   };
 
   const handleNextStep = () => {
@@ -560,144 +573,185 @@ export function AssessmentsDashboard() {
                 </div>
               </div>
 
-              {/* All Questions for Current Pillar - Single Card */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {currentPillar.title} Questions
-                  </h3>
-                  <div className="text-sm text-gray-500">
-                    {currentPillar.questions.length} questions
+              {/* Question Carousel - One Question at a Time */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 overflow-visible">
+                {/* Progress Indicators */}
+                <div className="mb-6">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {currentPillar.title} Questions
+                    </h3>
+                    <div className="flex items-center gap-3">
+                      <div className="text-sm text-gray-500">
+                        Question {currentQuestionIndex + 1} of {currentPillar.questions.length}
+                      </div>
+                      
+                      {/* Premium Progress Bars - Right Side */}
+                      <div className="flex items-center gap-1">
+                        {currentPillar.questions.map((_, qIndex) => {
+                          const questionKey = `${currentPillar.id}-${qIndex}`;
+                          const isAnswered = answers[questionKey];
+                          const isCurrent = qIndex === currentQuestionIndex;
+                          
+                          return (
+                            <button
+                              key={qIndex}
+                              onClick={() => setCurrentQuestionIndex(qIndex)}
+                              className={`transition-all duration-200 rounded-full ${
+                                isCurrent 
+                                  ? 'w-8 h-1.5 bg-[#46cdc6] ring-1 ring-[#46cdc6]' 
+                                  : isAnswered 
+                                    ? 'w-6 h-1.5 bg-[#46cdc6] opacity-50' 
+                                    : 'w-6 h-1.5 bg-gray-300'
+                              } hover:opacity-100`}
+                              title={`Question ${qIndex + 1}${isAnswered ? ' (Answered)' : ''}`}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
-                <div className="space-y-6">
-                  {currentPillar.questions.map((question, questionIndex) => {
-                    const questionKey = `${currentPillar.id}-${questionIndex}`;
-                    const selectedAnswer = answers[questionKey];
-                    
-                    return (
-                      <div 
-                        key={questionIndex}
-                        className="border-b border-gray-100 pb-6 last:border-b-0 last:pb-0"
-                      >
-                        <div className="flex items-start gap-3 mb-4">
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold ${
-                            selectedAnswer 
-                              ? 'bg-[#46cdc6] text-white' 
-                              : 'bg-gray-100 text-gray-600'
-                          }`}>
-                            {questionIndex + 1}
+                {/* Question Carousel Container */}
+                <div className="relative overflow-visible min-h-[400px]">
+                  <AnimatePresence mode="wait">
+                    {currentPillar.questions.map((question, questionIndex) => {
+                      if (questionIndex !== currentQuestionIndex) return null;
+                      
+                      const questionKey = `${currentPillar.id}-${questionIndex}`;
+                      const selectedAnswer = answers[questionKey];
+                      const isFirstStep = currentPillarIndex === 0;
+                      
+                      return (
+                        <motion.div
+                          key={questionIndex}
+                          initial={{ opacity: 0, x: 100 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -100 }}
+                          transition={{ duration: 0.3, ease: "easeInOut" }}
+                          className="w-full"
+                        >
+                          {/* Question Header */}
+                          <div className="flex items-start gap-3 mb-6">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+                              selectedAnswer 
+                                ? 'bg-[#46cdc6] text-white' 
+                                : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              {questionIndex + 1}
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="text-base font-medium text-gray-900 mb-2">
+                                {question}
+                              </h4>
+                            </div>
+                            {selectedAnswer && (
+                              <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center"
+                              >
+                                <CheckCircle2 className="w-4 h-4 text-white" />
+                              </motion.div>
+                            )}
                           </div>
-                          <div className="flex-1">
-                            <h4 className="text-sm font-medium text-gray-900 mb-1">
-                              {question}
-                            </h4>
-                          </div>
-                          {selectedAnswer && (
-                            <motion.div
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                              className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center"
-                            >
-                              <CheckCircle2 className="w-3 h-3 text-white" />
-          </motion.div>
-                          )}
-                        </div>
-                        
-                        <div className="grid grid-cols-5 gap-2 ml-9">
-                          {['Initial', 'Adopting', 'Established', 'Advanced', 'Transformational'].map((option, index) => {
-                            const isSelected = selectedAnswer === option;
-                            const isFirstStep = currentPillarIndex === 0;
-                            const tooltipKey = `${questionKey}-${option}`;
-                            
-                            // Tooltip descriptions for each maturity level
-                            const tooltipDescriptions = {
-                              'Initial': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-                              'Adopting': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-                              'Established': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-                              'Advanced': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-                              'Transformational': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'
-                            };
-                            
-                            return (
-                              <div key={option} className="relative min-w-0">
+                          
+                          {/* Options */}
+                          <div className="space-y-3 overflow-visible">
+                            {['Initial', 'Adopting', 'Established', 'Advanced', 'Transformational'].map((option, index) => {
+                              const isSelected = selectedAnswer === option;
+                              const tooltipKey = `${questionKey}-${option}`;
+                              
+                              // Get question-specific option text from JSON if available
+                              const questionOptions = currentPillar.questionOptions;
+                              const questionKeyStr = String(questionIndex);
+                              const optionText = questionOptions && questionOptions[questionKeyStr] && questionOptions[questionKeyStr][option]
+                                ? questionOptions[questionKeyStr][option]
+                                : option;
+                              
+                              return (
                                 <motion.button 
+                                  key={option}
                                   onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
                                     console.log('Button clicked:', questionKey, option);
                                     handleAnswerSelect(questionKey, option);
                                   }}
-                                  className={`flex flex-col items-center justify-center p-2 sm:p-3 rounded-lg text-xs sm:text-sm font-medium border cursor-pointer relative z-10 overflow-visible w-full ${
+                                  className={`flex items-start gap-3 p-4 rounded-lg text-sm font-normal border-2 cursor-pointer relative w-full text-left transition-all ${
                                     isSelected 
                                       ? 'bg-[#46cdc6]/10 text-[#15ae99] border-[#46cdc6] shadow-md' 
-                                      : 'bg-white text-gray-700 hover:bg-[#46cdc6]/10 hover:text-[#46cdc6] border-gray-300 hover:border-[#46cdc6] shadow-sm'
+                                      : 'bg-white text-gray-700 hover:bg-gray-50 hover:border-[#46cdc6]/50 border-gray-200 shadow-sm'
                                   }`}
                                   type="button"
                                   whileHover={{ 
-                                    scale: 1.05
+                                    scale: 1.01
                                   }}
                                   whileTap={{ 
-                                    scale: 0.95 
-                                  }}
-                                  animate={isSelected ? {
-                                    scale: 1,
-                                    backgroundColor: 'rgb(207, 250, 254)'
-                                  } : {
-                                    scale: 1,
-                                    backgroundColor: 'rgb(255, 255, 255)'
+                                    scale: 0.99 
                                   }}
                                   transition={{ 
-                                    duration: 0.1,
+                                    duration: 0.15,
                                     ease: "easeOut"
                                   }}
                                 >
-                                  <div className="flex items-center justify-center w-full relative pr-4">
-                                    <motion.div 
-                                      className="font-bold text-xs sm:text-sm pointer-events-none text-center leading-tight w-full"
-                                      animate={isSelected ? { 
-                                        scale: 1.1,
-                                        color: 'rgb(14, 116, 144)'
-                                      } : {
-                                        scale: 1,
-                                        color: 'rgb(55, 65, 81)'
-                                      }}
-                                      transition={{ 
-                                        duration: 0.15,
-                                        ease: "easeOut"
-                                      }}
-                                    >
-                                      {option}
-                                    </motion.div>
-                                    {isFirstStep && (
-                                      <div 
-                                        className="absolute right-0 top-0 z-30 flex items-center justify-center h-full"
-                                        onMouseEnter={() => setHoveredTooltip(tooltipKey)}
-                                        onMouseLeave={() => setHoveredTooltip(null)}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          e.preventDefault();
-                                        }}
-                                      >
-                                        <Info className="w-3 h-3 text-gray-400 hover:text-[#46cdc6] transition-colors cursor-help flex-shrink-0" />
-                                        <AnimatePresence>
-                                          {hoveredTooltip === tooltipKey && (
-                                            <motion.div
-                                              initial={{ opacity: 0, y: 5, scale: 0.95 }}
-                                              animate={{ opacity: 1, y: 0, scale: 1 }}
-                                              exit={{ opacity: 0, y: 5, scale: 0.95 }}
-                                              transition={{ duration: 0.2 }}
-                                              className="absolute bottom-full right-0 mb-2 w-56 p-2.5 bg-gray-900 text-white text-xs rounded-lg shadow-xl z-[100] pointer-events-none whitespace-normal"
-                                            >
-                                              {tooltipDescriptions[option]}
-                                              <div className="absolute top-full right-3 w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-transparent border-t-gray-900"></div>
-                                            </motion.div>
-                                          )}
-                                        </AnimatePresence>
-                                      </div>
+                                  {/* Radio button indicator */}
+                                  <div className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center mt-0.5 ${
+                                    isSelected 
+                                      ? 'border-[#46cdc6] bg-[#46cdc6]' 
+                                      : 'border-gray-300 bg-white'
+                                  }`}>
+                                    {isSelected && (
+                                      <motion.div
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        className="w-2.5 h-2.5 rounded-full bg-white"
+                                      />
                                     )}
                                   </div>
+                                  
+                                  {/* Content */}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="flex-1">
+                                        <div className={`text-sm leading-relaxed ${
+                                          isSelected ? 'text-gray-800' : 'text-gray-700'
+                                        }`}>
+                                          {optionText}
+                                        </div>
+                                      </div>
+                                      {isFirstStep && (
+                                        <div 
+                                          className="flex-shrink-0 z-30"
+                                          onMouseEnter={() => setHoveredTooltip(tooltipKey)}
+                                          onMouseLeave={() => setHoveredTooltip(null)}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                          }}
+                                        >
+                                          <Info className="w-4 h-4 text-gray-400 hover:text-[#46cdc6] transition-colors cursor-help" />
+                                          <AnimatePresence>
+                                            {hoveredTooltip === tooltipKey && (
+                                              <motion.div
+                                                initial={{ opacity: 0, y: 5, scale: 0.95 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                exit={{ opacity: 0, y: 5, scale: 0.95 }}
+                                                transition={{ duration: 0.2 }}
+                                                className="absolute right-0 mt-2 w-72 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl z-[100] pointer-events-none whitespace-normal"
+                                              >
+                                                {optionText}
+                                                <div className="absolute bottom-full right-4 w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-transparent border-b-gray-900"></div>
+                                              </motion.div>
+                                            )}
+                                          </AnimatePresence>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Selected indicator overlay */}
                                   {isSelected && (
                                     <motion.div
                                       initial={{ scale: 0, opacity: 0 }}
@@ -707,17 +761,44 @@ export function AssessmentsDashboard() {
                                         duration: 0.2,
                                         ease: "easeOut"
                                       }}
-                                      className="absolute inset-0 bg-[#46cdc6]/30 rounded-lg"
+                                      className="absolute inset-0 bg-[#46cdc6]/5 rounded-lg pointer-events-none"
                                     />
                                   )}
                                 </motion.button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
+                              );
+                            })}
+                          </div>
+                          
+                          {/* Navigation Buttons */}
+                          <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
+                            <button
+                              onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
+                              disabled={currentQuestionIndex === 0}
+                              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                                currentQuestionIndex === 0
+                                  ? 'text-gray-400 cursor-not-allowed'
+                                  : 'text-gray-700 hover:bg-gray-100'
+                              }`}
+                            >
+                              ← Previous
+                            </button>
+                            
+                            <button
+                              onClick={() => setCurrentQuestionIndex(prev => Math.min(currentPillar.questions.length - 1, prev + 1))}
+                              disabled={currentQuestionIndex === currentPillar.questions.length - 1}
+                              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                                currentQuestionIndex === currentPillar.questions.length - 1
+                                  ? 'text-gray-400 cursor-not-allowed'
+                                  : 'text-gray-700 hover:bg-gray-100'
+                              }`}
+                            >
+                              Next →
+                            </button>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </AnimatePresence>
                 </div>
               </div>
             </div>

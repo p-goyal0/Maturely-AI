@@ -8,24 +8,24 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 
 const industryUseCases = {
   healthcare: [
-    { id: 1, name: "AI-Powered Diagnostics", description: "Automated medical image analysis for faster diagnosis", category: "Clinical Operations", impact: "High" },
-    { id: 2, name: "Patient Flow Optimization", description: "Predictive analytics for hospital bed management", category: "Operations", impact: "Medium" },
-    { id: 3, name: "Drug Interaction Checker", description: "AI system to identify potential medication conflicts", category: "Patient Safety", impact: "High" },
+    { id: 1, name: "AI-Powered Diagnostics", description: "Automated medical image analysis for faster diagnosis", category: "Clinical Operations", impact: "High", feasibility: "Medium" },
+    { id: 2, name: "Patient Flow Optimization", description: "Predictive analytics for hospital bed management", category: "Operations", impact: "Medium", feasibility: "High" },
+    { id: 3, name: "Drug Interaction Checker", description: "AI system to identify potential medication conflicts", category: "Patient Safety", impact: "High", feasibility: "High" },
   ],
   finance: [
-    { id: 1, name: "Fraud Detection System", description: "Real-time transaction monitoring using ML models", category: "Risk Management", impact: "High" },
-    { id: 2, name: "Automated Underwriting", description: "AI-driven loan approval process", category: "Operations", impact: "High" },
-    { id: 3, name: "Customer Churn Prediction", description: "Identify at-risk customers before they leave", category: "Customer Retention", impact: "Medium" },
+    { id: 1, name: "Fraud Detection System", description: "Real-time transaction monitoring using ML models", category: "Risk Management", impact: "High", feasibility: "Medium" },
+    { id: 2, name: "Automated Underwriting", description: "AI-driven loan approval process", category: "Operations", impact: "High", feasibility: "High" },
+    { id: 3, name: "Customer Churn Prediction", description: "Identify at-risk customers before they leave", category: "Customer Retention", impact: "Medium", feasibility: "High" },
   ],
   retail: [
-    { id: 1, name: "Demand Forecasting", description: "ML-based inventory optimization", category: "Supply Chain", impact: "High" },
-    { id: 2, name: "Personalized Recommendations", description: "AI-powered product suggestions", category: "Customer Experience", impact: "High" },
-    { id: 3, name: "Dynamic Pricing Engine", description: "Real-time price optimization based on market conditions", category: "Revenue", impact: "Medium" },
+    { id: 1, name: "Demand Forecasting", description: "ML-based inventory optimization", category: "Supply Chain", impact: "High", feasibility: "High" },
+    { id: 2, name: "Personalized Recommendations", description: "AI-powered product suggestions", category: "Customer Experience", impact: "High", feasibility: "Medium" },
+    { id: 3, name: "Dynamic Pricing Engine", description: "Real-time price optimization based on market conditions", category: "Revenue", impact: "Medium", feasibility: "Medium" },
   ],
   manufacturing: [
-    { id: 1, name: "Predictive Maintenance", description: "AI-driven equipment failure prediction", category: "Operations", impact: "High" },
-    { id: 2, name: "Quality Control Automation", description: "Computer vision for defect detection", category: "Quality", impact: "High" },
-    { id: 3, name: "Supply Chain Optimization", description: "ML-based supplier and logistics management", category: "Supply Chain", impact: "Medium" },
+    { id: 1, name: "Predictive Maintenance", description: "AI-driven equipment failure prediction", category: "Operations", impact: "High", feasibility: "High" },
+    { id: 2, name: "Quality Control Automation", description: "Computer vision for defect detection", category: "Quality", impact: "High", feasibility: "Medium" },
+    { id: 3, name: "Supply Chain Optimization", description: "ML-based supplier and logistics management", category: "Supply Chain", impact: "Medium", feasibility: "High" },
   ],
 };
 
@@ -51,7 +51,6 @@ export function UseCaseLibrary() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [activeMode, setActiveMode] = useState(null);
-  const [selectedIndustry, setSelectedIndustry] = useState('healthcare');
   const [selectedUseCase, setSelectedUseCase] = useState(null);
   const [customUseCases, setCustomUseCases] = useState([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -211,7 +210,7 @@ export function UseCaseLibrary() {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-bold text-gray-900 mb-1">Inspire Me</h3>
-                  <p className="text-gray-600 text-sm mb-2">Browse curated AI use cases by industry</p>
+                  <p className="text-gray-600 text-sm mb-2">Browse curated AI use cases</p>
                   <div className="flex items-center gap-1 text-[#46cdc6] font-medium text-sm">
                     <span>Explore</span><ChevronRight className="w-4 h-4" />
                   </div>
@@ -255,66 +254,49 @@ export function UseCaseLibrary() {
         <section className="pb-16 relative z-10">
           <div className="mx-auto px-4">
             {activeMode === 'inspire' ? (
-              <div className="grid lg:grid-cols-4 gap-6">
-                {/* Industry Sidebar */}
-                <div className="lg:col-span-1">
-                  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sticky top-20">
-                    <h3 className="text-base font-semibold text-gray-900 mb-3">Select Industry</h3>
-                    <div className="space-y-2">
-                      {industries.map((ind) => {
-                        const Icon = ind.icon;
-                        return (
-                          <button 
-                            key={ind.id} 
-                            onClick={() => setSelectedIndustry(ind.id)}
-                            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
-                              selectedIndustry === ind.id 
-                                ? 'bg-gradient-to-r from-[#46cdc6] to-[#15ae99] text-white shadow' 
-                                : 'bg-gray-50 text-gray-700 hover:bg-[#46cdc6]/10'
-                            }`}
-                          >
-                            <Icon className="w-5 h-5" />
-                            <span className="font-medium text-sm">{ind.name}</span>
-                          </button>
-                );
-              })}
-                    </div>
+              <div>
+                {/* Use Cases Grid - All Mixed */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-bold text-gray-900">
+                      All Use Cases
+                    </h3>
+                    <span className="text-sm text-gray-500">
+                      {Object.values(industryUseCases).flat().length} available
+                    </span>
                   </div>
-            </div>
-
-                {/* Use Cases Grid */}
-                <div className="lg:col-span-3">
-                  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-bold text-gray-900">
-                        {industries.find(i => i.id === selectedIndustry)?.name} Use Cases
-                      </h3>
-                      <span className="text-sm text-gray-500">
-                        {industryUseCases[selectedIndustry]?.length} available
-                      </span>
-                    </div>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {industryUseCases[selectedIndustry]?.map((uc) => (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Object.values(industryUseCases).flat().map((uc, index) => (
                         <motion.div 
-                          key={uc.id} 
+                          key={`${uc.id}-${index}`} 
                           onClick={() => setSelectedUseCase(uc)}
                           className="cursor-pointer bg-gray-50 rounded-xl p-4 border border-gray-200 hover:border-[#46cdc6] hover:shadow-md transition-all"
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            uc.impact === 'High' 
-                              ? 'bg-green-100 text-green-700' 
-                              : 'bg-amber-100 text-amber-700'
-                          }`}>
-                            {uc.impact} Impact
-                          </span>
+                          <div className="flex items-center justify-between mb-2">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              uc.impact === 'High' 
+                                ? 'bg-green-100 text-green-700' 
+                                : 'bg-amber-100 text-amber-700'
+                            }`}>
+                              {uc.impact} Impact
+                            </span>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              uc.feasibility === 'High' 
+                                ? 'bg-blue-100 text-blue-700' 
+                                : uc.feasibility === 'Medium'
+                                ? 'bg-purple-100 text-purple-700'
+                                : 'bg-gray-100 text-gray-700'
+                            }`}>
+                              {uc.feasibility} Feasibility
+                            </span>
+                          </div>
                           <h4 className="font-semibold text-gray-900 mt-2 mb-1">{uc.name}</h4>
                           <p className="text-sm text-gray-600 mb-2">{uc.description}</p>
                           <span className="px-2 py-1 bg-white rounded text-xs text-gray-500">{uc.category}</span>
           </motion.div>
-                      ))}
-                    </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -589,14 +571,25 @@ export function UseCaseLibrary() {
           >
             <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
-                <div>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    selectedUseCase.impact === 'High' 
-                      ? 'bg-green-100 text-green-700' 
-                      : 'bg-amber-100 text-amber-700'
-                  }`}>
-                    {selectedUseCase.impact} Impact
-                  </span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      selectedUseCase.impact === 'High' 
+                        ? 'bg-green-100 text-green-700' 
+                        : 'bg-amber-100 text-amber-700'
+                    }`}>
+                      {selectedUseCase.impact} Impact
+                    </span>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      selectedUseCase.feasibility === 'High' 
+                        ? 'bg-blue-100 text-blue-700' 
+                        : selectedUseCase.feasibility === 'Medium'
+                        ? 'bg-purple-100 text-purple-700'
+                        : 'bg-gray-100 text-gray-700'
+                    }`}>
+                      {selectedUseCase.feasibility} Feasibility
+                    </span>
+                  </div>
                   <h3 className="text-xl font-bold text-gray-900 mt-2">{selectedUseCase.name}</h3>
                 </div>
                 <button 

@@ -643,14 +643,15 @@ export default function HomePage() {
                                 }`}
                                 style={isThirdCard ? { backgroundColor: '#ebe8d9', borderColor: '#606a61' } : {}}
                               >
-                                {/* Lottie Animation - directly on background */}
+                                {/* Lottie Animation - Static (first frame only) */}
                                 <div className="h-20 mb-6 flex justify-start items-start">
                                   {lottieData ? (
                                     <div className="w-16 h-16">
                                       <Lottie 
                                         animationData={lottieData}
-                                        loop={true}
-                                        autoplay={true}
+                                        loop={false}
+                                        autoplay={false}
+                                        initialSegment={[0, 1]}
                                         style={{ width: '100%', height: '100%' }}
                                       />
                                     </div>

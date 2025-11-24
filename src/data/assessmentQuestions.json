@@ -7,12 +7,41 @@
       "description": "Assess how AI aligns with your business vision and strategic objectives",
       "image": "Strategy & Governance.png",
       "questions": [
-        "How mature is your organization's AI strategy and governance?",
-        "What level of AI leadership exists in your organization?",
-        "How aligned is your AI roadmap with clinical and business priorities?",
-        "How often does leadership review AI program progress?",
-        "Are AI responsibilities clearly defined across departments?"
-      ]
+        "How often are AI projects evaluated and funded based on their direct, quantifiable contribution to the organization's top-line revenue or bottom-line cost savings?",
+        "What is the current state of your organization's commitment to the ethical and responsible use of AI?",
+        "How automated and reliable is the process for moving a finalized AI model from development to live production use?",
+        "To what extent have operational teams integrated AI outputs (predictions, recommendations) into their daily decision-making workflows?"
+      ],
+      "questionOptions": {
+        "0": {
+          "Initial": "AI projects are experimental pilots, funded separately, with no required link to core business KPIs.",
+          "Adopting": "AI projects must articulate a potential business impact, but tracking and accountability are inconsistent.",
+          "Established": "Every new AI initiative requires a formal business case linking it to a major KPI (e.g., 5% reduction in churn).",
+          "Advanced": "AI project performance is reviewed quarterly by executive leadership against the original business case and KPI targets.",
+          "Transformational": "AI impact is integrated into the official financial forecasting/budgeting system and is a mandatory component of multiple departmental strategic plans."
+        },
+        "1": {
+          "Initial": "We are aware of the risks but have no formal policies or review processes in place.",
+          "Adopting": "We have a draft document of principles/guidelines, but adherence is voluntary and decentralized.",
+          "Established": "We have a formal, documented policy on bias, transparency, and fairness that all AI teams must follow.",
+          "Advanced": "A dedicated AI Ethics/Review Board or a similar cross-functional committee must formally approve all models before production deployment.",
+          "Transformational": "Responsible AI metrics (e.g., bias auditing, explainability scores) are automatically tracked, monitored in production, and integrated into the model's performance KPIs."
+        },
+        "2": {
+          "Initial": "Deployment is a manual, one-off process handled primarily by the data scientist who built the model.",
+          "Adopting": "We use basic scripts/templates, but deployment often requires manual configuration and significant IT involvement.",
+          "Established": "We have a standardized CI/CD pipeline (MLOps) for model packaging, testing, and automated staging deployment.",
+          "Advanced": "The pipeline includes automated production monitoring for model performance, data drift, and latency with automated alerting.",
+          "Transformational": "We utilize fully automated, containerized deployment with automated rollbacks/shadow deployment and A/B testing capabilities managed by the MLOps platform."
+        },
+        "3": {
+          "Initial": "AI outputs are only used occasionally, typically as background reports or in isolated proof-of-concepts.",
+          "Adopting": "AI provides insights that human operators may review but are not mandatory for proceeding with a task.",
+          "Established": "In key processes (e.g., sales, scheduling), AI-generated recommendations are presented as the default action, requiring a human override to reject.",
+          "Advanced": "AI decisions are automatically executed in some non-critical workflows (e.g., inventory restocking) without direct human intervention.",
+          "Transformational": "AI models operate in a tight feedback loop where human overrides are automatically captured and used to retrain/fine-tune the model, continuously improving performance."
+        }
+      }
     },
     {
       "id": "organization-workforce",

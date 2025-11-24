@@ -105,6 +105,8 @@ export function ResultsDashboard() {
     { name: 'Organization & Workforce', value: 12, color: '#15ae99' },
     { name: 'Data & Technology', value: 28, color: '#2a868c' },
     { name: 'Performance & Impact', value: 8, color: '#1a1a1a' },
+    { name: 'Trust, Ethics & Responsible AI', value: 10, color: '#4ade80' },
+    { name: 'Security & Risk', value: 7, color: '#10b981' },
   ];
 
   const totalScore = pieChartData.reduce((acc, curr) => acc + curr.value, 0);
@@ -118,23 +120,21 @@ export function ResultsDashboard() {
   }, []);
 
   const radarData = [
-    { pillar: "Strategy", score: 4.2, industry: 3.5 },
-    { pillar: "Workforce", score: 3.1, industry: 3.2 },
-    { pillar: "Technology", score: 4.5, industry: 3.8 },
-    { pillar: "Data", score: 3.8, industry: 3.6 },
-    { pillar: "Performance", score: 2.9, industry: 3.0 },
-    { pillar: "Governance", score: 3.6, industry: 3.4 },
-    { pillar: "Security", score: 4.7, industry: 3.9 },
+    { pillar: "Strategy & Governance", score: 3.9, industry: 3.45 },
+    { pillar: "Organization & Workforce", score: 3.1, industry: 3.2 },
+    { pillar: "Data & Technology", score: 4.15, industry: 3.7 },
+    { pillar: "Performance & Impact", score: 2.9, industry: 3.0 },
+    { pillar: "Trust, Ethics & Responsible AI", score: 3.6, industry: 3.4 },
+    { pillar: "Security & Risk", score: 4.7, industry: 3.9 },
   ];
 
   const pillarScores = [
-    { icon: Target, title: "Strategy & Vision", score: 4.2, maxScore: 5, status: "strong", change: "+0.8" },
-    { icon: Users, title: "Workforce & Culture", score: 3.1, maxScore: 5, status: "moderate", change: "+0.2" },
-    { icon: Cpu, title: "Technology", score: 4.5, maxScore: 5, status: "strong", change: "+1.2" },
-    { icon: Database, title: "Data & Analytics", score: 3.8, maxScore: 5, status: "strong", change: "+0.5" },
-    { icon: TrendingUp, title: "Performance", score: 2.9, maxScore: 5, status: "needs-improvement", change: "-0.1" },
-    { icon: Shield, title: "Governance", score: 3.6, maxScore: 5, status: "moderate", change: "+0.3" },
-    { icon: Lock, title: "Security", score: 4.7, maxScore: 5, status: "strong", change: "+0.9" },
+    { icon: Target, title: "Strategy & Governance", score: 3.9, maxScore: 5, status: "strong", change: "+0.55" },
+    { icon: Users, title: "Organization & Workforce", score: 3.1, maxScore: 5, status: "moderate", change: "+0.2" },
+    { icon: Database, title: "Data & Technology", score: 4.15, maxScore: 5, status: "strong", change: "+0.85" },
+    { icon: TrendingUp, title: "Performance & Impact", score: 2.9, maxScore: 5, status: "needs-improvement", change: "-0.1" },
+    { icon: Shield, title: "Trust, Ethics & Responsible AI", score: 3.6, maxScore: 5, status: "moderate", change: "+0.3" },
+    { icon: Lock, title: "Security & Risk", score: 4.7, maxScore: 5, status: "strong", change: "+0.9" },
   ];
 
   const strengths = [
