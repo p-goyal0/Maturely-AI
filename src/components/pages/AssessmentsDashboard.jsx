@@ -578,11 +578,11 @@ export function AssessmentsDashboard() {
                 {/* Progress Indicators */}
                 <div className="mb-6">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {currentPillar.title} Questions
-                    </h3>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {currentPillar.title} Questions
+                  </h3>
                     <div className="flex items-center gap-3">
-                      <div className="text-sm text-gray-500">
+                  <div className="text-sm text-gray-500">
                         Question {currentQuestionIndex + 1} of {currentPillar.questions.length}
                       </div>
                       
@@ -616,51 +616,51 @@ export function AssessmentsDashboard() {
                 {/* Question Carousel Container */}
                 <div className="relative overflow-visible min-h-[400px]">
                   <AnimatePresence mode="wait">
-                    {currentPillar.questions.map((question, questionIndex) => {
+                  {currentPillar.questions.map((question, questionIndex) => {
                       if (questionIndex !== currentQuestionIndex) return null;
                       
-                      const questionKey = `${currentPillar.id}-${questionIndex}`;
-                      const selectedAnswer = answers[questionKey];
+                    const questionKey = `${currentPillar.id}-${questionIndex}`;
+                    const selectedAnswer = answers[questionKey];
                       const isFirstStep = currentPillarIndex === 0;
-                      
-                      return (
+                    
+                    return (
                         <motion.div
-                          key={questionIndex}
+                        key={questionIndex}
                           initial={{ opacity: 0, x: 100 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: -100 }}
                           transition={{ duration: 0.3, ease: "easeInOut" }}
                           className="w-full"
-                        >
+                      >
                           {/* Question Header */}
                           <div className="flex items-start gap-3 mb-6">
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
-                              selectedAnswer 
-                                ? 'bg-[#46cdc6] text-white' 
-                                : 'bg-gray-100 text-gray-600'
-                            }`}>
-                              {questionIndex + 1}
-                            </div>
-                            <div className="flex-1">
-                              <h4 className="text-base font-medium text-gray-900 mb-2">
-                                {question}
-                              </h4>
-                            </div>
-                            {selectedAnswer && (
-                              <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center"
-                              >
-                                <CheckCircle2 className="w-4 h-4 text-white" />
-                              </motion.div>
-                            )}
+                            selectedAnswer 
+                              ? 'bg-[#46cdc6] text-white' 
+                              : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {questionIndex + 1}
                           </div>
-                          
+                          <div className="flex-1">
+                              <h4 className="text-base font-medium text-gray-900 mb-2">
+                              {question}
+                            </h4>
+                          </div>
+                          {selectedAnswer && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                                className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center"
+                            >
+                                <CheckCircle2 className="w-4 h-4 text-white" />
+          </motion.div>
+                          )}
+                        </div>
+                        
                           {/* Options */}
                           <div className="space-y-3 overflow-visible">
                             {['Initial', 'Adopting', 'Established', 'Advanced', 'Transformational'].map((option, index) => {
-                              const isSelected = selectedAnswer === option;
+                            const isSelected = selectedAnswer === option;
                               const tooltipKey = `${questionKey}-${option}`;
                               
                               // Get question-specific option text from JSON if available
@@ -669,26 +669,26 @@ export function AssessmentsDashboard() {
                               const optionText = questionOptions && questionOptions[questionKeyStr] && questionOptions[questionKeyStr][option]
                                 ? questionOptions[questionKeyStr][option]
                                 : option;
-                              
-                              return (
-                                <motion.button 
-                                  key={option}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    console.log('Button clicked:', questionKey, option);
-                                    handleAnswerSelect(questionKey, option);
-                                  }}
+                            
+                            return (
+                              <motion.button 
+                                key={option}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  console.log('Button clicked:', questionKey, option);
+                                  handleAnswerSelect(questionKey, option);
+                                }}
                                   className={`flex items-start gap-3 p-4 rounded-lg text-sm font-normal border-2 cursor-pointer relative w-full text-left transition-all ${
-                                    isSelected 
-                                      ? 'bg-[#46cdc6]/10 text-[#15ae99] border-[#46cdc6] shadow-md' 
+                                  isSelected 
+                                    ? 'bg-[#46cdc6]/10 text-[#15ae99] border-[#46cdc6] shadow-md' 
                                       : 'bg-white text-gray-700 hover:bg-gray-50 hover:border-[#46cdc6]/50 border-gray-200 shadow-sm'
-                                  }`}
-                                  type="button"
-                                  whileHover={{ 
+                                }`}
+                                type="button"
+                                whileHover={{ 
                                     scale: 1.01
-                                  }}
-                                  whileTap={{ 
+                                }}
+                                whileTap={{ 
                                     scale: 0.99 
                                   }}
                                   transition={{ 
@@ -743,7 +743,7 @@ export function AssessmentsDashboard() {
                                               >
                                                 {optionText}
                                                 <div className="absolute bottom-full right-4 w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-transparent border-b-gray-900"></div>
-                                              </motion.div>
+          </motion.div>
                                             )}
                                           </AnimatePresence>
                                         </div>
@@ -752,22 +752,22 @@ export function AssessmentsDashboard() {
                                   </div>
                                   
                                   {/* Selected indicator overlay */}
-                                  {isSelected && (
-                                    <motion.div
-                                      initial={{ scale: 0, opacity: 0 }}
-                                      animate={{ scale: 1, opacity: 1 }}
-                                      exit={{ scale: 0, opacity: 0 }}
-                                      transition={{ 
-                                        duration: 0.2,
-                                        ease: "easeOut"
-                                      }}
+                                {isSelected && (
+                                  <motion.div
+                                    initial={{ scale: 0, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    exit={{ scale: 0, opacity: 0 }}
+                                    transition={{ 
+                                      duration: 0.2,
+                                      ease: "easeOut"
+                                    }}
                                       className="absolute inset-0 bg-[#46cdc6]/5 rounded-lg pointer-events-none"
-                                    />
-                                  )}
-                                </motion.button>
-                              );
-                            })}
-                          </div>
+                                  />
+                                )}
+                              </motion.button>
+                            );
+                          })}
+                        </div>
                           
                           {/* Navigation Buttons */}
                           <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
@@ -794,10 +794,10 @@ export function AssessmentsDashboard() {
                             >
                               Next →
                             </button>
-                          </div>
+                      </div>
                         </motion.div>
-                      );
-                    })}
+                    );
+                  })}
                   </AnimatePresence>
                 </div>
               </div>

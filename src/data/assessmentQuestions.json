@@ -2,117 +2,680 @@
   "assessmentPillars": [
     {
       "id": "strategy-governance",
-      "title": "Strategy & Governance",
+      "title": "Strategic Value & Governance",
       "weight": 20,
       "description": "Assess how AI aligns with your business vision and strategic objectives",
       "image": "Strategy & Governance.png",
       "questions": [
-        "How often are AI projects evaluated and funded based on their direct, quantifiable contribution to the organization's top-line revenue or bottom-line cost savings?",
-        "What is the current state of your organization's commitment to the ethical and responsible use of AI?",
-        "How automated and reliable is the process for moving a finalized AI model from development to live production use?",
-        "To what extent have operational teams integrated AI outputs (predictions, recommendations) into their daily decision-making workflows?"
+        "How mature is your organization's AI strategy and governance structure?",
+        "What level of AI leadership exists in your organization?",
+        "How well are AI initiatives prioritized and aligned with strategic objectives?",
+        "What is the maturity of your AI compliance and regulatory management?",
+        "How aligned is your AI strategy with business outcomes and revenue targets?",
+        "How robust and enforceable is your AI governance framework?",
+        "How prepared is your organization for emerging AI regulations (EU AI Act; Singapore AI Act, US State wise AI Acts or industry-specific compliance)?",
+        "How well-managed is your vendor and third-party AI ecosystem?",
+        "How strong is your AI ethics governance and responsible AI commitment?",
+        "How is the AI budget structured and allocated across the enterprise?",
+        "How mature is your Cost Attribution and Internal Chargeback model?",
+        "How accurate and predictive is your AI Financial Forecasting (Variance Management)?",
+        "How sophisticated is your AI Procurement Strategy regarding CapEx/OpEx balance and commitment leverage?",
+        "How rigorously is the business value of Agents and RAG systems audited and validated by Finance?"
       ],
       "questionOptions": {
         "0": {
-          "Initial": "AI projects are experimental pilots, funded separately, with no required link to core business KPIs.",
-          "Adopting": "AI projects must articulate a potential business impact, but tracking and accountability are inconsistent.",
-          "Established": "Every new AI initiative requires a formal business case linking it to a major KPI (e.g., 5% reduction in churn).",
-          "Advanced": "AI project performance is reviewed quarterly by executive leadership against the original business case and KPI targets.",
-          "Transformational": "AI impact is integrated into the official financial forecasting/budgeting system and is a mandatory component of multiple departmental strategic plans."
+          "Initial": "No documented AI strategy; initiatives are ad-hoc and disconnected from business goals; no governance structure exists",
+          "Adopting": "Informal AI vision exists but not documented; occasional discussions at leadership level; basic policies being drafted",
+          "Established": "Documented AI strategy aligned with organization and business objectives; at least one formal governance committee established; AI usage policies defined and communicated",
+          "Advanced": "Comprehensive AI strategy integrated across business units; active governance board with executive sponsorship; multiple action oriented subcommittee's established, policies enforced with regular reviews",
+          "Transformational": "AI strategy is indistinguishable from Corporate Strategy and offers competitive differentiation; sophisticated multi-layered and cross functional governance with board-level oversight; industry-leading policies and frameworks"
         },
         "1": {
-          "Initial": "We are aware of the risks but have no formal policies or review processes in place.",
-          "Adopting": "We have a draft document of principles/guidelines, but adherence is voluntary and decentralized.",
-          "Established": "We have a formal, documented policy on bias, transparency, and fairness that all AI teams must follow.",
-          "Advanced": "A dedicated AI Ethics/Review Board or a similar cross-functional committee must formally approve all models before production deployment.",
-          "Transformational": "Responsible AI metrics (e.g., bias auditing, explainability scores) are automatically tracked, monitored in production, and integrated into the model's performance KPIs."
+          "Initial": "No designated AI leadership; responsibilities unclear or nonexistent",
+          "Adopting": "Part-time or informal AI lead without executive authority or dedicated budget",
+          "Established": "Dedicated AI leader (Head of AI/Chief AI Officer) with formal role but limited executive influence or resources potentially with mixed responsibilities",
+          "Advanced": "Chief AI Officer with direct C-suite reporting; budget authority; and clear mandate for AI strategy execution; avoids mixed responsibilities",
+          "Transformational": "Strategic AI leader driving enterprise-wide transformation; influencing board decisions; and recognized as industry thought leader"
         },
         "2": {
-          "Initial": "Deployment is a manual, one-off process handled primarily by the data scientist who built the model.",
-          "Adopting": "We use basic scripts/templates, but deployment often requires manual configuration and significant IT involvement.",
-          "Established": "We have a standardized CI/CD pipeline (MLOps) for model packaging, testing, and automated staging deployment.",
-          "Advanced": "The pipeline includes automated production monitoring for model performance, data drift, and latency with automated alerting.",
-          "Transformational": "We utilize fully automated, containerized deployment with automated rollbacks/shadow deployment and A/B testing capabilities managed by the MLOps platform."
+          "Initial": "No prioritization framework; AI projects pursued opportunistically or loudest first without strategic alignment",
+          "Adopting": "Basic prioritization based on resource availability; limited connection to strategic objectives; loudest voice usually wins",
+          "Established": "Formal prioritization process with clear criteria; 60-70% of AI initiatives aligned with strategic goals; soft ROI benefits",
+          "Advanced": "Sophisticated portfolio management; 80-90% alignment with strategy; regular optimization and rebalancing driven by governance committees; soft and hard ROI benefits",
+          "Transformational": "AI portfolio fully integrated with enterprise strategy; 95%+ alignment; dynamic optimization with measurable strategic impact and ROI"
         },
         "3": {
-          "Initial": "AI outputs are only used occasionally, typically as background reports or in isolated proof-of-concepts.",
-          "Adopting": "AI provides insights that human operators may review but are not mandatory for proceeding with a task.",
-          "Established": "In key processes (e.g., sales, scheduling), AI-generated recommendations are presented as the default action, requiring a human override to reject.",
-          "Advanced": "AI decisions are automatically executed in some non-critical workflows (e.g., inventory restocking) without direct human intervention.",
-          "Transformational": "AI models operate in a tight feedback loop where human overrides are automatically captured and used to retrain/fine-tune the model, continuously improving performance."
+          "Initial": "No awareness of AI-specific regulations; compliance is reactive",
+          "Adopting": "Basic awareness of regulations; compliance efforts are ad-hoc and incomplete",
+          "Established": "Documented compliance framework for known regulations; regular monitoring; some gaps remain",
+          "Advanced": "Comprehensive compliance program covering all relevant regulations; proactive monitoring; dedicated compliance resources",
+          "Transformational": "Leading-edge compliance with anticipatory risk management; active participation in regulatory development; zero compliance incidents"
+        },
+        "4": {
+          "Initial": "No documented AI strategy; initiatives chosen opportunistically without business alignment; C-suite unaware of AI priorities",
+          "Adopting": "AI strategy exists but weakly tied to business KPIs; 30-40% of initiatives misaligned with revenue/cost targets; limited C-suite engagement",
+          "Established": "Documented AI strategy with clear business KPIs and revenue targets; 70% of initiatives aligned; quarterly strategy reviews; C-suite involved",
+          "Advanced": "Comprehensive AI strategy integrated into 3-year business plan; 90% initiative alignment; weighted business case for all projects; active board oversight",
+          "Transformational": "AI strategy drives enterprise transformation and competitive differentiation; 100% alignment; autonomous strategic adjustment based on market; board-level visibility"
+        },
+        "5": {
+          "Initial": "No governance; AI projects operate independently; no oversight, compliance checks, or accountability",
+          "Adopting": "Informal governance; occasional reviews; selective policy enforcement; inconsistent compliance across projects",
+          "Established": "Formal governance board established; documented AI policies and standards; at least 50% compliance rate; quarterly audits and reviews",
+          "Advanced": "Enterprise governance with executive sponsorship; risk-based oversight; real-time compliance monitoring; at least 75% adherence rate; monthly audits and reviews",
+          "Transformational": "Sophisticated autonomous governance; AI-powered compliance monitoring; predictive risk detection; at least 95% compliance achieved; self-governing ecosystem"
+        },
+        "6": {
+          "Initial": "No regulatory awareness; unprepared for compliance requirements; potential legal exposure",
+          "Adopting": "Basic regulatory tracking; ad-hoc compliance responses; gaps in understanding requirements",
+          "Established": "Compliance framework established for known regulations; documented policies; annual audit cycles; 85% coverage of requirements",
+          "Advanced": "Proactive compliance program; legal review for all AI initiatives; 95%+ regulatory adherence; dedicated compliance resources; dedicated reporting and apps in place to monitor compliance",
+          "Transformational": "Industry leader in compliance; anticipatory regulatory management; active in regulatory development; zero violations; recognized compliance excellence and measurable using dashboards and automated reporting"
+        },
+        "7": {
+          "Initial": "No vendor management; heavy reliance on single provider; lock-in risk extreme; no oversight of third-party models",
+          "Adopting": "Basic vendor selection criteria; limited due diligence; inconsistent security assessment; low negotiation leverage",
+          "Established": "Formal vendor evaluation process; security assessments; contracts include compliance terms; multi-vendor approach for key capabilities; annual reviews",
+          "Advanced": "Sophisticated vendor management; continuous security monitoring; contractual SLAs enforced; cost benchmarking across vendors; strategic partnerships",
+          "Transformational": "World-class ecosystem management; real-time vendor performance tracking; transparent AI model sourcing; zero dependency risk; industry partnerships"
+        },
+        "8": {
+          "Initial": "No ethics framework; ethics concerns ignored; governance nonexistent",
+          "Adopting": "Basic ethics guidelines; informal bias considerations; ad-hoc oversight of high-risk systems",
+          "Established": "Formal ethics framework; documented responsible AI principles; regular bias testing for 70-80% of systems; ethics board established",
+          "Advanced": "Comprehensive ethics governance; mandatory ethics review for all projects; real-time bias monitoring; diverse ethics board; third-party audits",
+          "Transformational": "Industry-leading ethics program; proactive governance; continuous improvement; thought leadership; stakeholder trust verified"
+        },
+        "9": {
+          "Initial": "Ad-Hoc / Scrappy: No dedicated AI line item. Projects are funded by \"stealing\" from IT reserves or unused R&D budget. Funding is unpredictable and often cuts out mid-project.",
+          "Adopting": "Central Innovation Fund: A single centralized \"AI Innovation Budget\" exists (usually under the CTO/CIO). Business units treat it as \"free money\" and have no incentive to be efficient.",
+          "Established": "Hybrid Funding: Infrastructure (CapEx) is funded centrally, but application development is funded by individual business units (OpEx). Basic budget caps are in place for each department. Department heads own each budget line items and are incentivized to be efficient.",
+          "Advanced": "Value-Based Allocation: Budgets are released in \"Tranches\" (stages) based on hitting specific KPI milestones. If a project misses a milestone, funding pauses automatically. We balance CapEx (Training) and OpEx (Inference) strategically.",
+          "Transformational": "Dynamic Portfolio Management: We view AI spend as an investment portfolio. Capital is autonomously reallocated quarterly from underperforming projects to high-yield ones, similar to a Venture Capital firm operating inside the company."
+        },
+        "10": {
+          "Initial": "IT Pays All: All AI costs (Cloud, API keys, GPUs) are buried in a general IT overhead bucket. Business units have zero visibility into what their specific projects cost.",
+          "Adopting": "Shadow Spend: Departments put AI API costs on credit cards to bypass IT. Attribution is impossible because half the spend is hidden in expense reports (\"Shadow AI Spend\").",
+          "Established": "Showback (Reporting): We can produce a report showing \"Marketing spent $50k on AI,\" but we don't actually charge them for it. It is informational only. Accountability is low.",
+          "Advanced": "Granular Chargeback: Business units are billed internally for their exact consumption (Compute + Tokens). The P&L owner of the business unit feels the pain of inefficient AI usage, driving self-optimization.",
+          "Transformational": "Unit-Level Profitability: We don't just charge back \"cost\"; we report \"Net Margin.\" E.g. the system tracks that the Customer Service Bot cost $10k but saved $50k in labor, automatically crediting the Support Department's P&L with the net value. Penalty is also added in for unused AI products or \"shelfware\""
+        },
+        "11": {
+          "Initial": "Bill Shock: We find out how much we spent when the invoice arrives. Variance is wild (+/- 50%). We frequently blow the budget due to runaway loops or unmonitored experiments.",
+          "Adopting": "Spreadsheet Guessing: We try to forecast based on last month's usage, but we fail to account for scaling (e.g., a marketing campaign driving 10x traffic to the bot).",
+          "Established": "Threshold Alerts: We have set \"Soft Limits\" in the cloud console. If spend hits 80% of budget, an email goes to the admin. Response is manual and reactive.",
+          "Advanced": "Predictive Modeling: We use historical data to model future spend based on business or sales events (e.g., \"Black Friday will increase Inference cost by 40%\"). Variance is tight (+/- 10%).",
+          "Transformational": "Automated Cost Control: The system detects \"Spend Anomalies\" (e.g., a developer leaving a massive GPU cluster running) in real-time and autonomously shuts down the resource before the budget is exceeded. We have zero bill shock."
+        },
+        "12": {
+          "Initial": "On-Demand OpEx: We pay full retail price for cloud/AI services (\"Pay-as-you-go\"). Spend is 100% OpEx, highly volatile, and we have no long-term contracts or leverage.",
+          "Adopting": "Basic Commitments: We sign basic savings plans (e.g., 1-year Reserved Instances) to lower OpEx. We struggle to classify AI development costs, defaulting everything to \"Expense\" rather than \"Capital.\"",
+          "Established": "Asset Definition: Accounting policies distinguish between OpEx (Inference/Tokens) and CapEx (Building Vector Indexes, Fine-Tuning Adapters, Designing Agent Workflows). We treat our curated \"Knowledge Base\" as a digital asset.",
+          "Advanced": "Strategic Capitalization: We capitalize the development of proprietary \"Agentic Systems\" and \"Vector Stores\" as internal software assets (depreciable). We utilize \"Bring Your Own Key\" (BYOK) contracts to separate infrastructure costs from IP costs.",
+          "Transformational": "Arbitrage & Asset Sweat: Procurement is dynamic. We use Spot/Batch instances for heavy RAG indexing (90% cheaper). We measure the \"Return on Asset\" (ROA) of our Vector Database—tracking how much revenue each curated document chunk generates over its lifespan"
+        },
+        "13": {
+          "Initial": "Unvalidated Claims: Tech teams report improvements such as \"Search Accuracy\" or \"Fast Responses\". Finance ignores these technical metrics because they don't see a corresponding drop in the payroll or support budget.",
+          "Adopting": "Soft ROI Tracking; We track \"Hours Saved\" per employee via AI tools and AI assistants. Finance acknowledges this as \"Cost Avoidance\" (Soft Savings) but does not adjust future hiring plans or budgets based on it.",
+          "Established": "Joint Validation; A Finance partner validates the baseline before an Agent is deployed. We distinguish between \"Task Automation\" (Soft) and \"Process Elimination\" (Hard Cash). Value is audited 6 months post-deployment.",
+          "Advanced": "Budget Capture; If an Agent reliably handles 30% of Tier-1 Support tickets, the Support Department's hiring budget is automatically reduced or reallocated. Efficiency gains are \"captured\" into the P&L, not left as surplus capacity.",
+          "Transformational": "Automated Value Realization; The loop is closed. \"Green Dollars\" saved by AI and AI Agent efficiency are autonomously swept into an \"Innovation Fund.\" Adoption bonuses and promotions are paid from this fund to encourage \"smart usage\" and rest of the fund is allocated between innovation and the remaining IT/AI needs."
         }
       }
     },
     {
       "id": "organization-workforce",
-      "title": "Organization & Workforce",
+      "title": "Workforce Skillset & Organization Structure",
       "weight": 20,
       "description": "Understand your culture, adaptability, and readiness for transformation",
       "image": "Organization & Workforce.png",
       "questions": [
-        "How prepared is the workforce to adopt AI tools?",
-        "Are clinicians trained to understand AI-generated insights?",
-        "Are there AI literacy programs for operational staff?",
-        "Do cross-functional teams exist (clinical + data science)?",
-        "Is there a defined AI Center of Excellence?",
-        "How well are change-management processes established?"
-      ]
+        "What is the staffing level and composition of your AI team?",
+        "How clearly defined are AI roles and career paths?",
+        "What is the scope and effectiveness of AI skills development programs?",
+        "How adequate is your AI staffing relative to organizational needs?",
+        "How mature and well funded is your AI leadership structure and authority?",
+        "What is the maturity of your AI Center of Excellence (COE) structure and governance?",
+        "How effective is your change management and AI adoption enablement?",
+        "How adequate is your AI team staffing and talent composition?",
+        "How mature are your AI skills development and training programs?",
+        "What is the level of AI fluency and independent innovation across non-technical business units?",
+        "To what extent does your culture support \"Safe Failure\" and experimental risk-taking with AI?"
+      ],
+      "questionOptions": {
+        "0": {
+          "Initial": "No dedicated AI staff; work done ad-hoc by generalists or external consultants",
+          "Adopting": "Part-time or temporary contract staff handling AI tasks; no permanent AI roles; fragmented responsibilities",
+          "Established": "Core AI team with dedicated roles (data scientists, ML engineers, data engineers); some specialization; 5-10 team members",
+          "Advanced": "Cross-functional AI organization with specialized roles (MLOps, ethics, research); 15-30 team members; integrated with business units",
+          "Transformational": "Mature AI organization with 30+ specialists; multiple centers of excellence; diverse expertise across AI domains; strategic talent pipeline"
+        },
+        "1": {
+          "Initial": "AI roles are undefined; no clarity on responsibilities or career progression",
+          "Adopting": "Basic role descriptions exist but incomplete; no career development framework",
+          "Established": "AI roles documented with clear responsibilities; initial career paths defined; alignment with business needs",
+          "Advanced": "Comprehensive role framework with multiple career tracks; regular role reviews; structured progression opportunities",
+          "Transformational": "Fully integrated AI talent management; roles aligned with HR frameworks; sophisticated career development with internal mobility"
+        },
+        "2": {
+          "Initial": "No formal AI training; learning is individual and ad-hoc",
+          "Adopting": "Occasional external training or workshops; limited participation; no structured program",
+          "Established": "Established AI training curriculum for technical and business roles; 40-60% participation; basic communities of practice",
+          "Advanced": "Comprehensive learning ecosystem with mandatory training and customized pathways for departments; 70-85% participation; advanced certifications; innovation labs",
+          "Transformational": "\"AI-Gated Career Ladders;\" AI proficiency is a mandatory requirement for promotion to Director+ roles. \"Prompt Engineering\" and \"Data Fluency\" are core competencies for all roles, including HR and Finance. The organization operates as a \"Centaur\" workforce (Human + AI pairs)."
+        },
+        "3": {
+          "Initial": "Severe understaffing causing project delays and failures; <50% of needed capacity",
+          "Adopting": "Basic staffing meeting minimum needs; resources frequently stretched; 50-75% capacity",
+          "Established": "Adequate staffing for current projects with modest buffer; 75-90% of needs met",
+          "Advanced": "Staffing exceeds current demand; strategic hiring for growth; 90-110% capacity with bench strength to handle disruptions/staff outages. Internships and junior pipelines built.",
+          "Transformational": "Optimal staffing with dynamic resource allocation; talent pipeline management; 110%+ capacity with rapid scaling ability. World class internship program with top tier universities established."
+        },
+        "4": {
+          "Initial": "No dedicated AI leadership; responsibilities scattered; no budget authority or strategic influence",
+          "Adopting": "Part-time AI lead; limited executive authority; small budget; no board representation",
+          "Established": "Head of AI role established; reports to CIO/COO; 1-2% of overall Tech/IT budget; involved in strategy discussions; some cross-functional influence",
+          "Advanced": "Chief AI Officer with CEO reporting; 3-5% of overall IT budget; board member or advisor; drives enterprise AI strategy; full P&L accountability",
+          "Transformational": "Chief AI Officer as co-business leader; 6%+ of overall IT budget; strategic influencer; shapes corporate strategy; industry recognition"
+        },
+        "5": {
+          "Initial": "No COE; AI capabilities scattered across departments; no standardization or shared services",
+          "Adopting": "Informal AI team; ad-hoc shared services; inconsistent processes and tooling; limited governance",
+          "Established": "Formal COE established; standardized platforms and methodologies; governance policies defined; 60-70% of projects aligned",
+          "Advanced": "Mature COE with multiple specialized centers (platforms, ethics, innovation); 85-95% project alignment; proven scaling methodology",
+          "Transformational": "\"Federated Innovation Mesh;\" The CoE has dissolved into embedded \"AI Champions\" within every business unit. The central team focuses solely on Governance, Platform/Infrastructure, Operationalization/Security/Risk, and high-risk \"Moonshots.\" Innovation happens at the edge, not the center."
+        },
+        "6": {
+          "Initial": "No change management: projects fail due to user resistance; upto 20% of potential value realized but low adoption; high adoption friction",
+          "Adopting": "Basic change communication; upto 40% adoption; limited user training or support; scattered resistance",
+          "Established": "Formal change management plan; training programs, upto 75% adoption rate; documented lessons learned; proactive resistance management",
+          "Advanced": "Advanced adoption strategy; user feedback loops; 85-90% adoption; change metrics tracked; continuous improvement",
+          "Transformational": "Adoption-first culture; autonomous change enablement; 95%+ adoption; minimal friction; continuous innovation culture"
+        },
+        "7": {
+          "Initial": "Severe understaffing; <50% of needed capacity; high turnover; no training programs",
+          "Adopting": "Part-time or temporary contract staff; basic roles; 50-70% of needed capacity; high turnover",
+          "Established": "Core AI team with dedicated roles; some specialization; 80-90% of capacity; permanent team members; motivation programs in place",
+          "Advanced": "Cross-functional specialized team; AgentOps, ethics, research specialists; 100-110% capacity; permanent team; career development paths; high retention rates",
+          "Transformational": "Mature AI organization; 30+ specialists; multiple specializations; 110%+ capacity; partnerships with universities; internal development; top tier retention rates"
+        },
+        "8": {
+          "Initial": "No formal training; learning is individual and ad-hoc; no skill development investment",
+          "Adopting": "Occasional external training or workshops; 20-30% participation; no structured program; inconsistent upskilling",
+          "Established": "Structured training curriculum; 50-60% participation; technical and business training; communities of practice forming",
+          "Advanced": "Comprehensive learning ecosystem; 75-85% participation; mandatory training; advanced certifications; innovation labs; knowledge sharing",
+          "Transformational": "World-class AI academy; 90%+ participation; customized learning paths; academic partnerships; continuous upskilling; thought leadership"
+        },
+        "9": {
+          "Initial": "Total IT Dependency; Business units view AI as opaque \"magic\" or a threat; no ability to interpret model outputs; all requests go through IT tickets; \"Shadow AI\" usage is risky and hidden.",
+          "Adopting": "Passive Awareness; Some business users experiment with public tools (e.g., ChatGPT) without guidance; basic conceptual understanding exists, but they rely entirely on technical teams for execution.",
+          "Established": "Functional Fluency; Business stakeholders actively identify valid AI use cases; basic prompt engineering skills are common in non-tech teams; 50-60% of business units can interpret AI use cases correctly. Business units consider IT AI Head as a strategic partner and share their plans to get guidance",
+          "Advanced": "Strategic Alignment and Collaboration: Business units prioritize their use cases, leverage knowledge and guidance from Head of AI. Business has independent budget but ensure execution is in alignment with company and Head of AI's objectives. Operationalization and post go-live support still sits within the specialized AI org unit. AI fluency is a core KPI for non-technical user promotion. There are still some rogue operators and shadow AI but largely, key projects have good alignment and collaboration.",
+          "Transformational": "AI-Native Culture; Strategy is AI strategy; business users seamlessly collaborate with AI agents as team members; autonomous innovation where non-tech teams deploy safe, governed micro-apps. Tech focused AI specialists are embedded within business groups and have a direct line to the Head of AI and have presence or representation on key governance committees. AI specialized team is no longer a bottleneck and business units don't operate rogue."
+        },
+        "10": {
+          "Initial": "Fear-Based; Employees hide their use of AI tools for fear of punishment or judgment. Failures are penalized. No safe \"sandboxes\" exist for experimentation.",
+          "Adopting": "Permission-Gated; Experimentation is allowed but requires heavy approvals (weeks of delay). Failure is tolerated but not celebrated. Innovation is slow.",
+          "Established": "Defined \"Risk Bands\"; Specific \"Green Zones\" exist where anyone can experiment freely with internal generic data sets, with sanitized PII. Failure in these zones is viewed as learning. \"Red Zones\" are clearly marked.",
+          "Advanced": "Incentivized Experimentation: The organization hosts \"Hack Weeks\" where failure is an expected outcome. \"Blameless Post-Mortems\" are standard to capture institutional knowledge from failed pilots. Failures and learnings are celebrated and put on a leaderboard.",
+          "Transformational": "Systematic Innovation: Every employee has access to a personal AI sandbox. Innovation KPIs track \"number of experiments run\" rather than just success rate. \"Shadow AI\" is viewed as a signal of unmet needs, not a crime and discussed openly in terms of long term resolution."
+        }
+      }
     },
     {
       "id": "data-technology",
-      "title": "Data & Technology",
+      "title": "Technology & Data",
       "weight": 20,
       "description": "Evaluate your data infrastructure and technology capabilities",
       "image": "Data and Technology.png",
       "questions": [
-        "How standardized and interoperable is clinical data?",
-        "How mature are data quality processes?",
-        "How well integrated are EHR, LIS, RIS, and PACS systems?",
-        "Does the organization maintain a centralized clinical data lake?",
-        "Are imaging datasets stored in AI-ready formats?"
-      ]
+        "How mature is your data governance and quality management?",
+        "What is the maturity of your AI infrastructure and platforms?",
+        "How effective are your MLOps and model lifecycle management practices?",
+        "How well integrated is your AI technology with existing systems?",
+        "How robust is your multi-cloud strategy and cloud vendor lock-in management?",
+        "How comprehensive is your AI observability and production monitoring capability?",
+        "How mature is your model lifecycle management (versioning, deployment, drift, retirement)?",
+        "How effective are your MLOps practices and model deployment automation?",
+        "How well-managed is your cloud cost optimization for AI workloads?",
+        "How well do you assess and manage edge AI and real-time inference deployment?",
+        "How capable is your infrastructure at processing, vectorizing, and retrieving complex knowledge assets (text, video, audio)?"
+      ],
+      "questionOptions": {
+        "0": {
+          "Initial": "No data governance; data quality unknown; siloed and inaccessible data; no cataloging",
+          "Adopting": "Basic data inventory exists; quality issues identified but not systematically addressed; limited governance; inconsistent access",
+          "Established": "Formal data governance framework; data catalog with 60-75% coverage; regular quality monitoring; defined ownership; quality scores tracked",
+          "Advanced": "Comprehensive data governance with automated quality controls; 80-90% catalog coverage; strong stewardship; proactive issue resolution; real-time monitoring",
+          "Transformational": "Enterprise-wide data governance excellence; 95%+ quality scores; real-time monitoring; predictive quality management; autonomous data governance; industry benchmarks exceeded"
+        },
+        "1": {
+          "Initial": "No dedicated AI infrastructure; reliance on basic tools and personal devices; frequent bottlenecks",
+          "Adopting": "Basic cloud services or limited on-premise infrastructure; minimal automation; frequent bottlenecks; limited scalability",
+          "Established": "Dedicated AI platforms (cloud or hybrid); basic MLOps capabilities; 75-85% infrastructure availability; growing automation",
+          "Advanced": "Advanced AI infrastructure with automated deployment pipelines; robust MLOps; 95-99% uptime; scalable architecture; enterprise tooling",
+          "Transformational": "Enterprise-grade AI platform with full automation; 99.9%+ uptime; unlimited scalability; cutting-edge technology adoption; continuous optimization"
+        },
+        "2": {
+          "Initial": "No MLOps practices; manual model deployment; no version control; frequent production failures; models never retire",
+          "Adopting": "Basic model tracking and deployment; manual processes dominate; limited monitoring; inconsistent deployment procedures",
+          "Established": "Established MLOps framework with automated deployment for some models; version control; basic monitoring and retraining triggered occasionally",
+          "Advanced": "Comprehensive MLOps with CI/CD pipelines; automated monitoring; retraining; and rollback; 80-90% of models managed; <2 week deployment cycles",
+          "Transformational": "World-class MLOps with full automation; real-time monitoring; predictive maintenance; 100% model coverage; <3 day deployment cycles; autonomous optimization"
+        },
+        "3": {
+          "Initial": "AI systems operate in isolation; no integration with enterprise systems; manual handoffs required",
+          "Adopting": "Limited point-to-point integrations; manual data transfer common; frequent integration issues; inconsistent protocols",
+          "Established": "AI integrated with core systems via APIs; 60-70% of needed integrations complete; standard protocols used; some manual intervention",
+          "Advanced": "Comprehensive integration architecture; 85-95% coverage; real-time data flow; minimal manual intervention; well-documented interfaces",
+          "Transformational": "Seamless enterprise integration; 100% coverage; real-time bidirectional data flow; AI embedded in all critical systems; autonomous orchestration"
+        },
+        "4": {
+          "Initial": "Single cloud provider only; no portability; extreme vendor lock-in risk; no alternative planning",
+          "Adopting": "Primary cloud with minimal multi-cloud presence; workload migration difficult; high lock-in risk; limited negotiation leverage",
+          "Established": "Multi-cloud strategy documented; 50-60% workload portability designed; cost comparison across clouds; vendor diversification for key services",
+          "Advanced": "Cloud-agnostic architecture; 80-90% workload portability; automated cost optimization; vendor negotiation leverage; strategic partnerships",
+          "Transformational": "Ultimate cloud flexibility; 100% workload portability; autonomous cost optimization; <40% cost vs baseline; vendor-independent AI platform"
+        },
+        "5": {
+          "Initial": "No production monitoring; failures discovered by end-users; no visibility into system health; reactive only",
+          "Adopting": "Basic infrastructure metrics; alert thresholds only; reactive incident response; limited coverage; manual troubleshooting",
+          "Established": "Model performance dashboards; basic anomaly detection; 70-80% coverage; incident response playbooks; manual investigation; post-incident reviews",
+          "Advanced": "Full-stack observability; distributed tracing; predictive failure detection; 95%+ coverage; automated incident alerts; root cause analysis; proactive optimization",
+          "Transformational": "Advanced observability platform; AI-powered incident detection and response; 100% coverage; zero undetected failures; real-time insights and autonomous remediation"
+        },
+        "6": {
+          "Initial": "No model versioning; manual deployment; no version control; frequent production failures; models never retire; no documentation",
+          "Adopting": "Basic model tracking; inconsistent versioning; manual deployment process prone to errors; some documentation of retirements; unpredictable failures",
+          "Established": "Formal versioning; automated deployment for 60-70% of models; rollback capability; retraining triggered occasionally; some model retirement process; basic documentation",
+          "Advanced": "Advanced registry; canary deployments; A/B testing; automated rollback; <2 week deployment cycles; systematic retirement with auditing; full documentation",
+          "Transformational": "Sophisticated lifecycle management; shadow deployment; continuous comparison; zero-downtime updates; <3 day cycles; autonomous optimization; complete traceability"
+        },
+        "7": {
+          "Initial": "No MLOps practices; manual model deployment; no CI/CD; frequent deployment failures; high risk",
+          "Adopting": "Basic model tracking; manual processes dominate; inconsistent deployment procedures; limited automation; deployment delays common",
+          "Established": "Established MLOps framework; automated deployment for 60-70% of models; basic CI/CD; version control established; some manual steps remain",
+          "Advanced": "Comprehensive MLOps with full CI/CD pipelines; automated monitoring and retraining; 80-90% model coverage; <2 week deployment cycles; metrics tracked",
+          "Transformational": "World-class MLOps; complete automation; real-time monitoring; predictive maintenance; 100% coverage; <3 day cycles; autonomous deployment and rollback"
+        },
+        "8": {
+          "Initial": "No cost tracking; cloud bills uncontrolled; spending overruns 40%+; no budget allocation; no cost awareness",
+          "Adopting": "Basic cost awareness; occasional optimization efforts; 10-15% cost reduction; inconsistent monitoring; quarterly reviews",
+          "Established": "Cost dashboard by project; reserved instances optimized; 25-35% cost reduction; quarterly reviews; basic optimization processes; some automation",
+          "Advanced": "Advanced cost management; spot instances and auto-scaling optimized; 45-55% cost reduction; monthly reviews; vendor cost comparison; predictive modeling",
+          "Transformational": "Autonomous cost optimization; ML-driven resource allocation; 60%+ cost reduction; predictive cost modeling; financial transparency; continuous refinement"
+        },
+        "9": {
+          "Initial": "No edge AI deployment; all inference cloud-based; latency requirements not met; no edge strategy; performance issues",
+          "Adopting": "Ad-hoc edge deployment; limited real-time capability; latency issues common; no systematic approach; unpredictable performance",
+          "Established": "Edge strategy documented for select use cases; real-time inference working for 50-60% of needs; latency targets mostly met; some optimization",
+          "Advanced": "Comprehensive edge deployment; 80-90% of latency-sensitive workloads supported; on-device models optimized; edge-cloud sync working; performance tracked",
+          "Transformational": "Advanced edge-cloud ecosystem; 100% latency needs met; autonomous model optimization for edge; real-time performance at scale; continuous improvement"
+        },
+        "10": {
+          "Initial": "Structured Only; Infrastructure relies entirely on traditional relational databases (SQL). No capability to ingest or process unstructured text, images, or audio without manual entry.",
+          "Adopting": "Siloed Storage; Ad-hoc storage of unstructured data (PDFs, docs) in data lakes exists, but it is not vectorized or searchable by AI. Data is vectorized on as-needed basis for business use cases. Manual pre-processing is required for every use case.",
+          "Established": "Vector-Ready Foundation; Dedicated vector database or hybrid search is implemented; unstructured text is systematically cleaned and chunked; 60% of critical knowledge base is accessible for RAG.",
+          "Advanced": "Multi-Modal Pipelines; Automated ingestion and vectorization for text, audio, and video; semantic search is optimized with high accuracy (>90%); real-time syncing between core systems and vector stores.",
+          "Transformational": "Enterprise Semantic Fabric; Autonomous real-time vectorization of all enterprise assets; fluid retrieval across all modalities with zero latency; self-healing data pipelines; context-aware retrieval."
+        }
+      }
     },
     {
       "id": "performance-impact",
-      "title": "Performance & Impact",
-      "weight": 20,
+      "title": "Resilience, Performance & Impact",
+      "weight": 10,
       "description": "Measuring and demonstrating AI value and outcomes",
       "image": "Strategy & Governance.png",
       "questions": [
-        "Is there a framework for measuring AI project outcomes?",
-        "Is AI used for clinical performance improvement?",
-        "Does AI reduce operational burden (wait times, triage)?",
-        "Are outcome dashboards available for leadership?",
-        "Is predictive analytics used for risk reduction?"
-      ]
+        "How effectively do you measure AI business impact and ROI?",
+        "What percentage of deployed AI initiatives deliver measurable business value?",
+        "How integrated are AI systems with core business processes?",
+        "What is your approach to AI use case prioritization and portfolio management?",
+        "How accurately do you measure and track AI business value and ROI?",
+        "What percentage of deployed AI initiatives deliver on or exceed projected business value?",
+        "How mature is your LLM adoption strategy and implementation?",
+        "How effective is your LLM cost management and financial optimization?",
+        "How mature is your RAG (Retrieval-Augmented Generation) implementation for enterprise context?",
+        "How effectively do you track and optimize autonomous agent performance?",
+        "How comprehensive is your AI portfolio optimization and project prioritization?",
+        "How effectively does your organization track and optimize the direct profitability of AI-driven business outcomes?"
+      ],
+      "questionOptions": {
+        "0": {
+          "Initial": "No measurement of AI impact; success is anecdotal; no metrics tracked; CFO skeptical of AI value; no business case",
+          "Adopting": "Basic metrics captured inconsistently; ROI estimates are rough; 20-30% uncertainty in value claims; inconsistent tracking; limited business validation",
+          "Established": "Formal KPIs established for AI initiatives; ROI documented for major projects; 150-200% average ROI; most projects tracked; quarterly reviews",
+          "Advanced": "Comprehensive performance measurement system; real-time dashboards; validated ROI 200-300%; board reporting; continuous optimization underway",
+          "Transformational": "Advanced analytics on AI impact across all dimensions; 300%+ validated ROI; AI drives measurable competitive advantage; predictive value modeling"
+        },
+        "1": {
+          "Initial": "Less than 20% of AI projects deliver value; most fail or severely underperform; value creation inconsistent; limited learning",
+          "Adopting": "<20% success rate; 30-40% success rate; value often below projections; scaling limited; lessons not captured",
+          "Established": "60-70% of AI initiatives meet or exceed value targets; consistent delivery; lessons documented; continuous improvement underway; scaling beginning",
+          "Advanced": "80-90% success rate; most initiatives exceed expectations; rapid scaling of successful models; learnings applied systematically; high confidence",
+          "Transformational": "95%+ success rate; all initiatives deliver significant value; continuous optimization drives exponential returns; predictive success indicators established"
+        },
+        "2": {
+          "Initial": "AI operates as isolated experiments; no integration with business processes; pilots stuck; limited business adoption",
+          "Adopting": "AI supports 1-2 non-critical processes; limited adoption; manual handoffs common; integration incomplete; pilot fatigue",
+          "Established": "AI embedded in 40-60% of key processes; growing adoption; some automation of workflows; integration expanding; business engagement increasing",
+          "Advanced": "AI integral to 70-85% of core processes; high user adoption; automated workflows; continuous improvement; strong business ownership",
+          "Transformational": "\"Autonomous Workflow Agents;\" AI doesn't just \"assist\" the process; it owns several processes. Humans only handle exceptions (the \"Human-in-the-Loop\" for edge cases). Core workflows (e.g., Invoice Processing, L1 Support) run \"Headless\" (zero human touch) for 90%+ of volume of AI projects."
+        },
+        "3": {
+          "Initial": "No formal use case prioritization; projects pursued based on enthusiasm or politics; wasteful allocation; unclear priorities; missed opportunities",
+          "Adopting": "Informal prioritization based on perceived value; limited portfolio visibility; inconsistent governance; resource allocation unclear; limited optimization",
+          "Established": "Structured prioritization framework with clear criteria; portfolio tracking; quarterly reviews; 70% strategic alignment; known gaps identified",
+          "Advanced": "Sophisticated portfolio management with value/risk scoring; dynamic reallocation; monthly reviews; 90% alignment with strategy; optimization occurring",
+          "Transformational": "AI-powered portfolio optimization; predictive value modeling; autonomous reallocation; 100% alignment; continuous improvement; maximum strategic impact"
+        },
+        "4": {
+          "Initial": "No ROI measurement; success is anecdotal; no metrics tracked; CFO skeptical of AI value; no business case developed",
+          "Adopting": "Rough ROI estimates; many initiatives unmeasured; 20-30% uncertainty in value claims; inconsistent tracking; limited business validation",
+          "Established": "Formal ROI framework; 150-200% average ROI; most projects tracked; quarterly reviews; business metrics linked to AI initiatives",
+          "Advanced": "Comprehensive value measurement; real-time dashboards; 200-300% validated ROI; board reporting; continuous optimization processes",
+          "Transformational": "Advanced analytics; 300%+ proven ROI; every project tracked real-time; CFO confidence high; predictive value modeling established"
+        },
+        "5": {
+          "Initial": "<20% success rate; most projects fail or severely underperform; value creation inconsistent; lessons not captured or applied",
+          "Adopting": "35-45% success rate; value often below projections; scaling limited; lessons sometimes documented; improvement slow",
+          "Established": "65-75% success rate; most meet projections; lessons documented; continuous improvement underway; scaling increasing",
+          "Advanced": "85-95% success rate; most exceed expectations; rapid scaling of winners; learnings applied systematically; high confidence in outcomes",
+          "Transformational": "98%+ success rate; continuous value optimization; failed projects rare and low-cost; value accelerating over time; predictive indicators work"
+        },
+        "6": {
+          "Initial": "No LLM deployment; unaware of LLM capabilities; no strategy or pilots; no plan",
+          "Adopting": "1-2 exploratory LLM pilots; no governance; cost untracked; no integration with business processes; ad-hoc experiments",
+          "Established": "3-5 production LLM applications; basic governance; cost tracking; 60% of value opportunity identified; initial RAG implementation",
+          "Advanced": "10+ production LLM applications; vendor diversification; cost optimization active; advanced RAG implemented; fine-tuning in use; governance evolving",
+          "Transformational": "20+ LLM applications; proprietary research; cost <$0.20 per 1K tokens; advanced RAG; continuous innovation; market-leading AI capabilities"
+        },
+        "7": {
+          "Initial": "No LLM cost tracking; spending uncontrolled; cost overruns 40%+; no optimization attempts; financial risk high",
+          "Adopting": "Basic cost visibility; occasional optimization; 15-20% cost reduction; vendor comparison limited; inconsistent tracking",
+          "Established": "LLM cost dashboard; prompt optimization active; 30-40% cost reduction; vendor comparison and selection criteria established; ongoing monitoring",
+          "Advanced": "Advanced cost optimization; caching, batching strategies; 50-60% cost reduction; model selection automation; vendor negotiation active; monthly reviews",
+          "Transformational": "Autonomous cost optimization; dynamic model selection; <$0.10 per 1K tokens achieved; 70%+ cost reduction; financial predictability proven; continuous learning"
+        },
+        "8": {
+          "Initial": "No RAG implementation; LLMs used without enterprise context; hallucinations common; no knowledge base; risky deployment",
+          "Adopting": "Pilot RAG projects; manual knowledge management; limited accuracy improvement; ad-hoc implementation; ongoing issues",
+          "Established": "RAG implemented for 2-3 use cases; 70-75% retrieval accuracy; automated knowledge updates for some applications; processes defined",
+          "Advanced": "Enterprise RAG platform; 5+ applications; semantic search optimized; 85-90% accuracy; real-time knowledge updates; governance established",
+          "Transformational": "Advanced RAG ecosystem; 10+ applications; multiple retrieval strategies; 95%+ accuracy; knowledge graph optimization; autonomous improvement"
+        },
+        "9": {
+          "Initial": "No autonomous agents deployed; chatbots are rule-based; no performance tracking; no agent strategy",
+          "Adopting": "Basic conversational AI; 30-40% autonomous task completion; frequent human takeover; minimal performance tracking; limited capability",
+          "Established": "Multi-agent systems deployed; 60-70% autonomous completion; performance dashboards; escalation paths defined; improvements underway",
+          "Advanced": "Advanced agents; 85-90% autonomous completion; performance metrics tracked; intelligent routing; anomaly detection active; continuous optimization",
+          "Transformational": "Sophisticated autonomous ecosystem; 95%+ completion without intervention; predictive escalation; multi-agent optimization; minimal manual involvement"
+        },
+        "10": {
+          "Initial": "No portfolio management; projects chosen based on politics; wasteful allocation; unclear priorities; no business case",
+          "Adopting": "Basic prioritization; inconsistent governance; resource allocation unclear; limited optimization; some waste visible",
+          "Established": "Structured portfolio management; clear prioritization criteria; 70% strategic alignment; quarterly rebalancing; governance established",
+          "Advanced": "Advanced optimization; value/risk scoring; dynamic reallocation; monthly reviews; 90% alignment with strategy; measurable improvement",
+          "Transformational": "AI-powered portfolio optimization; predictive value modeling; autonomous reallocation; 100% alignment; continuous improvement; maximum ROI"
+        },
+        "11": {
+          "Initial": "Aggregate \"Black Box\" Spending; Total lump-sum bills for AI/Cloud services exist, but costs cannot be attributed to specific business activities or products. AI is viewed purely as a cost center.",
+          "Adopting": "Departmental Allocation; AI costs are allocated to high-level budgets (e.g., \"Marketing AI Spend\"), but there is no link to specific revenue generation or efficiency gains.",
+          "Established": "Project-Level ROI; Both \"Soft ROI\" and \"Hard ROI\" Costs are tracked per project (e.g., \"Customer Service Chatbot\"). ROI is estimated based on (Soft) time savings and efficiency gained as well as (Hard) cost savings and revenue generation, but reporting is retroactive and variance is high.",
+          "Advanced": "Transaction-Level Economics; The exact cost of specific outcomes is measured (e.g., \"Cost per Resolution,\" \"Cost per Lead\"). Unit costs are actively managed to ensure positive margins. Hard and Soft ROI targets are independently tracked.",
+          "Transformational": "Dynamic Margin Optimization; Real-time visibility into the profit margin of every AI interaction. Systems automatically switch between models to maximize profitability based on task complexity."
+        }
+      }
     },
     {
       "id": "trust-ethics",
-      "title": "Trust, Ethics & Responsible AI",
+      "title": "Ethics, Trust & Responsible AI",
       "weight": 10,
       "description": "Ethical AI practices and responsible deployment",
       "image": "Trst Ethics and responsive AI.png",
       "questions": [
-        "Are AI models tested for clinical fairness?",
-        "Is patient consent obtained where required?",
-        "Is AI use transparent to patients?",
-        "Are ethical risks assessed before deployment?",
-        "Are explainability tools used for decision support?"
-      ]
+        "How mature is your AI ethics framework and responsible AI governance?",
+        "What level of explainability and transparency exists for AI decisions?",
+        "How effective is your human oversight and control of AI systems?",
+        "How diverse and inclusive is your AI development and governance?",
+        "How mature is your AI ethics framework and responsible AI governance?",
+        "How robust is the explainability and transparency of your AI decision-making?",
+        "How effective is your human oversight and control of AI systems?",
+        "How diverse and inclusive is your AI development and governance?",
+        "How compliant are your AI systems with evolving responsible AI regulations and standards?"
+      ],
+      "questionOptions": {
+        "0": {
+          "Initial": "No ethics framework; bias and fairness not considered; no testing; governance nonexistent; high risk",
+          "Adopting": "Basic ethics guidelines; informal bias considerations; ad-hoc testing; inconsistent enforcement; awareness low",
+          "Established": "Formal ethics framework; regular bias testing for 70-80% of systems; documented principles; ethics review process established; governance beginning",
+          "Advanced": "Comprehensive governance; automated bias detection; 90-95% model coverage; diverse ethics committee; regular audits; oversight active",
+          "Transformational": "Industry-leading program; continuous bias monitoring; 98%+ compliance; third-party audits; transparency reports; stakeholder trust verified"
+        },
+        "1": {
+          "Initial": "AI systems are black boxes; no explainability; users have no insight into decisions; risk high",
+          "Adopting": "Limited documentation of model logic; explainability for some systems only; inconsistent transparency; opacity concerning",
+          "Established": "Explainability built into 60-75% of systems; documented decision logic; user-facing explanations for key decisions; transparency improving",
+          "Advanced": "Comprehensive explainability across 85-95% of systems; clear audit trails; stakeholder transparency; regulatory compliance achieved",
+          "Transformational": "Full transparency for all systems; real-time explanation tools; public transparency reports; industry standard-setting; stakeholder trust high"
+        },
+        "2": {
+          "Initial": "AI operates without oversight; automated decisions not reviewed; no human controls; accountability unclear; risk extreme",
+          "Adopting": "Occasional human review; oversight inconsistent; limited control mechanisms; reactive responses; sporadic oversight",
+          "Established": "Formal oversight protocols for high-risk decisions; 70-80% coverage; escalation paths defined; audit logging; governance established",
+          "Advanced": "Comprehensive human-in-the-loop; 90-95% oversight coverage; clear accountability; regular audits; automated alerts; robust controls",
+          "Transformational": "Sophisticated oversight with risk-based controls; 100% critical decision coverage; appeals processes; continuous improvement; stakeholder confidence"
+        },
+        "3": {
+          "Initial": "No diversity considerations; homogeneous teams; no inclusion initiatives; awareness gap; blind spots likely",
+          "Adopting": "Basic awareness of diversity value; limited representation; ad-hoc diversity efforts; token initiatives only",
+          "Established": "Active D&I efforts; 40-60% diverse representation; formal recruiting initiatives; inclusive design practices emerging; metrics tracked",
+          "Advanced": "Strong D&I culture; 60-80% diverse teams; inclusive design mandated; D&I metrics tracked; leadership commitment visible; improving representation",
+          "Transformational": "Industry-leading D&I; 80%+ diverse teams; inclusive innovation model; diverse perspectives in all decisions; recognized excellence; benchmark setting"
+        },
+        "4": {
+          "Initial": "No ethics framework; bias not considered; no testing; governance nonexistent; oversight lacking; risk high",
+          "Adopting": "Basic ethics guidelines; informal bias considerations; ad-hoc testing; inconsistent enforcement; awareness limited",
+          "Established": "Formal ethics framework; regular bias testing for 70-80% of systems; documented principles; ethics board established; governance active",
+          "Advanced": "Comprehensive ethics governance; mandatory ethics review for all projects; real-time bias monitoring; diverse committee; third-party audits; oversight strong",
+          "Transformational": "Industry-leading ethics program; continuous bias monitoring; 98%+ compliance; third-party audits; transparency reports; stakeholder trust verified"
+        },
+        "5": {
+          "Initial": "AI systems are black boxes; no explainability; users have no insight into decisions; complete lack of transparency",
+          "Adopting": "Limited documentation of model logic; explainability for some systems only; inconsistent transparency; partial explanations",
+          "Established": "Explainability built into 60-75% of systems; documented decision logic; user-facing explanations for key decisions; clarity improving",
+          "Advanced": "Comprehensive explainability across 85-95% of systems; clear audit trails; stakeholder transparency; regulatory compliance achieved; visible improvement",
+          "Transformational": "Full transparency for all systems; real-time explanation tools; public transparency reports; industry standard-setting; stakeholder trust evident"
+        },
+        "6": {
+          "Initial": "AI operates without oversight; automated decisions not reviewed; no human controls; high accountability risk; governance gaps",
+          "Adopting": "Occasional human review; oversight is inconsistent and reactive; limited control mechanisms; oversight sporadic; responsiveness weak",
+          "Established": "Formal oversight protocols for high-risk decisions; 70-80% coverage; escalation paths defined; audit logging in place; governance established; controls working",
+          "Advanced": "Comprehensive human-in-the-loop; 90-95% oversight coverage; clear accountability; regular audits; automated alerts; controls robust; oversight effective",
+          "Transformational": "Sophisticated oversight with risk-based controls; 100% critical decision coverage; appeals processes; continuous improvement; stakeholder confidence high"
+        },
+        "7": {
+          "Initial": "No diversity considerations; homogeneous teams; no awareness of inclusion importance; blind spots present; risks high",
+          "Adopting": "Basic awareness of diversity value; limited diverse representation; no formal D&I initiatives; minimal progress; token efforts only",
+          "Established": "Active D&I efforts; 40-60% diverse representation; formal recruiting initiatives; inclusive design practices emerging; metrics being tracked",
+          "Advanced": "Strong D&I culture; 60-80% diverse teams; inclusive design practices mandated; D&I metrics tracked; leadership commitment visible; steady progress",
+          "Transformational": "Industry-leading D&I; 80%+ diverse teams; inclusive innovation model; diverse perspectives in all decisions; recognized excellence; setting benchmarks"
+        },
+        "8": {
+          "Initial": "No compliance framework; regulatory requirements not understood; compliance risk extreme; exposure high; no planning",
+          "Adopting": "Basic compliance awareness; ad-hoc responses; gaps in understanding or implementation; inconsistent compliance; reactive posture",
+          "Established": "Compliance framework established; documented policies; 85% coverage; annual audit cycles; known gaps identified; efforts underway",
+          "Advanced": "Proactive compliance; legal review for all initiatives; 98% adherence; compliance monitoring continuous; remediation active; governance strong",
+          "Transformational": "Industry leader; anticipatory compliance; zero violations; recognized compliance excellence; thought leadership on responsible AI; standard-setting"
+        }
+      }
     },
     {
       "id": "security-risk",
-      "title": "Security & Risk",
+      "title": "Compliance, Security & Risk",
       "weight": 10,
       "description": "AI security and risk management practices",
       "image": "Security & risk.png",
       "questions": [
-        "Are AI systems protected under cybersecurity policies?",
-        "Is access to AI systems role-based?",
-        "Are AI pipelines monitored for vulnerabilities?",
-        "Is sensitive data encrypted end-to-end?",
-        "Is there a risk register for AI deployments?"
-      ]
+        "How effectively do you turn \"Shadow AI\" (employees using unauthorized tools) into official business assets?",
+        "How comprehensive is your AI risk management framework?",
+        "How robust are your protections against adversarial attacks and model manipulation?",
+        "How mature is your AI incident response and business continuity planning?",
+        "How well do you manage AI supply chain and third-party risks?",
+        "How well-managed is your AI supply chain and third-party model security?",
+        "How secure are your autonomous agent operations and AgentOps infrastructure?",
+        "How rigorous is your Adversarial Testing (Red Teaming) program for AI models?",
+        "How do you validate the integrity and provenance of the data entering your RAG (Retrieval) pipeline?",
+        "How integrated is Legal/Compliance into the AI Development Lifecycle?"
+      ],
+      "questionOptions": {
+        "0": {
+          "Initial": "Strict Ban; IT tries to block all unauthorized AI tools. Employees ignore this and use personal phones/accounts. The company gets no value and high risk.",
+          "Adopting": "Ad-Hoc Exceptions; Employees can ask for access, but the process is slow and confusing. Most \"Shadow\" projects die when the employee leaves the company.",
+          "Established": "The \"Paved Road\"; We have a clear process: \"If you want to use a new AI tool, fill out this form.\" If approved, IT helps you connect it securely.",
+          "Advanced": "Shadow-to-Product Pipeline; We actively scan for tools people are using, work with them and offer to \"adopt\" them. Successful experiments are rewarded and turned into official company tools. Risky experiments are closed down gracefully.",
+          "Transformational": "Citizen Developer Ecosystem; \"Shadow AI\" disappears because we provide a safe platform where everyone can build. Centralized management and repository ensure visibility and compliance. Apps are \"born compliant\" (security is built-in). Innovation is decentralized but safe."
+        },
+        "1": {
+          "Initial": "No AI risk management; risks not identified or assessed; reactive posture; vulnerability high; no mitigation",
+          "Adopting": "Basic risk awareness; informal tracking; reactive incident responses; gaps in risk identification; limited mitigation",
+          "Established": "Formal risk assessment framework; documented risks; mitigation plans for major threats; quarterly reviews; governance established",
+          "Advanced": "Comprehensive risk management integrated with enterprise risk; proactive monitoring; <5 incidents per quarter; strong governance; response plans active",
+          "Transformational": "Advanced management with predictive capabilities; real-time monitoring; <1 incident per quarter; industry-leading practices; continuous improvement"
+        },
+        "2": {
+          "Initial": "No AI-specific security; vulnerable to attacks; no testing or defenses; significant risk; exposure extreme",
+          "Adopting": "Basic security controls; limited adversarial testing; reactive patching; vulnerability windows exist; defenses weak",
+          "Established": "AI security framework with regular testing; adversarial defenses for 60-75% of models; documented approach; testing scheduled",
+          "Advanced": "Comprehensive security including adversarial testing; model hardening; continuous monitoring; 85-95% coverage; defenses strong; testing ongoing",
+          "Transformational": "World-class AI security; advanced threat detection; 100% model coverage; zero successful attacks; industry benchmarks set; continuous advancement"
+        },
+        "3": {
+          "Initial": "No incident response plan for AI; no business continuity; high impact from AI failures; risk extreme; no planning",
+          "Adopting": "Basic incident procedures; informal responses; limited backup and recovery capability; deficiencies apparent; planning incomplete",
+          "Established": "Documented incident response playbook; basic continuity; recovery time 24-48 hours; defined escalation; processes documented; testing needed",
+          "Advanced": "Comprehensive response with automated detection; full business continuity; recovery time <12 hours; regular testing; plans proven; governance active",
+          "Transformational": "Advanced response with AI-powered detection; automatic failover; recovery time <1 hour; zero business impact; continuous testing; leadership level"
+        },
+        "4": {
+          "Initial": "No vendor risk management; third-party AI components not assessed; dependency risk extreme; exposure high; no controls",
+          "Adopting": "Basic vendor selection; limited due diligence; no ongoing monitoring; security unknown; controls minimal; risk present",
+          "Established": "Formal assessment process; security requirements in contracts; annual reviews; risk register maintained; governance established; monitoring beginning",
+          "Advanced": "Comprehensive supply chain management; continuous vendor monitoring; secure model acquisition; regular audits; governance strong; controls effective",
+          "Transformational": "World-class management; real-time risk monitoring; secure AI development pipeline; zero dependency risks; industry leadership; continuous excellence"
+        },
+        "5": {
+          "Initial": "No vendor risk management; third-party models not assessed; dependency risk extreme; exposure high; uncontrolled",
+          "Adopting": "Basic vendor selection criteria; limited due diligence; no ongoing monitoring; security unknown; risk present; minimal oversight",
+          "Established": "Formal vendor assessment process; security requirements in contracts; annual reviews; risk register; governance established; oversight beginning",
+          "Advanced": "Comprehensive supply chain management; continuous vendor monitoring; secure model acquisition; regular audits; governance active; controls effective",
+          "Transformational": "World-class supply chain security; real-time risk monitoring; secure AI pipeline; zero dependency risks; industry leadership; excellence achieved"
+        },
+        "6": {
+          "Initial": "No agent security; autonomous systems unmonitored; control mechanisms absent; high risk; exposure extreme; no oversight",
+          "Adopting": "Basic agent monitoring; limited security controls; reactive incident response; deficiencies apparent; governance lacking; risk significant",
+          "Established": "Agent security framework; monitoring and alerts in place; governance policies defined; 70-80% coverage; controls established; oversight beginning",
+          "Advanced": "Comprehensive agent security; real-time monitoring; automated controls; 90-95% coverage; incident response tested; governance active; strong security",
+          "Transformational": "Advanced autonomous security; predictive threat detection; autonomous control systems; zero compromises; industry leadership; excellence achieved; continuous improvement"
+        },
+        "7": {
+          "Initial": "No Testing; We rely on standard QA (functionality testing). We assume the model is safe if it answers correctly. We never intentionally try to \"break\" or jailbreak the model.",
+          "Adopting": "Ad-Hoc Manual Attacks; A few developers try \"tricky\" prompts before launch (e.g., trying to get it to swear or provide sql queries or raw data). No formal methodology or documentation of the attack surface.",
+          "Established": "Scheduled Red Teaming; We hire external experts or use internal security teams to perform a \"Red Team\" exercise annually. We test for bias, toxicity, and basic prompt injection.",
+          "Advanced": "Automated Adversarial Scans; We use tools (e.g., Garak, PyRIT) in our CI/CD pipeline to automatically bombard the model with thousands of known attack prompts before every deployment.",
+          "Transformational": "Continuous Red Teaming; We employ \"LLM-vs-LLM\" attacks where an aggressor AI continuously tries to find weaknesses in our live production models. Security policy updates are autonomous based on findings. We have an in-house lead for a Red Team even if the work is outsourced"
+        },
+        "8": {
+          "Initial": "Blind Ingestion; The AI indiscriminately reads everything in a specified folder/SharePoint site. If a file is in the folder, it is treated as \"Truth.\" No validation of the author or source.",
+          "Adopting": "Source Allow-Listing; We only allow the AI to read from specific trusted domains (e.g., only \"internal.corp\"). However, we don't check if the files inside those domains have been tampered with.",
+          "Established": "Metadata Filtering; The ingestion pipeline filters data based on metadata (Author, Date, Classification). \"Draft\" or \"Unverified\" documents are technically excluded from the vector database.",
+          "Advanced": "Content Integrity Hashing; Critical knowledge assets are digitally signed or hashed. The RAG pipeline verifies that the document has not been altered since the \"Approver\" signed it. Unexpected changes trigger an alert.",
+          "Transformational": "Poisoning Detection AI; A secondary model scans ingested documents for \"Prompt Injection attacks\" hidden in white text or metadata before vectorization. Malicious documents are quarantined automatically."
+        },
+        "9": {
+          "Initial": "\"The Department of No\": Legal reviews happen at the very end of the project (post-development). They often block deployment due to undefined risks. Approval takes months.",
+          "Adopting": "Checklist Compliance: Developers fill out a static \"AI Risk Assessment\" form. Legal reviews it manually. It is a paper exercise, disconnected from the actual code.",
+          "Established": "Gatekeeper Model: Legal attends Governance Council conversations, has defined \"Pre-Approved\" data sources and use cases. Anything outside this requires review. Basic \"Terms of Use\" and disclaimers are coded into bot interfaces.",
+          "Advanced": "Compliance-as-Code: Regulatory rules (e.g., GDPR, EU AI Act, NYC Bias Law) are translated into automated tests in the CI/CD pipeline. If a model generates PII, the build fails automatically. Legal reviews exceptions, not rules",
+          "Transformational": "Real-Time Regulatory Adaptation: Our governance engine updates automatically when laws change (e.g., new copyright rulings). The system actively scans all running agents for compliance drift and throttles non-compliant actors instantly."
+        }
+      }
+    },
+    {
+      "id": "operations-implementation",
+      "title": "Operations & Implementation",
+      "weight": 10,
+      "description": "AI operations and implementation capabilities",
+      "image": "Operations & Implementation.png",
+      "questions": [
+        "How structured is your \"AI\" Help Desk and support process for users when the AI makes a mistake or doesn't \"delight\" the end user?",
+        "How effectively do you capture and use human feedback (thumbs up/down) to improve the AI?",
+        "How resilient is your architecture if a specific AI model provider crashes or changes their pricing?",
+        "How well do you ensure that AI works the same way in testing as it does in the real world (Environment Parity)?",
+        "(Operational Forensics) How deep is your \"Flight Recorder\" capability to investigate AI errors or hallucinations in order to explain \"why\" the AI failed?",
+        "How seamless is the handoff between AI experimentation (Data Science, Citizen Developers) and real-world production deployment (IT/Ops)?",
+        "How do you control and secure the \"traffic\" flowing to and from your AI models (Input/Output)?",
+        "How do you manage \"Excessive Agency\" and permissions for AI Agents that can take real-world actions (e.g., calling APIs, deleting files)?"
+      ],
+      "questionOptions": {
+        "0": {
+          "Initial": "No Formal Support: If the AI fails, users complain to random IT staff or just give up. There is no \"ticket\" category for AI issues. Problems persist for months.",
+          "Adopting": "Ad-Hoc Escalation: Support tickets go directly to the data scientist who built the bot. This distracts them from new work and creates a bottleneck. Fixes are slow.",
+          "Established": "Tiered AI Support: Standard L1 Support has a \"runbook\" for basic AI questions. Complex issues (e.g., hallucinations) are routed to L2/L3 specialists with defined response times (SLAs).",
+          "Advanced": "Observed Remediation: Support tools automatically detect recurring user complaints and suggest fixes to the engineering team. A \"Known Error Database\" helps L1 support answer questions faster.",
+          "Transformational": "Self-Healing Support: The system identifies common failure modes and proposes its own fixes (e.g., adding a missing document to the knowledge base) for human approval. Support is proactive, not reactive."
+        },
+        "1": {
+          "Initial": "One-Way Street: Users consume AI output, but there is no button to say if it was good or bad. We have no idea if the model is actually helpful.",
+          "Adopting": "Ignored Feedback: We have a \"Thumbs Up/Down\" button, but the data just sits in a database. Nobody looks at it unless a senior executive complains.",
+          "Established": "Manual Review: A team reviews negative feedback weekly. They manually identify patterns (e.g., \"The bot struggles with pricing questions\") and plan future updates.",
+          "Advanced": "Curated Datasets: User feedback is automatically filtered and turned into \"Golden Datasets\" for testing. We know exactly which topics users hate and track improvement scores.",
+          "Transformational": "Automated RLHF Loops: We use Reinforcement Learning from Human Feedback. High-quality user feedback automatically adjusts model weights or prompt logic (with safeguards), creating a continuously learning system."
+        },
+        "2": {
+          "Initial": "Locked In: Our code is hard-wired to one model (e.g., GPT-4). If they go down or double prices, our business stops. We have no backup plan.",
+          "Adopting": "Manual Scramble: We know we rely on one vendor. If they change versions, we have to rewrite code. We react to outage emails with panic and last-minute fixes.",
+          "Established": "Abstraction Layer: We use a tool (like LangChain) or a LLM Gateway that lets us swap models by changing a setting, not rewriting code. Testing is still required, but it's faster.",
+          "Advanced": "Automated Testing: Before switching models, our system automatically runs \"golden tests\" to ensure the new model behaves correctly. We have a pre-selected backup model ready.",
+          "Transformational": "Model Agnostic Routing: The system constantly evaluates multiple models. If the primary model fails or degrades, traffic autonomously fails over to a secondary model (or open source) with zero downtime."
+        },
+        "3": {
+          "Initial": "Wild Variance: Developers test with perfect, hand-picked examples. Real-world data is messy and different. Prompts usually break immediately after launch.",
+          "Adopting": "Anonymized Data: We use old dumps of production data for testing. It helps, but it's often stale, meaning new behaviors (like rate limits) catch us by surprise.",
+          "Established": "Synthetic Twins: We generate \"Synthetic Data\" that statistically matches the messiness and complexity of real production data. Testing is reliable.",
+          "Advanced": "Traffic Replay: We record real user traffic and \"replay\" it against new model versions in a staging area to prove they work before we flip the switch.",
+          "Transformational": "Digital Twin Environments: Development and Production are mathematically identical. We use \"Canary Deployments\" (testing on 1% of live users) with automated rollback, eliminating the risk of surprises."
+        },
+        "4": {
+          "Initial": "No Records: We see the output, but if it's wrong, we have no way to know why. The prompt and context are lost forever. \"Debugging\" is impossible.",
+          "Adopting": "Basic Logs: We save inputs and outputs to a text file. We can see what happened, but we can't easily link it to a specific model version or configuration.",
+          "Established": "Traceability: We can trace a user's request all the way to the AI model response. We store the prompt, the response, and how long it took. We can reconstruct incidents manually.",
+          "Advanced": "Deep Forensics: Full traceability of the data pipeline. We know exactly which document chunk the AI read, the similarity score, and the exact system instructions active at that millisecond.",
+          "Transformational": "Automated Root Cause: If an error occurs, a secondary AI agent instantly analyzes the logs, identifies the conflicting logic or bad data, and generates a \"Why it Failed\" report automatically."
+        },
+        "5": {
+          "Initial": "Silos & Confusion: Data scientists build models on laptops, but IT blocks them from going live. Teams don't talk. \"It works on my machine\" is a common excuse.",
+          "Adopting": "Manual Handoffs: We email code or model files to IT. The process is manual, slow, and often breaks because the production environment is different from the lab. Deployments take weeks.",
+          "Established": "Standardized Playbooks: We have a written guide for deployment. IT Ops (or Implementation Teams), Data Science agree on basic tools (like Docker containers). Most deployments succeed, but it still takes a few days.",
+          "Advanced": "Unified Platform Teams: MLOps and IT are one team. Developers deploy to production autonomously using pre-approved safety guardrails. Automated testing runs before every launch. Deployments take hours.",
+          "Transformational": "NoOps / Autonomous Deployment: Data Science is Engineering. The path to production is fully automated with zero human friction. The system auto-rolls back if errors are detected. Zero-touch operations."
+        },
+        "6": {
+          "Initial": "Direct Connections: Apps connect directly to AI providers (e.g., OpenAI) using hard-coded API keys. We have no visibility into costs, volume, or what data is leaving the building.",
+          "Adopting": "Basic Rate Limiting: We use a simple proxy to stop too many requests (DDoS protection), but we don't look at the actual content. \"Shadow\" apps still bypass this and connect directly.",
+          "Established": "Static Guardrails: We have a central gateway that blocks obvious bad keywords and hides credit card numbers (PII) before sending data to the AI. Audit logs exist.",
+          "Advanced": "Contextual Defense: An AI-specific Gateway actively scans for \"Prompt Injection\" attacks and jailbreaks. It understands context, blocking toxic answers even if they don't use bad words.",
+          "Transformational": "Intelligent Orchestration: A dynamic \"AI Control Plane\" routes traffic based on intent, cost, and security profile. It automatically sanitizes inputs and neutralizes sophisticated attacks in real-time."
+        },
+        "7": {
+          "Initial": "Unbounded Access: The AI agent runs with full admin privileges or the same permissions as the user. If the user can delete the database, the Agent can too. No human-in-the-loop.",
+          "Adopting": "Written Policy: We tell developers \"don't give the bot write access,\" but we don't enforce it technically. We rely on the model instructions and system prompts (\"Please don't delete files\") as the only defense.",
+          "Established": "Least Privilege Scopes: Agents are technically restricted to specific API scopes (Read-Only). \"Write\" actions require a specific robust authentication token separate from the reading token. Write is only allowed to specific columns or data fields within controlled databases or targets",
+          "Advanced": "Human Confirmation Loops: High-stakes actions (e.g., transferring >$100, emailing clients) trigger a mandatory \"Human-in-the-Loop\" approval step. The Agent prepares the action, but a human clicks \"Send.\"",
+          "Transformational": "Autonomous Circuit Breakers: The system monitors Agent behavior patterns. If an Agent attempts an anomaly repeatedly (e.g., downloading 500 files in 1 minute for the 3rd time), a \"Circuit Breaker\" instantly cuts its API access and alerts Ops, regardless of user permissions."
+        }
+      }
     }
   ],
   "maturityLevels": [

@@ -8,19 +8,30 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { StickyActionBar } from '../industry/StickyActionBar.jsx';
 
 const industries = [
-  { id: 'manufacturing', name: 'Manufacturing', description: 'Production & industrial operations' },
-  { id: 'retail', name: 'Retail & E-commerce', description: 'Consumer goods & online sales' },
-  { id: 'finance', name: 'Financial Services', description: 'Banking, insurance & investments' },
-  { id: 'healthcare', name: 'Healthcare', description: 'Medical services & pharmaceuticals' },
-  { id: 'education', name: 'Education', description: 'Learning institutions & EdTech' },
-  { id: 'technology', name: 'Technology', description: 'Software & IT services' },
-  { id: 'logistics', name: 'Logistics & Supply Chain', description: 'Transportation & warehousing' },
-  { id: 'realestate', name: 'Real Estate', description: 'Property & construction' },
+  { id: 'aerospace-defense', name: 'Aerospace & Defense', description: 'Aerospace & defense operations' },
+  { id: 'agriculture-forestry', name: 'Agriculture & Forestry', description: 'Farming, forestry & food production' },
+  { id: 'architecture-engineering', name: 'Architecture & Engineering', description: 'Design & engineering services' },
+  { id: 'automotive-mobility', name: 'Automotive & Mobility', description: 'Automotive & transportation solutions' },
   { id: 'construction', name: 'Construction', description: 'Building & infrastructure development' },
-  { id: 'travel', name: 'Travel & Hospitality', description: 'Tourism & accommodation' },
-  { id: 'agriculture', name: 'Agriculture', description: 'Farming & food production' },
-  { id: 'energy', name: 'Energy & Utilities', description: 'Power generation & distribution' },
-  { id: 'telecom', name: 'Telecommunications', description: 'Network & communication services' },
+  { id: 'education', name: 'Education', description: 'Learning institutions & EdTech' },
+  { id: 'energy-oil-gas-mining', name: 'Energy: Oil, Gas & Mining', description: 'Oil, gas & mining operations' },
+  { id: 'energy-utilities-renewables', name: 'Energy: Utilities & Renewables', description: 'Power generation & renewable energy' },
+  { id: 'financial-services', name: 'Financial Services', description: 'Banking, insurance & investments' },
+  { id: 'government-public-sector', name: 'Government & Public Sector', description: 'Government & public services' },
+  { id: 'healthcare', name: 'Healthcare', description: 'Medical services & pharmaceuticals' },
+  { id: 'hospitality-travel-leisure', name: 'Hospitality, Travel & Leisure', description: 'Tourism, hospitality & leisure' },
+  { id: 'insurance', name: 'Insurance', description: 'Insurance services' },
+  { id: 'legal-professional-services', name: 'Legal & Professional Services', description: 'Legal & professional consulting' },
+  { id: 'life-sciences', name: 'Life Sciences', description: 'Biotechnology & life sciences' },
+  { id: 'manufacturing', name: 'Manufacturing', description: 'Production & industrial operations' },
+  { id: 'media-entertainment-gaming', name: 'Media, Entertainment & Gaming', description: 'Media, entertainment & gaming' },
+  { id: 'non-profit-ngo', name: 'Non-Profit & NGO', description: 'Non-profit organizations & NGOs' },
+  { id: 'real-estate', name: 'Real Estate', description: 'Property & real estate services' },
+  { id: 'retail-ecommerce', name: 'Retail & E-Commerce', description: 'Consumer goods & online sales' },
+  { id: 'technology-software', name: 'Technology & Software', description: 'Software & IT services' },
+  { id: 'telecommunications', name: 'Telecommunications', description: 'Network & communication services' },
+  { id: 'transportation-logistics', name: 'Transportation & Logistics', description: 'Transportation & warehousing' },
+  { id: 'other', name: 'Other', description: 'Other industries' },
 ];
 
 export function IndustrySelectionPage() {
@@ -194,7 +205,7 @@ export function IndustrySelectionPage() {
               </div>
             )}
           </div>
-        </div>
+      </div>
       </main>
 
       <StickyActionBar 
