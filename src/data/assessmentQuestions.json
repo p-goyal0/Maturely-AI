@@ -23,12 +23,12 @@
         "How rigorously is the business value of Agents and RAG systems audited and validated by Finance?"
       ],
       "questionOptions": {
-        "0": {
-          "Initial": "No documented AI strategy; initiatives are ad-hoc and disconnected from business goals; no governance structure exists",
+        "0": {"Initial": "No documented AI strategy; initiatives are ad-hoc and disconnected from business goals; no governance structure exists",
           "Adopting": "Informal AI vision exists but not documented; occasional discussions at leadership level; basic policies being drafted",
           "Established": "Documented AI strategy aligned with organization and business objectives; at least one formal governance committee established; AI usage policies defined and communicated",
           "Advanced": "Comprehensive AI strategy integrated across business units; active governance board with executive sponsorship; multiple action oriented subcommittee's established, policies enforced with regular reviews",
           "Transformational": "AI strategy is indistinguishable from Corporate Strategy and offers competitive differentiation; sophisticated multi-layered and cross functional governance with board-level oversight; industry-leading policies and frameworks"
+          
         },
         "1": {
           "Initial": "No designated AI leadership; responsibilities unclear or nonexistent",

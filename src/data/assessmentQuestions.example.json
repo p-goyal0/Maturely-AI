@@ -1,0 +1,31 @@
+{
+  "assessmentPillars": [
+    {
+      "id": "strategy-governance",
+      "title": "Strategic Value & Governance",
+      "weight": 20,
+      "description": "Assess how AI aligns with your business vision and strategic objectives",
+      "image": "Strategy & Governance.png",
+      "questions": [
+        "How mature is your organization's AI strategy and governance structure?",
+        "What level of AI leadership exists in your organization?"
+      ],
+      "questionOptions": {
+        "0": {
+          "Initial": "No documented AI strategy...",
+          "Adopting": "Informal AI vision exists...",
+          "Established": "Documented AI strategy...",
+          "Advanced": "Comprehensive AI strategy...",
+          "Transformational": "AI strategy is indistinguishable..."
+        }
+      },
+      "questionAssignments": {
+        "0": ["MODULE_OWNER", "SUPER_ADMIN"],
+        "1": ["SUPER_ADMIN"]
+      },
+      "stepAssignments": ["MODULE_OWNER", "SUPER_ADMIN"]
+    }
+  ]
+}
+
+

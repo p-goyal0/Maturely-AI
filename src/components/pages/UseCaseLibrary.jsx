@@ -256,16 +256,16 @@ export function UseCaseLibrary() {
             {activeMode === 'inspire' ? (
               <div>
                 {/* Use Cases Grid - All Mixed */}
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-gray-900">
+                  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-bold text-gray-900">
                       All Use Cases
-                    </h3>
-                    <span className="text-sm text-gray-500">
+                      </h3>
+                      <span className="text-sm text-gray-500">
                       {Object.values(industryUseCases).flat().length} available
-                    </span>
-                  </div>
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      </span>
+                    </div>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {Object.values(industryUseCases).flat().map((uc, index) => (
                         <motion.div 
                           key={`${uc.id}-${index}`} 
@@ -275,13 +275,13 @@ export function UseCaseLibrary() {
                           whileTap={{ scale: 0.98 }}
                         >
                           <div className="flex items-center justify-between mb-2">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              uc.impact === 'High' 
-                                ? 'bg-green-100 text-green-700' 
-                                : 'bg-amber-100 text-amber-700'
-                            }`}>
-                              {uc.impact} Impact
-                            </span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            uc.impact === 'High' 
+                              ? 'bg-green-100 text-green-700' 
+                              : 'bg-amber-100 text-amber-700'
+                          }`}>
+                            {uc.impact} Impact
+                          </span>
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                               uc.feasibility === 'High' 
                                 ? 'bg-blue-100 text-blue-700' 
@@ -296,7 +296,7 @@ export function UseCaseLibrary() {
                           <p className="text-sm text-gray-600 mb-2">{uc.description}</p>
                           <span className="px-2 py-1 bg-white rounded text-xs text-gray-500">{uc.category}</span>
           </motion.div>
-                    ))}
+                      ))}
                   </div>
                 </div>
               </div>
@@ -573,13 +573,13 @@ export function UseCaseLibrary() {
                   <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      selectedUseCase.impact === 'High' 
-                        ? 'bg-green-100 text-green-700' 
-                        : 'bg-amber-100 text-amber-700'
-                    }`}>
-                      {selectedUseCase.impact} Impact
-                    </span>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    selectedUseCase.impact === 'High' 
+                      ? 'bg-green-100 text-green-700' 
+                      : 'bg-amber-100 text-amber-700'
+                  }`}>
+                    {selectedUseCase.impact} Impact
+                  </span>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                       selectedUseCase.feasibility === 'High' 
                         ? 'bg-blue-100 text-blue-700' 

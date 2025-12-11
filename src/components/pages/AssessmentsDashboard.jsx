@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/button';
-import { CheckCircle2, Target, ArrowRight, ArrowLeft, LogOut, Info } from 'lucide-react';
+import { CheckCircle2, Target, ArrowRight, ArrowLeft, LogOut } from 'lucide-react';
 import Lottie from 'lottie-react';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
@@ -32,7 +32,6 @@ export function AssessmentsDashboard() {
   });
   const [hoveredStepIcon, setHoveredStepIcon] = useState(null);
   const [hoveredMainIcon, setHoveredMainIcon] = useState(false);
-  const [hoveredTooltip, setHoveredTooltip] = useState(null);
 
   const currentPillar = assessmentPillars[currentPillarIndex];
 
@@ -621,7 +620,6 @@ export function AssessmentsDashboard() {
                       
                     const questionKey = `${currentPillar.id}-${questionIndex}`;
                     const selectedAnswer = answers[questionKey];
-                      const isFirstStep = currentPillarIndex === 0;
                     
                     return (
                         <motion.div
@@ -661,12 +659,11 @@ export function AssessmentsDashboard() {
                           <div className="space-y-3 overflow-visible">
                             {['Initial', 'Adopting', 'Established', 'Advanced', 'Transformational'].map((option, index) => {
                             const isSelected = selectedAnswer === option;
-                              const tooltipKey = `${questionKey}-${option}`;
                               
                               // Get question-specific option text from JSON if available
                               const questionOptions = currentPillar.questionOptions;
                               const questionKeyStr = String(questionIndex);
-                              const optionText = questionOptions && questionOptions[questionKeyStr] && questionOptions[questionKeyStr][option]
+                              const optionDescription = questionOptions && questionOptions[questionKeyStr] && questionOptions[questionKeyStr][option]
                                 ? questionOptions[questionKeyStr][option]
                                 : option;
                             
@@ -713,40 +710,12 @@ export function AssessmentsDashboard() {
                                   
                                   {/* Content */}
                                   <div className="flex-1 min-w-0">
-                                    <div className="flex items-start justify-between gap-2">
-                                      <div className="flex-1">
-                                        <div className={`text-sm leading-relaxed ${
-                                          isSelected ? 'text-gray-800' : 'text-gray-700'
-                                        }`}>
-                                          {optionText}
-                                        </div>
-                                      </div>
-                                      {isFirstStep && (
-                                        <div 
-                                          className="flex-shrink-0 z-30"
-                                          onMouseEnter={() => setHoveredTooltip(tooltipKey)}
-                                          onMouseLeave={() => setHoveredTooltip(null)}
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            e.preventDefault();
-                                          }}
-                                        >
-                                          <Info className="w-4 h-4 text-gray-400 hover:text-[#46cdc6] transition-colors cursor-help" />
-                                          <AnimatePresence>
-                                            {hoveredTooltip === tooltipKey && (
-                                              <motion.div
-                                                initial={{ opacity: 0, y: 5, scale: 0.95 }}
-                                                animate={{ opacity: 1, y: 0, scale: 1 }}
-                                                exit={{ opacity: 0, y: 5, scale: 0.95 }}
-                                                transition={{ duration: 0.2 }}
-                                                className="absolute right-0 mt-2 w-72 p-3 bg-gray-900 text-white text-xs rounded-lg shadow-xl z-[100] pointer-events-none whitespace-normal"
-                                              >
-                                                {optionText}
-                                                <div className="absolute bottom-full right-4 w-0 h-0 border-l-[6px] border-r-[6px] border-b-[6px] border-transparent border-b-gray-900"></div>
-          </motion.div>
-                                            )}
-                                          </AnimatePresence>
-                                        </div>
+                                    <div className={`text-sm leading-relaxed ${
+                                      isSelected ? 'text-gray-800' : 'text-gray-700'
+                                    }`}>
+                                      <span className="font-bold">{option}</span>
+                                      {optionDescription && optionDescription !== option && (
+                                        <span> - {optionDescription}</span>
                                       )}
                                     </div>
                                   </div>
