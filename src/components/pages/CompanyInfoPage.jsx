@@ -1,23 +1,17 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
-import { LogOut } from 'lucide-react';
-import { Avatar, AvatarFallback } from '../ui/avatar';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
+import { PageHeader } from '../shared/PageHeader';
 
 export function CompanyInfoPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signOut, currentUser } = useAuth();
   const [totalHeadcount, setTotalHeadcount] = useState('');
   const [marketCap, setMarketCap] = useState('');
   const [revenues, setRevenues] = useState('');
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
 
   // Get data from previous pages
-  const { industry, companyType, isListed, stockTicker } = location.state || {};
+  const { industry, subIndustry, companyType, isListed, stockTicker } = location.state || {};
 
   // Format number with commas (handles decimals)
   const formatNumber = (value, allowDecimals = false) => {
@@ -71,6 +65,7 @@ export function CompanyInfoPage() {
   const handleContinue = () => {
     const companyData = {
       industry,
+      subIndustry,
       companyType,
       isListed,
       stockTicker,
@@ -78,33 +73,9 @@ export function CompanyInfoPage() {
       marketCap: marketCap ? marketCap.replace(/,/g, '') : '',
       revenues: revenues ? revenues.replace(/,/g, '') : ''
     };
-    navigate("/assessments", { state: companyData });
+    navigate("/offerings", { state: companyData });
   };
 
-  const handleSignOut = () => {
-    signOut();
-    setTimeout(() => {
-      navigate("/");
-    }, 0);
-  };
-
-  // Scroll detection for header
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      if (currentScrollY > 50) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-      
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
 
   // Redirect if no previous data
   useEffect(() => {
@@ -118,51 +89,7 @@ export function CompanyInfoPage() {
   return (
     <div className="min-h-screen bg-[#f3f2ed] text-gray-900 relative overflow-hidden">
       {/* Header */}
-      <motion.div
-        className={`fixed top-0 left-0 right-0 z-40 transition-transform duration-300 ${
-          isScrolled ? "-translate-y-full" : "translate-y-0"
-        }`}
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <div className="pt-4 px-4 sm:px-6 lg:px-8">
-          <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg px-6 lg:px-8 py-3 border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <img src="/logo/wings.png" alt="Logo" className="h-10 w-10 lg:h-8 lg:w-12 transition-all duration-300 group-hover:scale-110" />
-                <img src="/logo/maturely_logo.png" alt="MATURITY.AI" className="h-4 lg:h-5 transition-all duration-300 group-hover:scale-110" />
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <span className="text-gray-900 font-semibold text-sm">
-                  {currentUser?.username || 'User'}
-                </span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="cursor-pointer flex items-center gap-2 hover:opacity-80 transition-opacity outline-none">
-                      <Avatar className="h-10 w-10 bg-[#46cdc6]">
-                        <AvatarFallback className="bg-[#46cdc6] text-white font-semibold">
-                          {currentUser?.username?.charAt(0).toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-40">
-                    <DropdownMenuItem
-                      onClick={handleSignOut}
-                      className="cursor-pointer"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
+      <PageHeader />
 
       {/* Main content */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-10 sm:py-12 md:py-16 min-h-screen pt-24 pb-24">

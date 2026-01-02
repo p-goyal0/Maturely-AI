@@ -5,9 +5,13 @@ import { IndustrySelectionPage } from "./components/pages/IndustrySelectionPage"
 import { CompanyTypePage } from "./components/pages/CompanyTypePage";
 import { CompanyInfoPage } from "./components/pages/CompanyInfoPage";
 import { AssessmentsDashboard } from "./components/pages/AssessmentsDashboard";
+import { OfferingsPage } from "./components/pages/OfferingsPage";
 import { ResultsDashboard } from "./components/pages/ResultsDashboard";
 import { RoadmapGenerator } from "./components/pages/RoadmapGenerator";
 import { UseCaseLibrary } from "./components/pages/UseCaseLibrary";
+import { RoleManagementPage } from "./components/pages/RoleManagementPage";
+import { TeamManagementPage } from "./components/pages/TeamManagementPage";
+import { SettingsPage } from "./components/pages/SettingsPage";
 import { LoginPage } from "./components/pages/LoginPage";
 import { SignInPage } from "./components/pages/SignInPage";
 import { SignUpPage } from "./components/pages/SignUpPage";
@@ -81,6 +85,14 @@ export default function App() {
             }
           />
           <Route
+            path="/offerings"
+            element={
+              <ProtectedRoute>
+                <OfferingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/assessments"
             element={
               <ProtectedRoute>
@@ -109,6 +121,30 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <UseCaseLibrary />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/role-management"
+            element={
+              <ProtectedRoute>
+                <RoleManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/team-management"
+            element={
+              <ProtectedRoute>
+                <TeamManagementPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
               </ProtectedRoute>
             }
           />

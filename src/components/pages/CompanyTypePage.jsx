@@ -1,28 +1,24 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
-import { LogOut } from 'lucide-react';
-import { Avatar, AvatarFallback } from '../ui/avatar';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
+import { PageHeader } from '../shared/PageHeader';
 
 export function CompanyTypePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signOut, currentUser } = useAuth();
   const [companyType, setCompanyType] = useState(null); // 'public' or 'private'
   const [isListed, setIsListed] = useState(false);
   const [stockTicker, setStockTicker] = useState('');
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
 
-  // Get industry from previous page
+  // Get industry and subIndustry from previous page
   const industry = location.state?.industry;
+  const subIndustry = location.state?.subIndustry;
 
   const handleContinue = () => {
     if (companyType) {
       const companyData = {
         industry,
+        subIndustry,
         companyType,
         isListed: companyType === 'public' ? isListed : false,
         stockTicker: companyType === 'public' && isListed ? stockTicker : ''
@@ -31,30 +27,6 @@ export function CompanyTypePage() {
     }
   };
 
-  const handleSignOut = () => {
-    signOut();
-    setTimeout(() => {
-      navigate("/");
-    }, 0);
-  };
-
-  // Scroll detection for header
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      if (currentScrollY > 50) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-      
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
 
   // Reset stock ticker when company type changes
   useEffect(() => {
@@ -76,58 +48,13 @@ export function CompanyTypePage() {
   return (
     <div className="min-h-screen bg-[#f3f2ed] text-gray-900 relative overflow-hidden">
       {/* Header */}
-      <motion.div
-        className={`fixed top-0 left-0 right-0 z-40 transition-transform duration-300 ${
-          isScrolled ? "-translate-y-full" : "translate-y-0"
-        }`}
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <div className="pt-4 px-4 sm:px-6 lg:px-8">
-          <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg px-6 lg:px-8 py-3 border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <img src="/logo/wings.png" alt="Logo" className="h-10 w-10 lg:h-8 lg:w-12 transition-all duration-300 group-hover:scale-110" />
-                <img src="/logo/maturely_logo.png" alt="MATURITY.AI" className="h-4 lg:h-5 transition-all duration-300 group-hover:scale-110" />
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <span className="text-gray-900 font-semibold text-sm">
-                  {currentUser?.username || 'User'}
-                </span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="cursor-pointer flex items-center gap-2 hover:opacity-80 transition-opacity outline-none">
-                      <Avatar className="h-10 w-10 bg-[#46cdc6]">
-                        <AvatarFallback className="bg-[#46cdc6] text-white font-semibold">
-                          {currentUser?.username?.charAt(0).toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-40">
-                    <DropdownMenuItem
-                      onClick={handleSignOut}
-                      className="cursor-pointer"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
+      <PageHeader />
 
       {/* Main content */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-10 sm:py-12 md:py-16 min-h-screen pt-24 pb-24">
         <div className="text-center mx-auto w-full px-2 sm:px-4 md:px-6">
           <h1 className="text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] xl:text-[4rem] tracking-[-0.05rem] font-regular leading-[1] mb-8 text-[#1a1a1a] mx-auto w-[90%] sm:w-[80%] md:w-[70%] lg:w-[60%]">
-            What type of company<br />
-            are you?
+            Are you a public or private company?
           </h1>
 
           {/* Company Type Selection */}
@@ -239,7 +166,7 @@ export function CompanyTypePage() {
                       type="text"
                       value={stockTicker}
                       onChange={(e) => setStockTicker(e.target.value.toUpperCase())}
-                      placeholder="e.g., AAPL, MSFT, GOOGL"
+                      placeholder="e.g., AAPL"
                       className="w-full px-4 py-3 bg-white rounded-lg border-2 border-gray-200 focus:border-[#46cdc6] focus:ring-2 focus:ring-[#46cdc6] outline-none transition-all duration-200"
                     />
                     <p className="mt-1 text-xs text-gray-500">

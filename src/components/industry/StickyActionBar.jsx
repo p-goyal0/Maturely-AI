@@ -1,10 +1,13 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 
-export function StickyActionBar({ selectedIndustry, onContinue }) {
+export function StickyActionBar({ selectedIndustry, selectedSubIndustry, onContinue }) {
+  // Show bar if industry is selected and (it's "Other" or sub-industry is selected)
+  const shouldShow = selectedIndustry && (selectedIndustry.id === 'other' || selectedSubIndustry);
+  
   return (
     <AnimatePresence>
-      {selectedIndustry && (
+      {shouldShow && (
         <motion.div
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -19,8 +22,12 @@ export function StickyActionBar({ selectedIndustry, onContinue }) {
           <div className="relative w-full mx-auto px-4 sm:px-6 lg:px-8 py-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm mb-0.5">Selected Industry</p>
-                <p className="text-gray-900 font-medium text-sm">Ready to continue</p>
+                <p className="text-gray-500 text-sm mb-0.5">
+                  {selectedSubIndustry ? 'Selected Sub-Industry' : 'Selected Industry'}
+                </p>
+                <p className="text-gray-900 font-medium text-sm">
+                  {selectedSubIndustry ? selectedSubIndustry : selectedIndustry?.name}
+                </p>
               </div>
               <motion.button
                 onClick={onContinue}

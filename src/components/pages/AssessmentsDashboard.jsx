@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/button';
-import { CheckCircle2, Target, ArrowRight, ArrowLeft, LogOut } from 'lucide-react';
+import { CheckCircle2, Target, ArrowRight, ArrowLeft } from 'lucide-react';
 import Lottie from 'lottie-react';
-import { Avatar, AvatarFallback } from '../ui/avatar';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
+import { PageHeader } from '../shared/PageHeader';
 
 // Lottie animations will be loaded dynamically
 
@@ -15,19 +13,12 @@ import { assessmentPillars } from '../../data/assessmentQuestions.json';
 
 export function AssessmentsDashboard() {
   const navigate = useNavigate();
-  const { isAuthenticated, currentUser, signOut } = useAuth();
   const [currentPillarIndex, setCurrentPillarIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [completedPillars, setCompletedPillars] = useState(new Set());
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
   const [lottieAnimations, setLottieAnimations] = useState({
-    document: null,
-    globe: null,
-    wings: null,
-    chart: null,
     layers: null
   });
   const [hoveredStepIcon, setHoveredStepIcon] = useState(null);
@@ -39,27 +30,10 @@ export function AssessmentsDashboard() {
   useEffect(() => {
     const loadAnimations = async () => {
       try {
-        const [documentRes, globeRes, wingsRes, chartRes, layersRes] = await Promise.all([
-          fetch('/lottieFiles/wired-outline-56-document-hover-swipe.json'),
-          fetch('/lottieFiles/wired-outline-27-globe-hover-rotate.json'),
-          fetch('/lottieFiles/wired-outline-1145-wings-hover-pinch.json'),
-          fetch('/lottieFiles/wired-outline-153-bar-chart-hover-pinch.json'),
-          fetch('/lottieFiles/wired-lineal-12-layers-hover-squeeze.json')
-        ]);
-
-        const [documentData, globeData, wingsData, chartData, layersData] = await Promise.all([
-          documentRes.json(),
-          globeRes.json(),
-          wingsRes.json(),
-          chartRes.json(),
-          layersRes.json()
-        ]);
+        const layersRes = await fetch('/lottieFiles/wired-lineal-12-layers-hover-squeeze.json');
+        const layersData = await layersRes.json();
 
         setLottieAnimations({
-          document: documentData,
-          globe: globeData,
-          wings: wingsData,
-          chart: chartData,
           layers: layersData
         });
       } catch (error) {
@@ -75,27 +49,28 @@ export function AssessmentsDashboard() {
     setCurrentQuestionIndex(0);
   }, [currentPillarIndex]);
 
-  // Scroll detection for header animation
+  // Auto-advance to next pillar when all questions in current pillar are answered
   useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+    const allQuestionsAnswered = currentPillar.questions.every((_, qIndex) => {
+      const questionKey = `${currentPillar.id}-${qIndex}`;
+      return answers[questionKey];
+    });
       
-      if (currentScrollY > 100) {
-        if (currentScrollY > lastScrollY) {
-          setIsScrolled(true);
+    if (allQuestionsAnswered && currentPillar.questions.length > 0) {
+      // Wait a bit before auto-advancing to next pillar
+      const timer = setTimeout(() => {
+        if (currentPillarIndex < assessmentPillars.length - 1) {
+          setCompletedPillars(prev => new Set([...prev, currentPillarIndex]));
+          setCurrentPillarIndex(prev => prev + 1);
         } else {
-          setIsScrolled(false);
+          // Last pillar completed, navigate to results
+          navigate('/results');
         }
-      } else {
-        setIsScrolled(false);
-      }
-      
-      setLastScrollY(currentScrollY);
-    };
+      }, 800); // Slightly longer delay for pillar transition
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+      return () => clearTimeout(timer);
+    }
+  }, [answers, currentPillar, currentPillarIndex, assessmentPillars.length, navigate]);
 
   const handleAnswerSelect = (questionKey, level) => {
     console.log('Answer selected:', questionKey, level); // Debug log
@@ -164,266 +139,28 @@ export function AssessmentsDashboard() {
         }}
       />
 
-      {/* Header with white background strip - matching landing page */}
-      <motion.div 
-        className="fixed top-0 left-0 right-0 z-50 bg-transparent pt-4"
-        initial={{ y: 0 }}
-        animate={{ y: isScrolled ? -100 : 0 }}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
-      >
-        <div className="mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 px-6 py-3">
-            <div className="flex items-center justify-between">
-              {/* Logo - Left */}
-              <div className="flex items-center gap-3">
-                <img src="/logo/wings.png" alt="Logo" className="h-10 w-10 lg:h-8 lg:w-12 transition-all duration-300 group-hover:scale-110" />
-                <img src="/logo/maturely_logo.png" alt="MATURITY.AI" className="h-4 lg:h-5 transition-all duration-300 group-hover:scale-110" />
-              </div>
+      {/* Header */}
+      <PageHeader 
+        centerItems={[
+          { label: "Home", path: "/offerings" }
+        ]}
+        zIndex="z-50"
+      />
 
-              {/* Center - Industry Link */}
-              <div className="flex items-center">
-                <button
-                  onClick={() => navigate("/industry")}
-                  className="text-sm text-slate-700 hover:text-[#46cdc6] transition-colors font-medium"
-                >
-                  Industry
-                </button>
-              </div>
-
-              {/* Right - User Avatar with Dropdown */}
-              <div className="flex items-center gap-3">
-                <span className="text-gray-900 font-semibold text-sm">
-                  {currentUser?.username || 'User'}
-                </span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="cursor-pointer flex items-center gap-2 hover:opacity-80 transition-opacity outline-none">
-                      <Avatar className="h-10 w-10 bg-[#46cdc6]">
-                        <AvatarFallback className="bg-[#46cdc6] text-white font-semibold">
-                          {currentUser?.username?.charAt(0).toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-40">
-                    <DropdownMenuItem
-                      onClick={() => {
-                        signOut();
-                        // Use setTimeout to ensure state updates before navigation
-                        setTimeout(() => {
-                          navigate("/");
-                        }, 0);
-                      }}
-                      className="cursor-pointer"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-              </div>
-            </div>
-          </motion.div>
-
-      {/* SECTION 1: Hero Section */}
-      <section className="pt-40 pb-20 relative z-10">
-        {/* Non-uniform Gradient Overlay System - More Varied */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 1 }}>
-          {/* Irregular teal/cyan gradient overlay with varied opacity */}
-          <div 
-            className="absolute left-0 top-0 bottom-0 w-full lg:w-[65%]"
-            style={{
-              background: `
-                linear-gradient(135deg, transparent 0%, rgba(175, 232, 221, 0.08) 15%, rgba(223, 246, 248, 0.25) 35%, rgba(194, 252, 232, 0.18) 48%, rgba(253, 255, 255, 0.12) 65%, transparent 85%, transparent 100%),
-                radial-gradient(ellipse 1200px 400px at 25% 60%, rgba(223, 239, 241, 0.3) 0%, rgba(184, 245, 232, 0.15) 40%, transparent 70%),
-                radial-gradient(ellipse 800px 600px at 5% 30%, rgba(227, 237, 246, 0.2) 0%, rgba(165, 243, 252, 0.1) 35%, transparent 65%),
-                linear-gradient(45deg, rgba(162, 197, 201, 0.15) 0%, transparent 25%, rgba(171, 244, 229, 0.12) 50%, transparent 75%)
-              `,
-            }}
-          />
-          {/* Scattered gradient spots on top right */}
-          <div 
-            className="absolute right-0 top-0 w-full lg:w-[45%] h-[60%]"
-            style={{
-              background: `
-                radial-gradient(ellipse 300px 200px at 75% 20%, rgba(165, 243, 252, 0.2) 0%, transparent 60%),
-                radial-gradient(ellipse 600px 300px at 90% 10%, rgba(153, 246, 228, 0.15) 0%, rgba(236, 254, 255, 0.08) 40%, transparent 65%),
-                radial-gradient(ellipse 200px 400px at 85% 45%, rgba(194, 252, 232, 0.1) 0%, transparent 50%)
-              `,
-            }}
-          />
-          {/* Additional organic spots */}
-          <div 
-            className="absolute left-[20%] bottom-[20%] w-[40%] h-[30%]"
-            style={{
-              background: `
-                radial-gradient(ellipse 400px 200px at 50% 50%, rgba(223, 246, 248, 0.12) 0%, transparent 70%)
-              `,
-            }}
-          />
-        </div>
-        
-        <div className="mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Hero Content */}
-          <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-center">
-
-            {/* Left Column - Content */}
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }} 
-              animate={{ opacity: 1, x: 0 }} 
-              transition={{ duration: 0.6 }}
-              className="space-y-3 lg:space-y-4 relative z-20 text-center ml-10 lg:text-left"
-            >
-              {/* Small Badge */}
-              <div className="inline-block">
-                <div className="bg-white/90 text-slate-900 px-4 py-2 rounded-full text-xs font-medium border border-gray-200 shadow-sm">
-                  ✨ AI READINESS ASSESSMENT
-                </div>
-              </div>
-              
-              {/* Large Title */}
-              <div>
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 leading-tight">
-                  Discover Your AI Potential
-                </h1>
-              </div>
-
-              {/* Description */}
-              <p className="text-base md:text-lg text-slate-600 leading-relaxed max-w-lg font-medium">
-                Take our comprehensive assessment to understand your organization's AI readiness across 6 critical dimensions. Get personalized insights and actionable recommendations.
-              </p>
-
-              {/* Button and Rating */}
-              <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-                <button 
-                  className="bg-gradient-to-r from-[#46cdc6] to-[#15ae99] hover:from-[#15ae99] hover:to-[#46cdc6] text-slate-900 px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 w-full sm:w-auto"
-                >
-                  How Its Work
-                  </button>
-
-                {/* Rating */}
-                <div className="flex items-center gap-3">
-                  <div className="flex text-yellow-400 text-base sm:text-lg">
-                    {'★'.repeat(5)}
-                  </div>
-                  <span className="text-slate-600 text-sm font-medium">
-                    <span className="font-bold text-slate-900">5.0</span> from 100+ reviews
-                  </span>
-                </div>
-              </div>
-                    </motion.div>
-
-            {/* Right Column - Stats Grid */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="relative flex justify-center lg:justify-end mt-8 mr-10 lg:mt-0"
-            >
-              <div className="grid grid-cols-2 gap-0 w-full max-w-[480px] h-[416px] sm:w-[480px] sm:h-[480px] overflow-hidden shadow-lg">
-                {/* Top Left */}
-                <div className="bg-[#d8dfdf] p-4 sm:p-6 flex flex-col justify-center items-center">
-                  <div className="w-12 h-12 sm:w-18 sm:h-18 mb-2 sm:mb-3">
-                    {lottieAnimations.document && (
-                      <Lottie 
-                        animationData={lottieAnimations.document}
-                        loop={true}
-                      />
-                    )}
-                  </div>
-                  <div className="text-center">
-                    <div className="text-base sm:text-lg font-bold text-gray-800 mb-1">25+</div>
-                    <div className="text-xs sm:text-md text-gray-600">Questions</div>
-                  </div>
-                </div>
-
-                {/* Top Right - Beige with curve */}
-                <div className="relative bg-amber-50 p-6 flex flex-col justify-center items-center overflow-hidden">
-                  {/* Big background curve */}
-                  <div className="absolute -top-17 -right-32 w-80 h-80 bg-[#ebe8d9] rounded-full"></div>
-
-                  {/* Circular design elements */}
-                  <div className="absolute top-4 right-4 w-16 h-16 border border-gray-300 rounded-full opacity-30"></div>
-                  <div className="absolute bottom-4 left-4 w-12 h-12 border border-gray-300 rounded-full opacity-20"></div>
-
-                  <div className="relative z-10 text-center">
-                    <div className="text-2xl font-bold text-gray-800 mb-1">12+</div>
-                    <div className="text-sm text-gray-600 mb-4">Sectors</div>
-                    <div className="w-20 h-20 ml-15 mx-auto transform -rotate-20">
-                      {lottieAnimations.globe && (
-                        <Lottie 
-                          animationData={lottieAnimations.globe}
-                          loop={true}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bottom Left - Light Teal with curve */}
-                <div className="relative bg-[#46cdc6]/10 p-6 flex flex-col justify-center items-center overflow-hidden">
-                  {/* Big background curve */}
-                  <div className="absolute -bottom-30 -left-30 w-80 h-80 bg-[#e1eae8] rounded-full"></div>
-
-                  <div className="relative z-10 text-center">
-                    <div className="w-16 h-16 mb-3 mx-auto">
-                      {lottieAnimations.wings && (
-                        <Lottie 
-                          animationData={lottieAnimations.wings}
-                          loop={true}
-                        />
-                      )}
-                    </div>
-                    <div className="text-sm text-[#15ae99] font-medium mb-2">Users Active</div>
-                    <div className="flex items-center justify-center">
-                      <div className="flex -space-x-2">
-                        <div className="w-6 h-6 bg-[#46cdc6] rounded-full border-2 border-white"></div>
-                        <div className="w-6 h-6 bg-green-400 rounded-full border-2 border-white"></div>
-                        <div className="w-6 h-6 bg-purple-400 rounded-full border-2 border-white"></div>
-                        <div className="w-6 h-6 bg-teal-400 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-white">
-                          +
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Bottom Right - Dark Teal */}
-                <div className="bg-teal-800 p-4 sm:p-6 flex flex-col justify-center items-center text-white relative overflow-hidden">
-                  <div className="relative z-10 text-center">
-                    <div className="text-base sm:text-lg opacity-80 mb-5">Deep Analytics</div>
-                    <div className="w-12 h-12 sm:w-18 sm:h-18 mx-auto">
-                      {lottieAnimations.chart && (
-                        <Lottie 
-                          animationData={lottieAnimations.chart}
-                          loop={true}
-                        />
-                  )}
-                </div>
-                  </div>
-                </div>
-              </div>
-          </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 2: Assessment Interface */}
-      <section className="bg-gray-50 py-16">
+      {/* SECTION 1: Assessment Interface */}
+      <section className="bg-gray-50 py-16 pt-40">
         <div className="mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-4 gap-8">
             
-            {/* Left Sidebar - Compact Steps */}
+            {/* Left Sidebar - Compact Pillars */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
             <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Assessment Steps</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Assessment Pillars</h3>
                   <p className="text-sm text-gray-600">Track your progress</p>
             </div>
 
-                {/* Custom Ant Design Style Steps */}
+                {/* Custom Ant Design Style Pillars */}
                 <div className="space-y-0">
                   {assessmentPillars.map((pillar, index) => {
                     const isCompleted = completedPillars.has(index);
@@ -444,7 +181,7 @@ export function AssessmentsDashboard() {
                         )}
                         
                         <div className="flex items-start w-full">
-                          {/* Step Icon */}
+                          {/* Pillar Icon */}
                           <div className="relative z-10 flex items-center justify-center">
                             <div 
                               className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm font-semibold group ${
@@ -481,7 +218,7 @@ export function AssessmentsDashboard() {
                             </div>
                           </div>
                           
-                          {/* Step Content */}
+                          {/* Pillar Content */}
                           <div className="ml-4 pb-8">
                             <div className={`text-sm font-semibold ${
                               isCompleted || isCurrent ? 'text-gray-900' : 'text-gray-500'
@@ -514,7 +251,7 @@ export function AssessmentsDashboard() {
 
             {/* Assessment Content */}
             <div className="lg:col-span-3 space-y-4">
-              {/* Step Information - No Image */}
+              {/* Pillar Information - No Image */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center gap-4 mb-4">
                   <div 
@@ -542,7 +279,7 @@ export function AssessmentsDashboard() {
                   </div>
                   <div>
                     <div className="text-sm font-medium text-[#46cdc6] mb-1">
-                      STEP {currentPillarIndex + 1}
+                      PILLAR {currentPillarIndex + 1}
                     </div>
                     <h2 className="text-xl font-bold text-gray-900">{currentPillar.title}</h2>
                   </div>
@@ -808,7 +545,7 @@ export function AssessmentsDashboard() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    Previous
+                    Previous Pillar
                   </motion.button>
                 )}
                 
@@ -818,7 +555,7 @@ export function AssessmentsDashboard() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {currentPillarIndex === assessmentPillars.length - 1 ? 'View Results' : 'Continue'}
+                  {currentPillarIndex === assessmentPillars.length - 1 ? 'View Results' : 'Next Pillar'}
                   {currentPillarIndex < assessmentPillars.length - 1 && (
                     <span className="ml-2">
                       ({currentPillarIndex + 1}/{assessmentPillars.length})

@@ -89,3 +89,11 @@ export const hasAllPermissions = (role, permissions) => {
 };
 
 
+
+
+
+
+
+
+
+

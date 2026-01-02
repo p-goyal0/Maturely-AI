@@ -1,10 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
-import { motion } from "motion/react";
-import { ChevronRight, Sparkles, PenTool, Plus, Save, Building2, Zap, TrendingUp, Shield, CheckCircle2, X, LogOut } from 'lucide-react';
-import { Avatar, AvatarFallback } from '../ui/avatar';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
+import { motion, AnimatePresence } from "motion/react";
+import { ChevronRight, Sparkles, PenTool, Plus, Save, Building2, Zap, TrendingUp, Shield, CheckCircle2, X, Lock, Globe } from 'lucide-react';
+import { PageHeader } from '../shared/PageHeader';
+import { Button } from '../ui/button';
 
 const industryUseCases = {
   healthcare: [
@@ -43,46 +42,31 @@ const emptyUseCase = {
   businessUse: '', description: '', preconditions: '', postconditions: '',
   performanceGoal: '', basicWorkflow: '', alternativeWorkflow: '',
   category: '', risks: '', possibilities: '',
+  visibility: 'private', // 'private' or 'public'
 };
 
 export function UseCaseLibrary() {
   const navigate = useNavigate();
-  const { currentUser, signOut } = useAuth();
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
   const [activeMode, setActiveMode] = useState(null);
   const [selectedUseCase, setSelectedUseCase] = useState(null);
   const [customUseCases, setCustomUseCases] = useState([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formData, setFormData] = useState(emptyUseCase);
-
-  // Scroll detection for header animation
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      
-      if (currentScrollY > 100) {
-        if (currentScrollY > lastScrollY) {
-          setIsScrolled(true);
-        } else {
-          setIsScrolled(false);
-        }
-      } else {
-        setIsScrolled(false);
-      }
-      
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
+  const [showPersonalizeModal, setShowPersonalizeModal] = useState(false);
+  const [personalizeQuery, setPersonalizeQuery] = useState('');
+  const [showUseCases, setShowUseCases] = useState(false);
 
   const handleFormChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
 
   const handleSaveUseCase = () => {
     if (formData.useCaseName && formData.description) {
+      if (formData.id) {
+        // Update existing use case
+        setCustomUseCases(prev => prev.map(uc => uc.id === formData.id ? formData : uc));
+      } else {
+        // Create new use case
       setCustomUseCases(prev => [...prev, { ...formData, id: Date.now() }]);
+      }
       setFormData(emptyUseCase);
       setIsFormOpen(false);
     }
@@ -90,7 +74,14 @@ export function UseCaseLibrary() {
 
   const useAsTemplate = (uc) => {
     setActiveMode('build');
-    setFormData({ ...emptyUseCase, useCaseName: uc.name, description: uc.description, category: uc.category });
+    setFormData({ ...emptyUseCase, useCaseName: uc.name, description: uc.description, category: uc.category, visibility: uc.visibility || 'private' });
+    setIsFormOpen(true);
+    setSelectedUseCase(null);
+  };
+
+  const handleEditUseCase = (useCase) => {
+    setActiveMode('build');
+    setFormData({ ...useCase });
     setIsFormOpen(true);
     setSelectedUseCase(null);
   };
@@ -104,83 +95,22 @@ export function UseCaseLibrary() {
       }} />
 
       {/* Header */}
-      <motion.div 
-        className="fixed top-0 left-0 right-0 z-50 bg-transparent pt-4"
-        initial={{ y: 0 }}
-        animate={{ y: isScrolled ? -100 : 0 }}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
-      >
-        <div className="mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 px-6 py-3">
-            <div className="flex items-center justify-between">
-              {/* Logo - Left */}
-              <div className="flex items-center gap-3">
-                <img src="/logo/wings.png" alt="Logo" className="h-10 w-10 lg:h-8 lg:w-12 transition-all duration-300 group-hover:scale-110" />
-                <img src="/logo/maturely_logo.png" alt="MATURITY.AI" className="h-4 lg:h-5 transition-all duration-300 group-hover:scale-110" />
-              </div>
-
-              {/* Center - Navigation */}
-              <div className="flex items-center gap-6">
-                <button
-                  onClick={() => navigate("/industry")}
-                  className="text-sm text-slate-700 hover:text-cyan-600 transition-colors font-medium"
-                >
-                  Industry
-                </button>
-                <button
-                  onClick={() => navigate("/assessments")}
-                  className="text-sm text-slate-700 hover:text-cyan-600 transition-colors font-medium"
-                >
-                  Assessment
-                </button>
-                <span className="text-sm text-cyan-600 font-semibold">Use Cases</span>
-              </div>
-
-              {/* Right - User Avatar with Dropdown */}
-              <div className="flex items-center gap-3">
-                <span className="text-gray-900 font-semibold text-sm">
-                  {currentUser?.username || 'User'}
-                </span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="cursor-pointer flex items-center gap-2 hover:opacity-80 transition-opacity outline-none">
-                      <Avatar className="h-10 w-10 bg-[#46cdc6]">
-                        <AvatarFallback className="bg-[#46cdc6] text-white font-semibold">
-                          {currentUser?.username?.charAt(0).toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-40">
-                    <DropdownMenuItem
-                      onClick={() => {
-                        signOut();
-                        // Use setTimeout to ensure state updates before navigation
-                        setTimeout(() => {
-                          navigate("/");
-                        }, 0);
-                      }}
-                      className="cursor-pointer"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          </div>
-            </div>
-          </motion.div>
+      <PageHeader 
+        centerItems={[
+          { label: "Home", path: "/offerings" }
+        ]}
+        activePath="/usecases"
+        zIndex="z-50"
+      />
 
       {/* Hero */}
       <section className="pt-32 pb-12 relative z-10">
         <div className="mx-auto text-center px-4">
-          <div className="inline-block bg-[#46cdc6]/10 text-[#46cdc6] px-4 py-2 rounded-full text-xs font-medium border border-[#46cdc6]/20 shadow-sm mb-4">
+          {/* <div className="inline-block bg-[#46cdc6]/10 text-[#46cdc6] px-4 py-2 rounded-full text-xs font-medium border border-[#46cdc6]/20 shadow-sm mb-4">
             ✨ AI USE CASES LIBRARY
-          </div>
+          </div> */}
           <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-4">
-            Discover & Build <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#46cdc6] to-[#15ae99]">AI Use Cases</span>
+          Build your <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#46cdc6] to-[#15ae99]">business case bank</span>
           </h1>
           <p className="text-lg text-gray-600">Explore industry-specific AI implementations or create custom use cases for your organization.</p>
         </div>
@@ -191,7 +121,9 @@ export function UseCaseLibrary() {
         <div className="mx-auto px-4">
           <div className="grid md:grid-cols-2 gap-4">
             <motion.div 
-              onClick={() => setActiveMode('inspire')}
+              onClick={() => {
+                setShowPersonalizeModal(true);
+              }}
               className={`cursor-pointer rounded-2xl p-5 border-2 transition-all ${
                 activeMode === 'inspire' 
                   ? 'bg-[#46cdc6]/10 border-[#46cdc6] shadow-lg' 
@@ -253,7 +185,7 @@ export function UseCaseLibrary() {
       {activeMode && (
         <section className="pb-16 relative z-10">
           <div className="mx-auto px-4">
-            {activeMode === 'inspire' ? (
+            {activeMode === 'inspire' && showUseCases ? (
               <div>
                 {/* Use Cases Grid - All Mixed */}
                   <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
@@ -312,7 +244,10 @@ export function UseCaseLibrary() {
                       </span>
                     </div>
                     <button 
-                      onClick={() => setIsFormOpen(true)}
+                      onClick={() => {
+                        setFormData(emptyUseCase);
+                        setIsFormOpen(true);
+                      }}
                       className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-gradient-to-r from-[#46cdc6] to-[#15ae99] text-white font-medium hover:shadow-lg transition-all mb-3"
                     >
                       <Plus className="w-5 h-5" /> New Use Case
@@ -323,15 +258,39 @@ export function UseCaseLibrary() {
                           <PenTool className="w-6 h-6 mx-auto mb-1 opacity-50" />
                           <p className="text-xs">No use cases yet</p>
                         </div>
-                      ) : customUseCases.map((uc) => (
+                      ) : customUseCases.map((uc) => {
+                        const isPrivate = (uc.visibility || 'private') === 'private';
+                        return (
                         <div 
                           key={uc.id} 
-                          className="p-3 bg-gray-50 rounded-xl cursor-pointer hover:bg-[#46cdc6]/10"
+                            onClick={() => handleEditUseCase(uc)}
+                            className={`p-3 rounded-xl cursor-pointer transition-all ${
+                              isPrivate 
+                                ? 'bg-gray-200 hover:bg-gray-300' 
+                                : 'bg-[#46cdc6]/10 hover:bg-[#46cdc6]/20'
+                            }`}
                         >
-                          <h4 className="font-medium text-gray-900 text-sm truncate">{uc.useCaseName}</h4>
+                            <div className="flex items-start justify-between gap-2 mb-1">
+                              <h4 className="font-medium text-gray-900 text-sm truncate flex-1">{uc.useCaseName || 'Untitled'}</h4>
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold flex-shrink-0 ${
+                                isPrivate
+                                  ? 'bg-gray-700 text-white'
+                                  : 'bg-[#46cdc6] text-white'
+                              }`}>
+                                {isPrivate ? 'Private' : 'Public'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {isPrivate ? (
+                                <Lock className="w-3 h-3 text-gray-600" />
+                              ) : (
+                                <Globe className="w-3 h-3 text-[#46cdc6]" />
+                              )}
                           <p className="text-xs text-gray-500">{uc.category || 'Uncategorized'}</p>
                         </div>
-                      ))}
+                          </div>
+                        );
+                      })}
                     </div>
         </div>
       </div>
@@ -339,176 +298,294 @@ export function UseCaseLibrary() {
                 {/* Form / Empty State */}
                 <div className="lg:col-span-3">
                   {isFormOpen ? (
-                    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 use-case-form">
+                    <div className={`rounded-2xl shadow-sm border-2 p-6 use-case-form transition-all duration-300 ${
+                      formData.visibility === 'public' 
+                        ? 'bg-gradient-to-br from-[#46cdc6]/5 to-[#15ae99]/5 border-[#46cdc6]' 
+                        : 'bg-gray-800 border-gray-600'
+                    }`}>
                       <div className="flex items-center justify-between mb-5">
-                        <h3 className="text-lg font-bold text-gray-900">Business Use Case Description</h3>
+                        <div className="flex items-center gap-3">
+                          {formData.visibility === 'public' ? (
+                            <Globe className="w-5 h-5 text-[#46cdc6]" />
+                          ) : (
+                            <Lock className="w-5 h-5 text-gray-300" />
+                          )}
+                          <div>
+                            <h3 className={`text-lg font-bold ${formData.visibility === 'private' ? 'text-white' : 'text-gray-900'}`}>
+                              {formData.useCaseName ? formData.useCaseName : 'Create New Use Case'}
+                            </h3>
+                            <p className={`text-xs mt-0.5 ${formData.visibility === 'private' ? 'text-gray-300' : 'text-gray-600'}`}>
+                              {formData.visibility === 'public' ? 'Public - Share in "Inspire Me" pool for all companies to see' : 'Private - Only your company'}
+                            </p>
+                          </div>
+                        </div>
                         <button 
                           onClick={() => setIsFormOpen(false)} 
-                          className="p-2 hover:bg-gray-100 rounded-lg"
+                          className={`p-2 rounded-lg ${formData.visibility === 'private' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
                         >
-                          <X className="w-5 h-5 text-gray-500" />
+                          <X className={`w-5 h-5 ${formData.visibility === 'private' ? 'text-gray-300' : 'text-gray-500'}`} />
                         </button>
                       </div>
                       <div className="space-y-4">
+                        {/* Visibility Selection */}
+                        <div>
+                          <label className={`block text-sm font-semibold mb-3 ${formData.visibility === 'private' ? 'text-white' : 'text-gray-900'}`}>Visibility</label>
+                          <div className="grid grid-cols-2 gap-4">
+                            <button
+                              type="button"
+                              onClick={() => handleFormChange('visibility', 'private')}
+                              className={`p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                                formData.visibility === 'private'
+                                  ? 'bg-gray-700 border-gray-500 shadow-md'
+                                  : 'bg-white border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3 mb-2">
+                                <Lock className={`w-5 h-5 ${formData.visibility === 'private' ? 'text-gray-200' : 'text-gray-500'}`} />
+                                <span className={`font-bold ${formData.visibility === 'private' ? 'text-white' : 'text-gray-700'}`}>Private</span>
+                              </div>
+                              <p className={`text-xs ${formData.visibility === 'private' ? 'text-gray-300' : 'text-gray-600'}`}>Keep this use case private to your company only</p>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleFormChange('visibility', 'public')}
+                              className={`p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                                formData.visibility === 'public'
+                                  ? 'bg-[#46cdc6]/20 border-[#46cdc6] shadow-md'
+                                  : 'bg-white border-gray-200 hover:border-[#46cdc6]/30'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3 mb-2">
+                                <Globe className={`w-5 h-5 ${formData.visibility === 'public' ? 'text-[#46cdc6]' : 'text-gray-500'}`} />
+                                <span className={`font-bold ${formData.visibility === 'public' ? 'text-[#46cdc6]' : 'text-gray-700'}`}>Public</span>
+                              </div>
+                              <p className="text-xs text-gray-600">Share in 'Inspire Me' pool for all companies to see</p>
+                            </button>
+                          </div>
+                        </div>
                         <div className="grid md:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Use Case ID</label>
+                            <label className={`block text-sm font-medium mb-1 ${formData.visibility === 'private' ? 'text-gray-200' : 'text-gray-700'}`}>Use Case ID</label>
                             <input 
                               type="text" 
                               value={formData.useCaseId} 
                               onChange={(e) => handleFormChange('useCaseId', e.target.value)}
-                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
+                              className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm ${
+                                formData.visibility === 'private' 
+                                  ? 'bg-gray-700 text-white placeholder:text-gray-400 border border-gray-600' 
+                                  : 'bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300'
+                              }`}
                               placeholder="UC-001"
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Use Case Name *</label>
+                            <label className={`block text-sm font-medium mb-1 ${formData.visibility === 'private' ? 'text-gray-200' : 'text-gray-700'}`}>Use Case Name *</label>
                             <input 
                               type="text" 
                               value={formData.useCaseName} 
                               onChange={(e) => handleFormChange('useCaseName', e.target.value)}
-                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
+                              className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm ${
+                                formData.visibility === 'private' 
+                                  ? 'bg-gray-700 text-white placeholder:text-gray-400 border border-gray-600' 
+                                  : 'bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300'
+                              }`}
                               placeholder="Enter name" 
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Process Owner</label>
+                            <label className={`block text-sm font-medium mb-1 ${formData.visibility === 'private' ? 'text-gray-200' : 'text-gray-700'}`}>Process Owner</label>
                             <input 
                               type="text" 
                               value={formData.processOwner} 
                               onChange={(e) => handleFormChange('processOwner', e.target.value)}
-                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
+                              className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm ${
+                                formData.visibility === 'private' 
+                                  ? 'bg-gray-700 text-white placeholder:text-gray-400 border border-gray-600' 
+                                  : 'bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300'
+                              }`}
                               placeholder="John Doe" 
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Last Updated By</label>
+                            <label className={`block text-sm font-medium mb-1 ${formData.visibility === 'private' ? 'text-gray-200' : 'text-gray-700'}`}>Last Updated By</label>
                             <input 
                               type="text" 
                               value={formData.lastUpdatedBy} 
                               onChange={(e) => handleFormChange('lastUpdatedBy', e.target.value)}
-                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
+                              className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm ${
+                                formData.visibility === 'private' 
+                                  ? 'bg-gray-700 text-white placeholder:text-gray-400 border border-gray-600' 
+                                  : 'bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300'
+                              }`}
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Date Created</label>
+                            <label className={`block text-sm font-medium mb-1 ${formData.visibility === 'private' ? 'text-gray-200' : 'text-gray-700'}`}>Date Created</label>
                             <input 
                               type="date" 
                               value={formData.dateCreated} 
                               onChange={(e) => handleFormChange('dateCreated', e.target.value)}
-                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
+                              className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm ${
+                                formData.visibility === 'private' 
+                                  ? 'bg-gray-700 text-white placeholder:text-gray-400 border border-gray-600' 
+                                  : 'bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300'
+                              }`}
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Date Last Updated</label>
+                            <label className={`block text-sm font-medium mb-1 ${formData.visibility === 'private' ? 'text-gray-200' : 'text-gray-700'}`}>Date Last Updated</label>
                             <input 
                               type="date" 
                               value={formData.dateLastUpdated} 
                               onChange={(e) => handleFormChange('dateLastUpdated', e.target.value)}
-                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
+                              className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm ${
+                                formData.visibility === 'private' 
+                                  ? 'bg-gray-700 text-white placeholder:text-gray-400 border border-gray-600' 
+                                  : 'bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300'
+                              }`}
                             />
                           </div>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Business Use</label>
+                          <label className={`block text-sm font-medium mb-1 ${formData.visibility === 'private' ? 'text-gray-200' : 'text-gray-700'}`}>Business Use</label>
                           <input 
                             type="text" 
                             value={formData.businessUse} 
                             onChange={(e) => handleFormChange('businessUse', e.target.value)}
-                            className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
+                            className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm ${
+                              formData.visibility === 'private' 
+                                ? 'bg-gray-700 text-white placeholder:text-gray-400 border border-gray-600' 
+                                : 'bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300'
+                            }`}
                             placeholder="Primary business use" 
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                          <label className={`block text-sm font-medium mb-1 ${formData.visibility === 'private' ? 'text-gray-200' : 'text-gray-700'}`}>Description *</label>
                           <textarea 
                             value={formData.description} 
                             onChange={(e) => handleFormChange('description', e.target.value)} 
                             rows={2}
-                            className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
+                            className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm ${
+                              formData.visibility === 'private' 
+                                ? 'bg-gray-700 text-white placeholder:text-gray-400 border border-gray-600' 
+                                : 'bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300'
+                            }`}
                             placeholder="Detailed description" 
                           />
                         </div>
                         <div className="grid md:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Preconditions</label>
+                            <label className={`block text-sm font-medium mb-1 ${formData.visibility === 'private' ? 'text-gray-200' : 'text-gray-700'}`}>Preconditions</label>
                             <textarea 
                               value={formData.preconditions} 
                               onChange={(e) => handleFormChange('preconditions', e.target.value)} 
                               rows={2}
-                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
+                              className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm ${
+                                formData.visibility === 'private' 
+                                  ? 'bg-gray-700 text-white placeholder:text-gray-400 border border-gray-600' 
+                                  : 'bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300'
+                              }`}
                               placeholder="Required conditions" 
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Postconditions</label>
+                            <label className={`block text-sm font-medium mb-1 ${formData.visibility === 'private' ? 'text-gray-200' : 'text-gray-700'}`}>Postconditions</label>
                             <textarea 
                               value={formData.postconditions} 
                               onChange={(e) => handleFormChange('postconditions', e.target.value)} 
                               rows={2}
-                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
+                              className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm ${
+                                formData.visibility === 'private' 
+                                  ? 'bg-gray-700 text-white placeholder:text-gray-400 border border-gray-600' 
+                                  : 'bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300'
+                              }`}
                               placeholder="Expected state after" 
                             />
                           </div>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Performance Goal</label>
+                          <label className={`block text-sm font-medium mb-1 ${formData.visibility === 'private' ? 'text-gray-200' : 'text-gray-700'}`}>Performance Goal</label>
                           <input 
                             type="text" 
                             value={formData.performanceGoal} 
                             onChange={(e) => handleFormChange('performanceGoal', e.target.value)}
-                            className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
+                            className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm ${
+                              formData.visibility === 'private' 
+                                ? 'bg-gray-700 text-white placeholder:text-gray-400 border border-gray-600' 
+                                : 'bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300'
+                            }`}
                             placeholder="e.g., Reduce time by 50%" 
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Basic Workflow</label>
+                          <label className={`block text-sm font-medium mb-1 ${formData.visibility === 'private' ? 'text-gray-200' : 'text-gray-700'}`}>Basic Workflow</label>
                           <textarea 
                             value={formData.basicWorkflow} 
                             onChange={(e) => handleFormChange('basicWorkflow', e.target.value)} 
                             rows={2}
-                            className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
+                            className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm ${
+                              formData.visibility === 'private' 
+                                ? 'bg-gray-700 text-white placeholder:text-gray-400 border border-gray-600' 
+                                : 'bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300'
+                            }`}
                             placeholder="Step-by-step workflow" 
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Alternative Workflow</label>
+                          <label className={`block text-sm font-medium mb-1 ${formData.visibility === 'private' ? 'text-gray-200' : 'text-gray-700'}`}>Alternative Workflow</label>
                           <textarea 
                             value={formData.alternativeWorkflow} 
                             onChange={(e) => handleFormChange('alternativeWorkflow', e.target.value)} 
                             rows={2}
-                            className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
+                            className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm ${
+                              formData.visibility === 'private' 
+                                ? 'bg-gray-700 text-white placeholder:text-gray-400 border border-gray-600' 
+                                : 'bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300'
+                            }`}
                             placeholder="Alternative approach" 
                           />
                         </div>
                         <div className="grid md:grid-cols-3 gap-4">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                            <label className={`block text-sm font-medium mb-1 ${formData.visibility === 'private' ? 'text-gray-200' : 'text-gray-700'}`}>Category</label>
                             <input 
                               type="text" 
                               value={formData.category} 
                               onChange={(e) => handleFormChange('category', e.target.value)}
-                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
+                              className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm ${
+                                formData.visibility === 'private' 
+                                  ? 'bg-gray-700 text-white placeholder:text-gray-400 border border-gray-600' 
+                                  : 'bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300'
+                              }`}
                               placeholder="Operations" 
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Risks</label>
+                            <label className={`block text-sm font-medium mb-1 ${formData.visibility === 'private' ? 'text-gray-200' : 'text-gray-700'}`}>Risks</label>
                             <input 
                               type="text" 
                               value={formData.risks} 
                               onChange={(e) => handleFormChange('risks', e.target.value)}
-                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
+                              className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm ${
+                                formData.visibility === 'private' 
+                                  ? 'bg-gray-700 text-white placeholder:text-gray-400 border border-gray-600' 
+                                  : 'bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300'
+                              }`}
                               placeholder="Potential risks" 
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Possibilities</label>
+                            <label className={`block text-sm font-medium mb-1 ${formData.visibility === 'private' ? 'text-gray-200' : 'text-gray-700'}`}>Possibilities</label>
                             <input 
                               type="text" 
                               value={formData.possibilities} 
                               onChange={(e) => handleFormChange('possibilities', e.target.value)}
-                              className="w-full px-3 py-2 bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm" 
+                              className={`w-full px-3 py-2 rounded-lg focus:ring-2 focus:ring-[#46cdc6] focus:outline-none text-sm ${
+                                formData.visibility === 'private' 
+                                  ? 'bg-gray-700 text-white placeholder:text-gray-400 border border-gray-600' 
+                                  : 'bg-white text-gray-900 placeholder:text-gray-500 border border-gray-300'
+                              }`}
                               placeholder="Opportunities" 
                             />
                           </div>
@@ -639,6 +716,82 @@ export function UseCaseLibrary() {
             </motion.div>
           </motion.div>
         )}
+
+      {/* Personalize Use Cases Modal */}
+      <AnimatePresence>
+        {showPersonalizeModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowPersonalizeModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl"
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h3 className="text-3xl font-bold text-slate-900 mb-2">Personalize Your Use Cases</h3>
+                  <p className="text-slate-600">Tell us what you're looking for and we'll show you the most relevant AI use cases.</p>
+                </div>
+                <button
+                  onClick={() => setShowPersonalizeModal(false)}
+                  className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
+                >
+                  <X className="w-5 h-5 text-slate-500" />
+                </button>
+              </div>
+
+              {/* Form */}
+              <div className="space-y-6">
+                <div>
+                  <label className="block font-semibold text-slate-900 mb-3">What are you looking for?</label>
+                  <textarea
+                    placeholder="e.g., improving patient diagnosis, reducing operational costs, automating customer support..."
+                    value={personalizeQuery}
+                    onChange={(e) => setPersonalizeQuery(e.target.value)}
+                    className="w-full px-5 py-4 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#46CDCF] focus:border-transparent text-slate-900 placeholder:text-slate-400 min-h-[120px] resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-4 mt-8">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowPersonalizeModal(false);
+                    setActiveMode('inspire');
+                    setShowUseCases(true);
+                    setPersonalizeQuery('');
+                  }}
+                  className="px-6 py-2.5 rounded-xl border-2 text-slate-700 hover:bg-slate-50"
+                >
+                  Skip & Show All
+                </Button>
+                <Button
+                  onClick={() => {
+                    // For now, just show all use cases (backend logic will be implemented later)
+                    setShowPersonalizeModal(false);
+                    setActiveMode('inspire');
+                    setShowUseCases(true);
+                    // In future: filter use cases based on personalizeQuery
+                  }}
+                  className="px-6 py-2.5 rounded-xl bg-[#46CDCF] hover:bg-[#15ae99] text-white shadow-lg shadow-[#46CDCF]/20"
+                >
+                  Apply Filters
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

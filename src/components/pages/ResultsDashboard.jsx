@@ -1,13 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-import { TrendingUp, Target, Users, Cpu, Database, Shield, Lock, ArrowRight, CheckCircle2, AlertCircle, LogOut, Sparkles } from 'lucide-react';
+import { TrendingUp, Target, Users, Cpu, Database, Shield, Lock, ArrowRight, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
 import { motion, useInView } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { useAuth } from "../../contexts/AuthContext";
-import { Avatar, AvatarFallback } from '../ui/avatar';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
+import { PageHeader } from '../shared/PageHeader';
 import {
   Radar,
   RadarChart,
@@ -22,9 +20,6 @@ import {
 
 export function ResultsDashboard() {
   const navigate = useNavigate();
-  const { currentUser, signOut } = useAuth();
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
   const [selectedSegment, setSelectedSegment] = useState(null);
   const [animatedSections, setAnimatedSections] = useState(new Set());
   
@@ -84,21 +79,6 @@ export function ResultsDashboard() {
       });
     }
   }, [recommendationsInView]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      if (currentScrollY > 100) {
-        setIsScrolled(currentScrollY > lastScrollY);
-      } else {
-        setIsScrolled(false);
-      }
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
 
   const pieChartData = [
     { name: 'Strategy & Governance', value: 35, color: '#46cdc6' },
@@ -193,8 +173,6 @@ export function ResultsDashboard() {
     }
   };
 
-
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50">
       {/* Animated Background Elements */}
@@ -217,73 +195,13 @@ export function ResultsDashboard() {
         />
       </div>
 
-          {/* Header */}
-      <motion.div 
-        className="fixed top-0 left-0 right-0 z-50 bg-transparent pt-4"
-        initial={{ y: 0 }}
-        animate={{ y: isScrolled ? -100 : 0 }}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
-      >
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 ">
-          <motion.div 
-            className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-white/20 px-6 py-3"
-            initial={{ y: -20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="flex items-center justify-between">
-              {/* Logo - Left */}
-              <div className="flex items-center gap-3">
-                <img src="/logo/wings.png" alt="Logo" className="h-10 w-10 lg:h-8 lg:w-12 transition-all duration-300 group-hover:scale-110" />
-                <img src="/logo/maturely_logo.png" alt="MATURITY.AI" className="h-4 lg:h-5 transition-all duration-300 group-hover:scale-110" />
-              </div>
-
-              {/* Center - Industry Link */}
-              <div className="flex items-center">
-                <button
-                  onClick={() => navigate("/industry")}
-                  className="text-sm text-slate-700 hover:text-cyan-600 transition-colors font-medium"
-                >
-                  Industry
-                </button>
-              </div>
-
-              {/* Right - User Avatar with Dropdown */}
-              <div className="flex items-center gap-3">
-                <span className="text-gray-900 font-semibold text-sm">
-                  {currentUser?.username || 'User'}
-                </span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="cursor-pointer flex items-center gap-2 hover:opacity-80 transition-opacity outline-none">
-                      <Avatar className="h-10 w-10 bg-[#46cdc6]">
-                        <AvatarFallback className="bg-[#46cdc6] text-white font-semibold">
-                          {currentUser?.username?.charAt(0).toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-40">
-                    <DropdownMenuItem
-                      onClick={() => {
-                        signOut();
-                        // Use setTimeout to ensure state updates before navigation
-                        setTimeout(() => {
-                          navigate("/");
-                        }, 0);
-                      }}
-                      className="cursor-pointer"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </motion.div>
+      {/* Header */}
+      <PageHeader 
+        centerItems={[
+          { label: "Industry", path: "/industry" }
+        ]}
+        zIndex="z-50"
+      />
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 relative z-10">

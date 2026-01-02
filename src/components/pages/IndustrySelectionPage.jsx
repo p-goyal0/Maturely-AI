@@ -34,23 +34,154 @@ const industries = [
   { id: 'other', name: 'Other', description: 'Other industries' },
 ];
 
+const subIndustries = {
+  'aerospace-defense': [
+    'Commercial Aviation',
+    'Defense Contractors',
+    'Space & Satellite'
+  ],
+  'agriculture-forestry': [
+    'AgTech / Precision Farming',
+    'Livestock & Dairy',
+    'Timber & Forestry'
+  ],
+  'architecture-engineering': [
+    'Architecture Firms',
+    'Civil Engineering Firms'
+  ],
+  'automotive-mobility': [
+    'OEMs (Vehicle Manufacturers)',
+    'Tier 1 Parts Suppliers',
+    'Dealership Networks'
+  ],
+  'construction': [
+    'Commercial: General Contractors',
+    'Commercial: Civil Infrastructure',
+    'Commercial: Specialty Trade (MEP)',
+    'Residential: Production Home Builders',
+    'Residential: Custom Builders'
+  ],
+  'education': [
+    'Higher Education (Universities)',
+    'K-12 Districts',
+    'EdTech & Corporate Training'
+  ],
+  'energy-oil-gas-mining': [
+    'Upstream (Exploration)',
+    'Downstream (Refining)',
+    'Mining & Metals'
+  ],
+  'energy-utilities-renewables': [
+    'Electric, Water & Gas Utilities',
+    'Renewables (Wind/Solar)',
+    'Waste Management & Recycling'
+  ],
+  'financial-services': [
+    'Retail Banking',
+    'Capital Markets & Trading',
+    'Wealth Management',
+    'Payment Processors & Gateways'
+  ],
+  'government-public-sector': [
+    'Federal / Central Agencies',
+    'State & Local Government',
+    'Public Safety & Justice'
+  ],
+  'healthcare': [
+    'Providers (Hospitals & Systems)',
+    'Payers (Health Insurance)',
+    'Digital Health & Telehealth'
+  ],
+  'hospitality-travel-leisure': [
+    'Airlines',
+    'Hotels, Casinos & Lodging',
+    'Food Service & Restaurants'
+  ],
+  'insurance': [
+    'Property & Casualty (P&C)',
+    'Life & Annuity'
+  ],
+  'legal-professional-services': [
+    'Law Firms',
+    'Accounting & Audit',
+    'BPO (Business Process Outsourcing)'
+  ],
+  'life-sciences': [
+    'Pharmaceuticals',
+    'Medical Devices'
+  ],
+  'manufacturing': [
+    'Discrete (Electronics/Auto)',
+    'Process (Chemicals/Food)',
+    'Package Manufacturing'
+  ],
+  'media-entertainment-gaming': [
+    'Streaming & Publishing',
+    'Video Gaming'
+  ],
+  'non-profit-ngo': [
+    'Charitable Foundations',
+    'Associations & Unions'
+  ],
+  'real-estate': [
+    'Commercial (CRE)',
+    'Residential Brokerage & PropTech'
+  ],
+  'retail-ecommerce': [
+    'E-Commerce / Direct-to-Consumer',
+    'Brick & Mortar / Grocery',
+    'Fashion & Luxury'
+  ],
+  'technology-software': [
+    'B2B SaaS',
+    'Infrastructure & Cloud'
+  ],
+  'telecommunications': [
+    'Mobile Network Operators (MNOs)',
+    'ISPs & Broadband'
+  ],
+  'transportation-logistics': [
+    '3PL & Freight Forwarding',
+    'Last-Mile Delivery'
+  ]
+};
+
 export function IndustrySelectionPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut, currentUser } = useAuth();
   const [selectedIndustry, setSelectedIndustry] = useState(null);
+  const [selectedSubIndustry, setSelectedSubIndustry] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [isSubIndustryOpen, setIsSubIndustryOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
 
   const handleIndustrySelect = (industry) => {
     setSelectedIndustry(industry);
+    setSelectedSubIndustry(null); // Reset sub-industry when industry changes
     setIsOpen(false);
+  };
+
+  const handleSubIndustrySelect = (subIndustry) => {
+    setSelectedSubIndustry(subIndustry);
+    setIsSubIndustryOpen(false);
   };
 
   const handleContinue = () => {
     if (selectedIndustry) {
-      navigate("/company-type", { state: { industry: selectedIndustry } });
+      // For "Other" industry, no sub-industry is required
+      // For other industries, sub-industry is required
+      const requiresSubIndustry = selectedIndustry.id !== 'other' && subIndustries[selectedIndustry.id];
+      
+      if (!requiresSubIndustry || selectedSubIndustry) {
+        navigate("/company-type", { 
+          state: { 
+            industry: selectedIndustry,
+            subIndustry: selectedSubIndustry 
+          } 
+        });
+      }
     }
   };
 
@@ -83,16 +214,24 @@ export function IndustrySelectionPage() {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (isOpen && !event.target.closest('.dropdown-container')) {
+      if (isOpen && !event.target.closest('.industry-dropdown-container')) {
         setIsOpen(false);
+      }
+      if (isSubIndustryOpen && !event.target.closest('.subindustry-dropdown-container')) {
+        setIsSubIndustryOpen(false);
       }
     };
 
-    if (isOpen) {
+    if (isOpen || isSubIndustryOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [isOpen]);
+  }, [isOpen, isSubIndustryOpen]);
+
+  // Get available sub-industries for selected industry
+  const availableSubIndustries = selectedIndustry && selectedIndustry.id !== 'other' 
+    ? subIndustries[selectedIndustry.id] || []
+    : [];
 
   return (
     <div className="min-h-screen bg-[#f3f2ed] text-gray-900 relative overflow-hidden">
@@ -148,12 +287,11 @@ export function IndustrySelectionPage() {
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-10 sm:py-12 md:py-16 min-h-screen pt-24 pb-24">
         <div className="text-center mx-auto w-full px-2 sm:px-4 md:px-6">
           <h1 className="text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] xl:text-[4rem] tracking-[-0.05rem] font-regular leading-[1] mb-8 text-[#1a1a1a] mx-auto w-[90%] sm:w-[80%] md:w-[70%] lg:w-[60%]">
-            Which industry your<br />
-            company operates in?
+            What's your industry?
           </h1>
 
-          {/* Dropdown */}
-          <div className="relative w-[75%] sm:w-[65%] md:w-[55%] lg:w-[45%] xl:w-[35%] mx-auto dropdown-container">
+          {/* Industry Dropdown */}
+          <div className="relative w-[75%] sm:w-[65%] md:w-[55%] lg:w-[45%] xl:w-[35%] mx-auto industry-dropdown-container mb-4">
             <button
               onClick={() => setIsOpen(!isOpen)}
               className={`
@@ -170,7 +308,7 @@ export function IndustrySelectionPage() {
               `}
             >
               <span className={selectedIndustry ? 'text-[#1a1a1a]' : 'text-gray-400'}>
-                {selectedIndustry ? selectedIndustry.name : 'Select Industry'}
+                {selectedIndustry ? selectedIndustry.name : "What's your industry?"}
               </span>
               <div className="bg-[#46cdc6] px-1.5 py-1 rounded">
                 <svg 
@@ -186,7 +324,11 @@ export function IndustrySelectionPage() {
             {isOpen && (
               <div className="absolute w-full mt-1 bg-gradient-to-b from-white via-white to-transparent rounded shadow-sm border border-gray-100 overflow-hidden z-[60]">
                 <div className="max-h-48 overflow-y-auto scrollbar-hide">
-                  {[...industries].sort((a, b) => a.name.localeCompare(b.name)).map((industry) => (
+                  {[...industries]
+                    .filter(industry => industry.id !== 'other')
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .concat(industries.find(industry => industry.id === 'other'))
+                    .map((industry) => (
                     <button
                       key={industry.id}
                       className={`
@@ -205,11 +347,73 @@ export function IndustrySelectionPage() {
               </div>
             )}
           </div>
+
+          {/* Sub-Industry Dropdown - Only show if industry is selected and not "Other" */}
+          {selectedIndustry && availableSubIndustries.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="relative w-[75%] sm:w-[65%] md:w-[55%] lg:w-[45%] xl:w-[35%] mx-auto subindustry-dropdown-container"
+            >
+              <button
+                onClick={() => setIsSubIndustryOpen(!isSubIndustryOpen)}
+                className={`
+                  w-full px-4 py-3
+                  bg-white
+                  text-left
+                  rounded
+                  shadow-sm
+                  tracking-[0.05rem]
+                  border border-gray-100
+                  flex justify-between items-center
+                  transition-all duration-200
+                  ${isSubIndustryOpen ? 'ring-2 ring-[#46cdc6]' : 'hover:border-[#46cdc6]'}
+                `}
+              >
+                <span className={selectedSubIndustry ? 'text-[#1a1a1a]' : 'text-gray-400'}>
+                  {selectedSubIndustry || 'Select Sub-Industry'}
+                </span>
+                <div className="bg-[#46cdc6] px-1.5 py-1 rounded">
+                  <svg 
+                    className={`w-4 h-4 transition-transform duration-200 ${isSubIndustryOpen ? 'rotate-180' : ''}`}
+                    fill="none" 
+                    stroke="white"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </button>
+              {isSubIndustryOpen && (
+                <div className="absolute w-full mt-1 bg-gradient-to-b from-white via-white to-transparent rounded shadow-sm border border-gray-100 overflow-hidden z-[60]">
+                  <div className="max-h-48 overflow-y-auto scrollbar-hide">
+                    {availableSubIndustries.map((subIndustry) => (
+                      <button
+                        key={subIndustry}
+                        className={`
+                          w-full px-4 py-3
+                          text-left
+                          hover:bg-gray-50
+                          transition-colors
+                          ${selectedSubIndustry === subIndustry ? 'text-[#46cdc6]' : 'text-[#1a1a1a]'}
+                        `}
+                        onClick={() => handleSubIndustrySelect(subIndustry)}
+                      >
+                        {subIndustry}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
       </div>
       </main>
 
       <StickyActionBar 
         selectedIndustry={selectedIndustry}
+        selectedSubIndustry={selectedSubIndustry}
         onContinue={handleContinue}
       />
     </div>
