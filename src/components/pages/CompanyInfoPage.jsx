@@ -1,66 +1,71 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from '../shared/PageHeader';
+import { ChevronDown } from 'lucide-react';
 
 export function CompanyInfoPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [totalHeadcount, setTotalHeadcount] = useState('');
-  const [marketCap, setMarketCap] = useState('');
-  const [revenues, setRevenues] = useState('');
+  const [totalHeadcountRange, setTotalHeadcountRange] = useState('');
+  const [marketCapRange, setMarketCapRange] = useState('');
+  const [annualRevenueRange, setAnnualRevenueRange] = useState('');
+  const [isHeadcountOpen, setIsHeadcountOpen] = useState(false);
+  const [isMarketCapOpen, setIsMarketCapOpen] = useState(false);
+  const [isRevenueOpen, setIsRevenueOpen] = useState(false);
+  const headcountRef = useRef(null);
+  const marketCapRef = useRef(null);
+  const revenueRef = useRef(null);
+
+  // Predefined ranges
+  const headcountRanges = [
+    { value: '1-10', label: '1-10' },
+    { value: '11-50', label: '11-50' },
+    { value: '51-200', label: '51-200' },
+    { value: '201-500', label: '201-500' },
+    { value: '501-1000', label: '501-1,000' },
+    { value: '1001-5000', label: '1,001-5,000' },
+    { value: '5001-10000', label: '5,001-10,000' },
+    { value: '10000+', label: '10,000+' },
+  ];
+
+  const marketCapRanges = [
+    { value: '<10M', label: '< $10M' },
+    { value: '10M-100M', label: '$10M - $100M' },
+    { value: '100M-1B', label: '$100M - $1B' },
+    { value: '>1B', label: '> $1B' },
+  ];
+
+  const annualRevenueRanges = [
+    { value: '<1M', label: '< $1M' },
+    { value: '1M-10M', label: '$1M - $10M' },
+    { value: '10M-100M', label: '$10M - $100M' },
+    { value: '>100M', label: '> $100M' },
+  ];
 
   // Get data from previous pages
   const { industry, subIndustry, companyType, isListed, stockTicker } = location.state || {};
 
-  // Format number with commas (handles decimals)
-  const formatNumber = (value, allowDecimals = false) => {
-    if (!value) return '';
-    // Remove all commas first
-    let numericValue = value.replace(/,/g, '');
-    
-    if (allowDecimals) {
-      // Allow only one decimal point
-      const parts = numericValue.split('.');
-      if (parts.length > 2) {
-        numericValue = parts[0] + '.' + parts.slice(1).join('');
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (headcountRef.current && !headcountRef.current.contains(event.target)) {
+        setIsHeadcountOpen(false);
       }
-    } else {
-      // Remove decimal points for integers
-      numericValue = numericValue.replace(/\./g, '');
-    }
-    
-    // Split by decimal point if it exists
-    const parts = numericValue.split('.');
-    // Format the integer part with commas
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    return parts.join('.');
-  };
+      if (marketCapRef.current && !marketCapRef.current.contains(event.target)) {
+        setIsMarketCapOpen(false);
+      }
+      if (revenueRef.current && !revenueRef.current.contains(event.target)) {
+        setIsRevenueOpen(false);
+      }
+    };
 
-  const handleHeadcountChange = (e) => {
-    const value = e.target.value.replace(/[^0-9]/g, '');
-    setTotalHeadcount(formatNumber(value, false));
-  };
-
-  const handleMarketCapChange = (e) => {
-    let value = e.target.value.replace(/[^0-9.]/g, '');
-    // Ensure only one decimal point
-    const parts = value.split('.');
-    if (parts.length > 2) {
-      value = parts[0] + '.' + parts.slice(1).join('');
+    if (isHeadcountOpen || isMarketCapOpen || isRevenueOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-    setMarketCap(formatNumber(value, true));
-  };
+  }, [isHeadcountOpen, isMarketCapOpen, isRevenueOpen]);
 
-  const handleRevenuesChange = (e) => {
-    let value = e.target.value.replace(/[^0-9.]/g, '');
-    // Ensure only one decimal point
-    const parts = value.split('.');
-    if (parts.length > 2) {
-      value = parts[0] + '.' + parts.slice(1).join('');
-    }
-    setRevenues(formatNumber(value, true));
-  };
 
   const handleContinue = () => {
     const companyData = {
@@ -69,9 +74,9 @@ export function CompanyInfoPage() {
       companyType,
       isListed,
       stockTicker,
-      totalHeadcount: totalHeadcount ? parseInt(totalHeadcount.replace(/,/g, ''), 10) : null,
-      marketCap: marketCap ? marketCap.replace(/,/g, '') : '',
-      revenues: revenues ? revenues.replace(/,/g, '') : ''
+      totalHeadcountRange,
+      marketCapRange,
+      annualRevenueRange,
     };
     navigate("/offerings", { state: companyData });
   };
@@ -84,7 +89,7 @@ export function CompanyInfoPage() {
     }
   }, [industry, companyType, navigate]);
 
-  const canContinue = totalHeadcount.trim() !== '';
+  const canContinue = totalHeadcountRange !== '';
 
   return (
     <div className="min-h-screen bg-[#f3f2ed] text-gray-900 relative overflow-hidden">
@@ -101,58 +106,192 @@ export function CompanyInfoPage() {
 
           {/* Company Information Fields */}
           <div className="w-[75%] sm:w-[65%] md:w-[55%] lg:w-[45%] xl:w-[35%] mx-auto space-y-6">
-            {/* Total Headcount */}
-            <div>
+            {/* Total Headcount Range */}
+            <div className="relative" ref={headcountRef}>
               <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
                 Total Headcount <span className="text-red-500">*</span>
               </label>
-              <input
-                type="text"
-                value={totalHeadcount}
-                onChange={handleHeadcountChange}
-                placeholder="e.g., 1,000"
-                className="w-full px-4 py-3 bg-white rounded-lg border-2 border-gray-200 focus:border-[#46cdc6] focus:ring-2 focus:ring-[#46cdc6] outline-none transition-all duration-200"
-              />
+              <button
+                type="button"
+                onClick={() => setIsHeadcountOpen(!isHeadcountOpen)}
+                className={`
+                  w-full px-4 py-3
+                  bg-white
+                  text-left
+                  rounded-lg
+                  shadow-sm
+                  border-2
+                  flex justify-between items-center
+                  transition-all duration-200
+                  ${isHeadcountOpen ? 'border-[#46cdc6] ring-2 ring-[#46cdc6]' : 'border-gray-200 hover:border-[#46cdc6]'}
+                `}
+              >
+                <span className={totalHeadcountRange ? 'text-[#1a1a1a]' : 'text-gray-400'}>
+                  {totalHeadcountRange 
+                    ? headcountRanges.find(r => r.value === totalHeadcountRange)?.label 
+                    : 'Select headcount range'}
+                </span>
+                <div className="bg-[#46cdc6] px-1.5 py-1 rounded">
+                  <ChevronDown 
+                    className={`w-4 h-4 text-white transition-transform duration-200 ${isHeadcountOpen ? 'rotate-180' : ''}`}
+                  />
+                </div>
+              </button>
+              {isHeadcountOpen && (
+                <div className="absolute w-full mt-1 bg-white rounded-lg shadow-lg border-2 border-gray-200 overflow-hidden z-50">
+                  <div className="max-h-60 overflow-y-auto">
+                    {headcountRanges.map((range) => (
+                      <button
+                        key={range.value}
+                        type="button"
+                        onClick={() => {
+                          setTotalHeadcountRange(range.value);
+                          setIsHeadcountOpen(false);
+                        }}
+                        className={`
+                          w-full px-4 py-3
+                          text-left
+                          hover:bg-gray-50
+                          transition-colors
+                          ${totalHeadcountRange === range.value ? 'bg-[#46cdc6]/10 text-[#46cdc6] font-medium' : 'text-[#1a1a1a]'}
+                        `}
+                      >
+                        {range.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <p className="mt-1 text-xs text-gray-500">
                 Total number of employees
               </p>
             </div>
 
-            {/* Market Cap - Only for Public Companies */}
+            {/* Market Cap Range - Only for Public Companies */}
             {companyType === 'public' && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
+                className="relative"
+                ref={marketCapRef}
               >
                 <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
                   Market Cap (USD)
                 </label>
-                <input
-                  type="text"
-                  value={marketCap}
-                  onChange={handleMarketCapChange}
-                  placeholder="e.g., 1,000,000,000"
-                  className="w-full px-4 py-3 bg-white rounded-lg border-2 border-gray-200 focus:border-[#46cdc6] focus:ring-2 focus:ring-[#46cdc6] outline-none transition-all duration-200"
-                />
+                <button
+                  type="button"
+                  onClick={() => setIsMarketCapOpen(!isMarketCapOpen)}
+                  className={`
+                    w-full px-4 py-3
+                    bg-white
+                    text-left
+                    rounded-lg
+                    shadow-sm
+                    border-2
+                    flex justify-between items-center
+                    transition-all duration-200
+                    ${isMarketCapOpen ? 'border-[#46cdc6] ring-2 ring-[#46cdc6]' : 'border-gray-200 hover:border-[#46cdc6]'}
+                  `}
+                >
+                  <span className={marketCapRange ? 'text-[#1a1a1a]' : 'text-gray-400'}>
+                    {marketCapRange 
+                      ? marketCapRanges.find(r => r.value === marketCapRange)?.label 
+                      : 'Select market cap range'}
+                  </span>
+                  <div className="bg-[#46cdc6] px-1.5 py-1 rounded">
+                    <ChevronDown 
+                      className={`w-4 h-4 text-white transition-transform duration-200 ${isMarketCapOpen ? 'rotate-180' : ''}`}
+                    />
+                  </div>
+                </button>
+                {isMarketCapOpen && (
+                  <div className="absolute w-full mt-1 bg-white rounded-lg shadow-lg border-2 border-gray-200 overflow-hidden z-50">
+                    <div className="max-h-60 overflow-y-auto">
+                      {marketCapRanges.map((range) => (
+                        <button
+                          key={range.value}
+                          type="button"
+                          onClick={() => {
+                            setMarketCapRange(range.value);
+                            setIsMarketCapOpen(false);
+                          }}
+                          className={`
+                            w-full px-4 py-3
+                            text-left
+                            hover:bg-gray-50
+                            transition-colors
+                            ${marketCapRange === range.value ? 'bg-[#46cdc6]/10 text-[#46cdc6] font-medium' : 'text-[#1a1a1a]'}
+                          `}
+                        >
+                          {range.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <p className="mt-1 text-xs text-gray-500">
                   Market capitalization in USD
                 </p>
               </motion.div>
             )}
 
-            {/* Revenues */}
-            <div>
+            {/* Annual Revenue Range */}
+            <div className="relative" ref={revenueRef}>
               <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
                 Annual Revenues (USD)
               </label>
-              <input
-                type="text"
-                value={revenues}
-                onChange={handleRevenuesChange}
-                placeholder="e.g., 500,000,000"
-                className="w-full px-4 py-3 bg-white rounded-lg border-2 border-gray-200 focus:border-[#46cdc6] focus:ring-2 focus:ring-[#46cdc6] outline-none transition-all duration-200"
-              />
+              <button
+                type="button"
+                onClick={() => setIsRevenueOpen(!isRevenueOpen)}
+                className={`
+                  w-full px-4 py-3
+                  bg-white
+                  text-left
+                  rounded-lg
+                  shadow-sm
+                  border-2
+                  flex justify-between items-center
+                  transition-all duration-200
+                  ${isRevenueOpen ? 'border-[#46cdc6] ring-2 ring-[#46cdc6]' : 'border-gray-200 hover:border-[#46cdc6]'}
+                `}
+              >
+                <span className={annualRevenueRange ? 'text-[#1a1a1a]' : 'text-gray-400'}>
+                  {annualRevenueRange 
+                    ? annualRevenueRanges.find(r => r.value === annualRevenueRange)?.label 
+                    : 'Select annual revenue range'}
+                </span>
+                <div className="bg-[#46cdc6] px-1.5 py-1 rounded">
+                  <ChevronDown 
+                    className={`w-4 h-4 text-white transition-transform duration-200 ${isRevenueOpen ? 'rotate-180' : ''}`}
+                  />
+                </div>
+              </button>
+              {isRevenueOpen && (
+                <div className="absolute w-full mb-1 bottom-full bg-white rounded-lg shadow-lg border-2 border-gray-200 overflow-hidden z-50">
+                  <div className="max-h-60 overflow-y-auto">
+                    {annualRevenueRanges.map((range) => (
+                      <button
+                        key={range.value}
+                        type="button"
+                        onClick={() => {
+                          setAnnualRevenueRange(range.value);
+                          setIsRevenueOpen(false);
+                        }}
+                        className={`
+                          w-full px-4 py-3
+                          text-left
+                          hover:bg-gray-50
+                          transition-colors
+                          ${annualRevenueRange === range.value ? 'bg-[#46cdc6]/10 text-[#46cdc6] font-medium' : 'text-[#1a1a1a]'}
+                        `}
+                      >
+                        {range.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <p className="mt-1 text-xs text-gray-500">
                 Annual revenue in USD
               </p>

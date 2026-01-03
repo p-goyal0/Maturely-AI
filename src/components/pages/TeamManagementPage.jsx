@@ -410,16 +410,16 @@ export function TeamManagementPage() {
             <div className="bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/60 overflow-hidden shadow-2xl shadow-slate-200/50">
               {/* Table Header */}
               <div className="grid grid-cols-12 gap-6 px-8 py-5 bg-gradient-to-r from-slate-50 to-white border-b border-slate-200">
-                <div className="col-span-4">
+                <div className="col-span-5">
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Team Member</span>
                 </div>
-                <div className="col-span-3">
+                {/* <div className="col-span-3">
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Role</span>
-                </div>
+                </div> */}
                 <div className="col-span-2">
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Status</span>
                 </div>
-                <div className="col-span-3">
+                <div className="col-span-5">
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</span>
                 </div>
               </div>
@@ -442,7 +442,7 @@ export function TeamManagementPage() {
                         `}
                       >
                         {/* Member Info */}
-                        <div className="col-span-4 flex items-center gap-4">
+                        <div className="col-span-5 flex items-center gap-4">
                           <div className={`
                             w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold shadow-md
                             ${isSuperAdmin
@@ -459,7 +459,7 @@ export function TeamManagementPage() {
                         </div>
 
                         {/* Role */}
-                        <div className="col-span-3 flex items-center">
+                        {/* <div className="col-span-3 flex items-center">
                           <div className="flex items-center gap-2">
                             <span className="text-2xl">{getRoleEmoji(member.role)}</span>
                             <span className="font-medium text-slate-900">{member.role}</span>
@@ -469,7 +469,7 @@ export function TeamManagementPage() {
                               </span>
                             )}
                           </div>
-                        </div>
+                        </div> */}
 
                         {/* Status */}
                         <div className="col-span-2 flex items-center">
@@ -477,7 +477,7 @@ export function TeamManagementPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="col-span-3 flex items-center gap-2">
+                        <div className="col-span-5 flex items-center gap-2">
                           {member.status === 'pending' && (
                             <Button
                               variant="outline"

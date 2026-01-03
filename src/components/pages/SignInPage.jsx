@@ -229,7 +229,8 @@ export function SignInPage() {
               </Button>
             </form>
 
-            <motion.div 
+            {/* Google Sign In - Commented out for now */}
+            {/* <motion.div 
               className="text-center mt-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -248,7 +249,7 @@ export function SignInPage() {
                 </svg>
                 Sign In with Google
               </Button>
-            </motion.div>
+            </motion.div> */}
 
                   <motion.div
               className="text-center mt-4"

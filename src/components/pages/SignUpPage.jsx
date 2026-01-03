@@ -3,15 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Eye, EyeOff, ArrowRight, CheckCircle2, Zap, Users, TrendingUp, AlertCircle, Lock } from 'lucide-react';
-import { motion } from "motion/react";
+import { Eye, EyeOff, ArrowRight, CheckCircle2, Zap, Users, TrendingUp, AlertCircle, Lock, X, ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from "motion/react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { signUp as signUpAPI, getTermsOfService } from "../../services/authService";
 
 export function SignUpPage() {
   const navigate = useNavigate();
-  const { signUp } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
@@ -26,6 +25,101 @@ export function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showTOSModal, setShowTOSModal] = useState(false);
+  const [tosContent, setTosContent] = useState(null);
+  const [isLoadingTOS, setIsLoadingTOS] = useState(false);
+  const [tosError, setTosError] = useState(null);
+  const [expandedSections, setExpandedSections] = useState({});
+
+  /**
+   * Parse HTML content and extract sections
+   */
+  const parseTOSContent = (htmlContent) => {
+    if (!htmlContent) return [];
+    
+    // Remove the duplicate "Terms and Conditions" heading from the beginning of content
+    // Pattern matches: <p><strong>Terms and Conditions</strong> or <p>Terms and Conditions
+    let cleanedContent = htmlContent.replace(
+      /<p>(?:<strong>)?\s*Terms\s+and\s+Conditions\s*(?:<\/strong>)?\s*<br>/i,
+      ''
+    );
+    
+    // Also remove "Last Updated" line if it follows immediately
+    cleanedContent = cleanedContent.replace(
+      /<p><em>Last\s+Updated[^<]*<\/em><\/p>\s*/i,
+      ''
+    );
+    
+    // Pattern to match numbered sections: <p>1. Title<br> or <p>1. Title<br> (handles \r\n)
+    // Also handles cases with <strong> tags: <p><strong>1. Title</strong><br>
+    const sectionPattern = /<p>(?:<strong>)?(\d+)\.\s+([^<]+)(?:<\/strong>)?<br>/gi;
+    const sections = [];
+    const matches = [];
+    
+    // Find all section matches
+    let match;
+    while ((match = sectionPattern.exec(cleanedContent)) !== null) {
+      matches.push({
+        number: match[1],
+        title: match[2].trim(),
+        startIndex: match.index,
+        headerLength: match[0].length,
+      });
+    }
+
+    if (matches.length === 0) {
+      // No sections found, return as single content block
+      return [{
+        type: 'content',
+        content: cleanedContent,
+      }];
+    }
+
+    // Process each section
+    for (let i = 0; i < matches.length; i++) {
+      const currentMatch = matches[i];
+      const nextMatch = matches[i + 1];
+      
+      // Get content before first section
+      if (i === 0 && currentMatch.startIndex > 0) {
+        const beforeContent = cleanedContent.substring(0, currentMatch.startIndex);
+        if (beforeContent.trim()) {
+          sections.push({
+            type: 'content',
+            content: beforeContent,
+          });
+        }
+      }
+
+      // Get section content (from after header to next section or end)
+      const contentStart = currentMatch.startIndex + currentMatch.headerLength;
+      const contentEnd = nextMatch ? nextMatch.startIndex : cleanedContent.length;
+      let sectionContent = cleanedContent.substring(contentStart, contentEnd);
+      
+      // Clean up the content (remove leading/trailing whitespace, \r\n)
+      sectionContent = sectionContent.trim();
+
+      sections.push({
+        type: 'section',
+        number: currentMatch.number,
+        title: currentMatch.title,
+        content: sectionContent,
+        id: `section-${currentMatch.number}`,
+      });
+    }
+
+    return sections;
+  };
+
+  /**
+   * Toggle section expansion
+   */
+  const toggleSection = (sectionId) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId],
+    }));
+  };
 
   const authImages = [
     {
@@ -85,10 +179,36 @@ export function SignUpPage() {
     }
   };
 
-  const handleSignUp = (e) => {
+  const handleTermsClick = async (e) => {
+    e.preventDefault();
+    setShowTOSModal(true);
+    setIsLoadingTOS(true);
+    setTosError(null);
+    setExpandedSections({}); // Reset expanded sections
+    
+    const result = await getTermsOfService();
+    
+    if (result.success) {
+      setTosContent(result.data);
+      // Parse sections and set first section to collapsed (not in expandedSections)
+      const sections = parseTOSContent(result.data.content);
+      const firstSection = sections.find(s => s.type === 'section');
+      if (firstSection) {
+        // First section starts collapsed, so don't add it to expandedSections
+        setExpandedSections({});
+      }
+    } else {
+      setTosError(result.error || 'Failed to load Terms and Conditions');
+    }
+    
+    setIsLoadingTOS(false);
+  };
+
+  const handleSignUp = async (e) => {
     e.preventDefault();
     setError("");
     
+    // Validation
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords don't match");
       return;
@@ -106,13 +226,35 @@ export function SignUpPage() {
 
     setIsLoading(true);
     
-    const result = signUp(formData.username, formData.password);
-    
-    if (result.success) {
-      navigate("/industry");
-    } else {
-      setError(result.error || "Registration failed");
+    try {
+      // Get device info
+      const deviceInfo = `${navigator.userAgent || 'Browser'}`;
+      
+      // Map form data to API format
+      const signUpData = {
+        email: formData.email,
+        password: formData.password,
+        full_name: formData.fullName,
+        user_name: formData.username,
+        organization_name: formData.companyName,
+        tos_accepted: formData.agreeToTerms ? "true" : "false",
+        device_info: deviceInfo,
+      };
+
+      const result = await signUpAPI(signUpData);
+      
+      if (result.success) {
+        // Token is automatically stored by the service
+        // Navigate to industry selection page
+        navigate("/industry");
+      } else {
+        setError(result.error || "Registration failed. Please try again.");
+        setIsLoading(false);
+      }
+    } catch (error) {
+      setError("An unexpected error occurred. Please try again.");
       setIsLoading(false);
+      console.error('Sign up error:', error);
     }
   };
 
@@ -416,10 +558,15 @@ export function SignUpPage() {
                                 />
                     <span className="text-sm text-slate-600">
                       I agree with the{" "}
-                      <button type="button" className="underline hover:no-underline" style={{ color: '#15ae99' }}>
+                      <button 
+                        type="button" 
+                        onClick={handleTermsClick}
+                        className="underline hover:no-underline" 
+                        style={{ color: '#15ae99' }}
+                      >
                         Terms & Condition
-                                  </button>
-                                </span>
+                      </button>
+                    </span>
                   </div>
                           </>
                         )}
@@ -455,7 +602,8 @@ export function SignUpPage() {
                         )}
                       </form>
 
-              <motion.div
+              {/* Google Sign Up - Commented out for now */}
+              {/* <motion.div
               className="text-center mt-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -474,7 +622,7 @@ export function SignUpPage() {
                 </svg>
                 Sign Up with Google
               </Button>
-                        </motion.div>
+                        </motion.div> */}
 
                   <motion.div
               className="text-center mt-4"
@@ -496,6 +644,120 @@ export function SignUpPage() {
           </motion.div>
               </motion.div>
       </div>
+
+      {/* Terms and Conditions Modal */}
+      <AnimatePresence>
+        {showTOSModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => setShowTOSModal(false)}
+            />
+            
+            {/* Modal Content */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col z-50"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 className="text-2xl font-bold text-slate-900">
+                  Terms and Conditions
+                </h2>
+                <button
+                  onClick={() => setShowTOSModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+              
+              {/* Content */}
+              <div className="flex-1 overflow-y-auto p-6">
+                {isLoadingTOS && (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="w-8 h-8 border-4 border-[#15ae99] border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+                
+                {tosError && (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                    {tosError}
+                  </div>
+                )}
+                
+                {!isLoadingTOS && !tosError && tosContent && (() => {
+                  const sections = parseTOSContent(tosContent.content);
+                  return (
+                    <div className="space-y-4">
+                      {sections.map((section, index) => {
+                        if (section.type === 'content') {
+                          return (
+                            <div
+                              key={`content-${index}`}
+                              className="prose prose-slate max-w-none text-slate-700"
+                              dangerouslySetInnerHTML={{ __html: section.content }}
+                            />
+                          );
+                        }
+
+                        const isExpanded = expandedSections[section.id];
+                        
+                        return (
+                          <div
+                            key={section.id}
+                            className="border border-gray-200 rounded-lg overflow-hidden"
+                          >
+                            {/* Section Header */}
+                            <button
+                              onClick={() => toggleSection(section.id)}
+                              className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left"
+                            >
+                              <span className="text-lg font-bold text-slate-900">
+                                {section.number}. {section.title}
+                              </span>
+                              <motion.div
+                                animate={{ rotate: isExpanded ? 180 : 0 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                <ChevronDown className="w-5 h-5 text-slate-700" />
+                              </motion.div>
+                            </button>
+
+                            {/* Section Content */}
+                            <AnimatePresence>
+                              {isExpanded && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.3 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div
+                                    className="p-4 prose prose-slate max-w-none text-slate-700"
+                                    dangerouslySetInnerHTML={{ __html: section.content }}
+                                  />
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

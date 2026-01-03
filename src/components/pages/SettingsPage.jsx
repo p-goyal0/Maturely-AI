@@ -40,57 +40,75 @@ export function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden">
-      {/* Background elements */}
+      {/* Background elements similar to homepage */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-40 left-1/4 w-96 h-96 bg-[#46CDCF]/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-40 right-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#46cdc6]/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-[#46cdc6]/5 rounded-full blur-[100px]" />
       </div>
+
+      {/* Tiles background pattern */}
+      <div 
+        className="absolute inset-0 opacity-20"
+        style={{
+          backgroundImage: 'url("/background/tiles.png")',
+          backgroundSize: '80px 80px',
+          backgroundRepeat: 'repeat',
+          filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3)) brightness(1.2)',
+        }}
+      />
 
       {/* Header */}
       <PageHeader />
 
-      <div className="relative">
-        {/* Hero Section */}
-        <div className="px-8 pt-12 pb-8 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-7xl mx-auto"
-          >
-            <motion.div 
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#46CDCF]/10 to-purple-500/10 rounded-full mb-6 border border-[#46CDCF]/20"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.1 }}
-            >
-              <Sparkles className="w-4 h-4 text-[#46CDCF]" />
-              <span className="text-sm font-semibold text-[#46CDCF]">SETTINGS</span>
-            </motion.div>
-
-            <motion.h1 
-              className="text-6xl font-bold text-slate-900 mb-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              Account Settings
-            </motion.h1>
-            
-            <motion.p 
-              className="text-xl text-slate-600 max-w-3xl"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              Configure your organization preferences and billing information.
-            </motion.p>
-          </motion.div>
+      {/* SECTION 1: Hero Section */}
+      <div className="px-8 pt-12 pb-8 relative z-10">
+        {/* Floating Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-40 right-40 w-96 h-96 bg-[#46CDCF]/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-40 left-40 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl" />
         </div>
 
-        {/* Content */}
-        <div className="px-8 pb-12 relative z-10">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-12 gap-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-7xl mx-auto relative"
+        >
+          <div className="flex items-start justify-between mb-12">
+            <div>
+              <motion.div 
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#46CDCF]/10 to-amber-500/10 rounded-full mb-6 border border-[#46CDCF]/20"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 }}
+              >
+                <Sparkles className="w-4 h-4 text-[#46CDCF]" />
+                <span className="text-sm font-semibold text-[#46CDCF]">SETTINGS</span>
+              </motion.div>
+              <motion.h1 
+                className="text-6xl font-bold text-slate-900 mb-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                Account Settings
+              </motion.h1>
+              <motion.p 
+                className="text-xl text-slate-600 max-w-3xl"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                Configure your organization preferences and billing information.
+              </motion.p>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Content */}
+      <div className="px-8 pb-12 relative z-10">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-12 gap-6">
               {/* Sidebar Tabs */}
               <motion.div 
                 className="col-span-3"
@@ -178,16 +196,13 @@ export function SettingsPage() {
                             <label className="block font-semibold text-slate-900 mb-3">
                               Language
                             </label>
-                            <select
-                              value={language}
-                              onChange={(e) => setLanguage(e.target.value)}
-                              className="w-full px-5 py-4 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#46CDCF] focus:border-transparent text-slate-900 bg-white"
-                            >
-                              <option>English</option>
-                              <option>Spanish</option>
-                              <option>French</option>
-                              <option>German</option>
-                            </select>
+                            <input
+                              type="text"
+                              value="English"
+                              readOnly
+                              disabled
+                              className="w-full px-5 py-4 border border-slate-200 rounded-xl text-slate-900 bg-slate-50 cursor-not-allowed opacity-75"
+                            />
                           </div>
                         </div>
                       </div>
@@ -301,7 +316,7 @@ export function SettingsPage() {
 
                   {/* Save Button */}
                   <div className="mt-8 pt-6 border-t border-slate-200 flex justify-end gap-4">
-                    <Button variant="outline" className="rounded-xl border-2 px-8">
+                    <Button variant="outline" className="rounded-xl border-2 border-slate-300 px-8 text-slate-700 hover:bg-slate-50 hover:border-slate-400">
                       Cancel
                     </Button>
                     <Button 
@@ -318,9 +333,6 @@ export function SettingsPage() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
-
-
 

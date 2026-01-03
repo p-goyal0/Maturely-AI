@@ -6,144 +6,40 @@ import { LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
 import { StickyActionBar } from '../industry/StickyActionBar.jsx';
+import { getIndustries } from "../../services/industryService";
+import { PageHeader } from '../shared/PageHeader';
 
-const industries = [
-  { id: 'aerospace-defense', name: 'Aerospace & Defense', description: 'Aerospace & defense operations' },
-  { id: 'agriculture-forestry', name: 'Agriculture & Forestry', description: 'Farming, forestry & food production' },
-  { id: 'architecture-engineering', name: 'Architecture & Engineering', description: 'Design & engineering services' },
-  { id: 'automotive-mobility', name: 'Automotive & Mobility', description: 'Automotive & transportation solutions' },
-  { id: 'construction', name: 'Construction', description: 'Building & infrastructure development' },
-  { id: 'education', name: 'Education', description: 'Learning institutions & EdTech' },
-  { id: 'energy-oil-gas-mining', name: 'Energy: Oil, Gas & Mining', description: 'Oil, gas & mining operations' },
-  { id: 'energy-utilities-renewables', name: 'Energy: Utilities & Renewables', description: 'Power generation & renewable energy' },
-  { id: 'financial-services', name: 'Financial Services', description: 'Banking, insurance & investments' },
-  { id: 'government-public-sector', name: 'Government & Public Sector', description: 'Government & public services' },
-  { id: 'healthcare', name: 'Healthcare', description: 'Medical services & pharmaceuticals' },
-  { id: 'hospitality-travel-leisure', name: 'Hospitality, Travel & Leisure', description: 'Tourism, hospitality & leisure' },
-  { id: 'insurance', name: 'Insurance', description: 'Insurance services' },
-  { id: 'legal-professional-services', name: 'Legal & Professional Services', description: 'Legal & professional consulting' },
-  { id: 'life-sciences', name: 'Life Sciences', description: 'Biotechnology & life sciences' },
-  { id: 'manufacturing', name: 'Manufacturing', description: 'Production & industrial operations' },
-  { id: 'media-entertainment-gaming', name: 'Media, Entertainment & Gaming', description: 'Media, entertainment & gaming' },
-  { id: 'non-profit-ngo', name: 'Non-Profit & NGO', description: 'Non-profit organizations & NGOs' },
-  { id: 'real-estate', name: 'Real Estate', description: 'Property & real estate services' },
-  { id: 'retail-ecommerce', name: 'Retail & E-Commerce', description: 'Consumer goods & online sales' },
-  { id: 'technology-software', name: 'Technology & Software', description: 'Software & IT services' },
-  { id: 'telecommunications', name: 'Telecommunications', description: 'Network & communication services' },
-  { id: 'transportation-logistics', name: 'Transportation & Logistics', description: 'Transportation & warehousing' },
-  { id: 'other', name: 'Other', description: 'Other industries' },
-];
+/**
+ * Convert industry name to ID (slug format)
+ */
+const generateIndustryId = (name) => {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+};
 
-const subIndustries = {
-  'aerospace-defense': [
-    'Commercial Aviation',
-    'Defense Contractors',
-    'Space & Satellite'
-  ],
-  'agriculture-forestry': [
-    'AgTech / Precision Farming',
-    'Livestock & Dairy',
-    'Timber & Forestry'
-  ],
-  'architecture-engineering': [
-    'Architecture Firms',
-    'Civil Engineering Firms'
-  ],
-  'automotive-mobility': [
-    'OEMs (Vehicle Manufacturers)',
-    'Tier 1 Parts Suppliers',
-    'Dealership Networks'
-  ],
-  'construction': [
-    'Commercial: General Contractors',
-    'Commercial: Civil Infrastructure',
-    'Commercial: Specialty Trade (MEP)',
-    'Residential: Production Home Builders',
-    'Residential: Custom Builders'
-  ],
-  'education': [
-    'Higher Education (Universities)',
-    'K-12 Districts',
-    'EdTech & Corporate Training'
-  ],
-  'energy-oil-gas-mining': [
-    'Upstream (Exploration)',
-    'Downstream (Refining)',
-    'Mining & Metals'
-  ],
-  'energy-utilities-renewables': [
-    'Electric, Water & Gas Utilities',
-    'Renewables (Wind/Solar)',
-    'Waste Management & Recycling'
-  ],
-  'financial-services': [
-    'Retail Banking',
-    'Capital Markets & Trading',
-    'Wealth Management',
-    'Payment Processors & Gateways'
-  ],
-  'government-public-sector': [
-    'Federal / Central Agencies',
-    'State & Local Government',
-    'Public Safety & Justice'
-  ],
-  'healthcare': [
-    'Providers (Hospitals & Systems)',
-    'Payers (Health Insurance)',
-    'Digital Health & Telehealth'
-  ],
-  'hospitality-travel-leisure': [
-    'Airlines',
-    'Hotels, Casinos & Lodging',
-    'Food Service & Restaurants'
-  ],
-  'insurance': [
-    'Property & Casualty (P&C)',
-    'Life & Annuity'
-  ],
-  'legal-professional-services': [
-    'Law Firms',
-    'Accounting & Audit',
-    'BPO (Business Process Outsourcing)'
-  ],
-  'life-sciences': [
-    'Pharmaceuticals',
-    'Medical Devices'
-  ],
-  'manufacturing': [
-    'Discrete (Electronics/Auto)',
-    'Process (Chemicals/Food)',
-    'Package Manufacturing'
-  ],
-  'media-entertainment-gaming': [
-    'Streaming & Publishing',
-    'Video Gaming'
-  ],
-  'non-profit-ngo': [
-    'Charitable Foundations',
-    'Associations & Unions'
-  ],
-  'real-estate': [
-    'Commercial (CRE)',
-    'Residential Brokerage & PropTech'
-  ],
-  'retail-ecommerce': [
-    'E-Commerce / Direct-to-Consumer',
-    'Brick & Mortar / Grocery',
-    'Fashion & Luxury'
-  ],
-  'technology-software': [
-    'B2B SaaS',
-    'Infrastructure & Cloud'
-  ],
-  'telecommunications': [
-    'Mobile Network Operators (MNOs)',
-    'ISPs & Broadband'
-  ],
-  'transportation-logistics': [
-    '3PL & Freight Forwarding',
-    'Last-Mile Delivery'
-  ]
+/**
+ * Transform API response to component format
+ */
+const transformIndustriesData = (apiData) => {
+  const industries = [];
+  const subIndustries = {};
+
+  apiData.forEach((item) => {
+    const id = generateIndustryId(item.industry);
+    industries.push({
+      id,
+      name: item.industry,
+      description: `${item.industry} operations`,
+    });
+
+    if (item.sub_industry && item.sub_industry.length > 0) {
+      subIndustries[id] = item.sub_industry;
+    }
+  });
+
+  return { industries, subIndustries };
 };
 
 export function IndustrySelectionPage() {
@@ -156,6 +52,10 @@ export function IndustrySelectionPage() {
   const [isSubIndustryOpen, setIsSubIndustryOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [industries, setIndustries] = useState([]);
+  const [subIndustries, setSubIndustries] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const handleIndustrySelect = (industry) => {
     setSelectedIndustry(industry);
@@ -192,6 +92,31 @@ export function IndustrySelectionPage() {
       navigate("/");
     }, 0);
   };
+
+  // Fetch industries from API
+  useEffect(() => {
+    const fetchIndustries = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      const result = await getIndustries();
+      
+      if (result.success) {
+        const transformed = transformIndustriesData(result.data);
+        setIndustries(transformed.industries);
+        setSubIndustries(transformed.subIndustries);
+      } else {
+        setError(result.error || 'Failed to load industries');
+        // Fallback to empty arrays if API fails
+        setIndustries([]);
+        setSubIndustries({});
+      }
+      
+      setIsLoading(false);
+    };
+
+    fetchIndustries();
+  }, []);
 
   // Scroll detection for header
   useEffect(() => {
@@ -237,51 +162,7 @@ export function IndustrySelectionPage() {
     <div className="min-h-screen bg-[#f3f2ed] text-gray-900 relative overflow-hidden">
 
       {/* Header */}
-      <motion.div
-        className={`fixed top-0 left-0 right-0 z-40 transition-transform duration-300 ${
-          isScrolled ? "-translate-y-full" : "translate-y-0"
-        }`}
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        <div className="pt-4 px-4 sm:px-6 lg:px-8">
-          <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg px-6 lg:px-8 py-3 border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <img src="/logo/wings.png" alt="Logo" className="h-10 w-10 lg:h-8 lg:w-12 transition-all duration-300 group-hover:scale-110" />
-                <img src="/logo/maturely_logo.png" alt="MATURITY.AI" className="h-4 lg:h-5 transition-all duration-300 group-hover:scale-110" />
-              </div>
-              
-              <div className="flex items-center gap-3">
-                <span className="text-gray-900 font-semibold text-sm">
-                  {currentUser?.username || 'User'}
-                </span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="cursor-pointer flex items-center gap-2 hover:opacity-80 transition-opacity outline-none">
-                      <Avatar className="h-10 w-10 bg-[#46cdc6]">
-                        <AvatarFallback className="bg-[#46cdc6] text-white font-semibold">
-                          {currentUser?.username?.charAt(0).toUpperCase() || 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-40">
-                    <DropdownMenuItem
-                      onClick={handleSignOut}
-                      className="cursor-pointer"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
+      <PageHeader />
 
       {/* Main content */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-10 sm:py-12 md:py-16 min-h-screen pt-24 pb-24">
@@ -290,8 +171,23 @@ export function IndustrySelectionPage() {
             What's your industry?
           </h1>
 
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex items-center justify-center py-8">
+              <div className="w-8 h-8 border-4 border-[#46cdc6] border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && !isLoading && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm max-w-md mx-auto">
+              {error}
+            </div>
+          )}
+
           {/* Industry Dropdown */}
-          <div className="relative w-[75%] sm:w-[65%] md:w-[55%] lg:w-[45%] xl:w-[35%] mx-auto industry-dropdown-container mb-4">
+          {!isLoading && (
+            <div className="relative w-[75%] sm:w-[65%] md:w-[55%] lg:w-[45%] xl:w-[35%] mx-auto industry-dropdown-container mb-4">
             <button
               onClick={() => setIsOpen(!isOpen)}
               className={`
@@ -325,9 +221,16 @@ export function IndustrySelectionPage() {
               <div className="absolute w-full mt-1 bg-gradient-to-b from-white via-white to-transparent rounded shadow-sm border border-gray-100 overflow-hidden z-[60]">
                 <div className="max-h-48 overflow-y-auto scrollbar-hide">
                   {[...industries]
-                    .filter(industry => industry.id !== 'other')
+                    .filter(industry => {
+                      const id = generateIndustryId(industry.name);
+                      return id !== 'other';
+                    })
                     .sort((a, b) => a.name.localeCompare(b.name))
-                    .concat(industries.find(industry => industry.id === 'other'))
+                    .concat(industries.find(industry => {
+                      const id = generateIndustryId(industry.name);
+                      return id === 'other';
+                    }))
+                    .filter(Boolean) // Remove undefined if "Other" not found
                     .map((industry) => (
                     <button
                       key={industry.id}
@@ -346,10 +249,11 @@ export function IndustrySelectionPage() {
                 </div>
               </div>
             )}
-          </div>
+            </div>
+          )}
 
           {/* Sub-Industry Dropdown - Only show if industry is selected and not "Other" */}
-          {selectedIndustry && availableSubIndustries.length > 0 && (
+          {!isLoading && selectedIndustry && availableSubIndustries.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -408,7 +312,7 @@ export function IndustrySelectionPage() {
               )}
             </motion.div>
           )}
-      </div>
+        </div>
       </main>
 
       <StickyActionBar 

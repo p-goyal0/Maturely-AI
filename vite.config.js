@@ -22,4 +22,6 @@ export default defineConfig({
     port: 5173,
     open: false,
   },
+  // Load environment variables
+  envPrefix: 'VITE_',
 });

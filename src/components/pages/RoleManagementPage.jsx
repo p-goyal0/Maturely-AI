@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Users, Lock, Sparkles, ChevronRight, ChevronDown, Crown, UserPlus, Plus, X, Check, AlertCircle, Database, Key, DollarSign, UserCog } from 'lucide-react';
+import { Shield, Users, Lock, Sparkles, ChevronRight, ChevronDown, Crown, UserPlus, Plus, X, Check, AlertCircle, Database, Key, DollarSign, UserCog, MoreVertical } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
 import { Button } from '../ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
+import { Checkbox } from '../ui/checkbox';
 
 // Hardcoded JSON data (will be replaced with API data later)
 const ROLES_DATA = {
@@ -147,7 +148,6 @@ const AVAILABLE_ROLES = [
   { value: '', label: 'View Only', icon: UserCog, color: 'slate' },
   { value: 'Super Admin', label: 'Super Admin', icon: Crown, color: 'amber' },
   { value: 'Regular member', label: 'Regular member', icon: Users, color: 'blue' },
-  { value: 'Billing Contact', label: 'Billing Contact', icon: DollarSign, color: 'green' },
 ];
 
 // Available pillars
@@ -161,6 +161,12 @@ const AVAILABLE_PILLARS = [
   'Operations & Implementation'
 ];
 
+// Available modules
+const AVAILABLE_MODULES = [
+  { id: 'usecase', name: 'Usecase Module', permissions: ['Read only', 'Create/Edit'] },
+  { id: 'roadmap', name: 'Roadmap Module', comingSoon: true }
+];
+
 export function RoleManagementPage() {
   // Transform users data to include their current roles
   const getUsersWithRoles = () => {
@@ -169,9 +175,15 @@ export function RoleManagementPage() {
       const assignedRole = ROLES_DATA.roles.find(role => 
         role.assignedUsers.includes(user.id)
       );
+      let roleName = assignedRole ? assignedRole.name : '';
+      // Convert removed roles to "Regular member" since they're no longer in dropdown
+      const removedRoles = ['Billing Contact', 'Module Assignment', 'Data Module', 'Security Module'];
+      if (removedRoles.includes(roleName)) {
+        roleName = 'Regular member';
+      }
       return {
         ...user,
-        role: assignedRole ? assignedRole.name : '',
+        role: roleName,
         status: 'active' // Default status
       };
     });
@@ -179,12 +191,16 @@ export function RoleManagementPage() {
 
   const [users, setUsers] = useState(getUsersWithRoles().map(user => ({
     ...user,
-    assignedPillars: [] // Initialize with empty array for assigned pillars
+    assignedPillars: [], // Initialize with empty array for assigned pillars
+    assignedModules: [] // Initialize with empty array for assigned modules
   })));
   const [roles, setRoles] = useState(ROLES_DATA.roles);
   const [showPillarModal, setShowPillarModal] = useState(null); // userId for which modal is open
+  const [showModuleModal, setShowModuleModal] = useState(null); // userId for which module modal is open
   const [selectedPillars, setSelectedPillars] = useState([]); // Temporary selection in modal
+  const [selectedModules, setSelectedModules] = useState([]); // Temporary selection in module modal
   const [openRoleDropdown, setOpenRoleDropdown] = useState(null); // userId for which role dropdown is open
+  const [openActionMenu, setOpenActionMenu] = useState(null); // userId for which action menu is open
 
   // Get role icon component
   const getRoleIcon = (roleName) => {
@@ -204,8 +220,8 @@ export function RoleManagementPage() {
     return {
       'Super Admin': users.filter(u => u.role === 'Super Admin').length,
       'Regular member': users.filter(u => u.role === 'Regular member').length,
-      'Billing Contact': users.filter(u => u.role === 'Billing Contact').length,
       'View Only': users.filter(u => !u.role || u.role === '').length,
+      'Billing Contact': users.filter(u => u.isBillingContact).length,
     };
   };
 
@@ -283,6 +299,82 @@ export function RoleManagementPage() {
     setUsers(users.map(u => 
       u.id === userId 
         ? { ...u, assignedPillars: u.assignedPillars.filter(p => p !== pillar) }
+        : u
+    ));
+  };
+
+  // Handle opening module assignment modal
+  const handleOpenModuleModal = (userId) => {
+    const user = users.find(u => u.id === userId);
+    setSelectedModules(user?.assignedModules || []);
+    setShowModuleModal(userId);
+    setOpenActionMenu(null); // Close the action menu
+  };
+
+  // Check if module is selected
+  const isModuleSelected = (moduleId) => {
+    return selectedModules.some(m => m.moduleId === moduleId);
+  };
+
+  // Get module permission
+  const getModulePermission = (moduleId) => {
+    const module = selectedModules.find(m => m.moduleId === moduleId);
+    return module?.permission || null;
+  };
+
+  // Handle closing module assignment modal
+  const handleCloseModuleModal = () => {
+    setShowModuleModal(null);
+    setSelectedModules([]);
+  };
+
+  // Handle toggling module selection
+  const handleToggleModule = (moduleId) => {
+    const module = AVAILABLE_MODULES.find(m => m.id === moduleId);
+    if (module?.comingSoon) return; // Don't allow selection of coming soon modules
+    
+    setSelectedModules(prev => {
+      const exists = prev.find(m => m.moduleId === moduleId);
+      if (exists) {
+        return prev.filter(m => m.moduleId !== moduleId);
+      } else {
+        // For usecase module, default to "Read only"
+        return [...prev, { moduleId, permission: moduleId === 'usecase' ? 'Read only' : null }];
+      }
+    });
+  };
+
+  // Handle changing module permission
+  const handleChangeModulePermission = (moduleId, permission) => {
+    setSelectedModules(prev => {
+      const exists = prev.find(m => m.moduleId === moduleId);
+      if (exists) {
+        return prev.map(m => 
+          m.moduleId === moduleId ? { ...m, permission } : m
+        );
+      } else {
+        return [...prev, { moduleId, permission }];
+      }
+    });
+  };
+
+  // Handle saving module assignments
+  const handleSaveModules = () => {
+    if (showModuleModal) {
+      setUsers(users.map(u => 
+        u.id === showModuleModal 
+          ? { ...u, assignedModules: selectedModules }
+          : u
+      ));
+      handleCloseModuleModal();
+    }
+  };
+
+  // Handle removing a module from user
+  const handleRemoveModule = (userId, module) => {
+    setUsers(users.map(u => 
+      u.id === userId 
+        ? { ...u, assignedModules: u.assignedModules.filter(m => m !== module) }
         : u
     ));
   };
@@ -432,8 +524,11 @@ export function RoleManagementPage() {
               <div className="col-span-3">
                 <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Assigned Pillars</span>
               </div>
-              <div className="col-span-2">
+              <div className="col-span-1">
                 <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Action</span>
+              </div>
+              <div className="col-span-1">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Billing Contact</span>
               </div>
             </div>
 
@@ -586,14 +681,54 @@ export function RoleManagementPage() {
                       )}
                     </div>
 
-                    {/* Action - Assign Pillars Button */}
-                    <div className="col-span-2 flex items-center">
-                      <Button
-                        onClick={() => handleOpenPillarModal(user.id)}
-                        className="bg-[#46CDCF] hover:bg-[#15ae99] text-white px-4 py-2 rounded-xl text-sm font-medium"
-                      >
-                        Assign Pillars
-                      </Button>
+                    {/* Action - Three Dots Menu */}
+                    <div className="col-span-1 flex items-center justify-center">
+                      <DropdownMenu open={openActionMenu === user.id} onOpenChange={(open) => setOpenActionMenu(open ? user.id : null)}>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreVertical className="w-5 h-5 text-slate-600" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 bg-white border-2 border-slate-200 rounded-xl shadow-xl p-1">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              handleOpenPillarModal(user.id);
+                              setOpenActionMenu(null);
+                            }}
+                            className="cursor-pointer px-4 py-3 rounded-lg transition-colors text-slate-700 hover:bg-slate-50"
+                          >
+                            <div className="flex items-center gap-3 w-full">
+                              <Database className="w-4 h-4 text-slate-500" />
+                              <span className="flex-1">Assign Pillars</span>
+                            </div>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleOpenModuleModal(user.id)}
+                            className="cursor-pointer px-4 py-3 rounded-lg transition-colors text-slate-700 hover:bg-slate-50"
+                          >
+                            <div className="flex items-center gap-3 w-full">
+                              <Shield className="w-4 h-4 text-slate-500" />
+                              <span className="flex-1">Assign Module</span>
+                            </div>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    {/* Billing Contact Checkbox */}
+                    <div className="col-span-1 flex items-center justify-center">
+                      <Checkbox
+                        checked={user.isBillingContact || false}
+                        onCheckedChange={(checked) => {
+                          setUsers(users.map(u => 
+                            u.id === user.id ? { ...u, isBillingContact: checked } : u
+                          ));
+                        }}
+                        className="w-5 h-5 border-2 border-slate-300 data-[state=checked]:bg-[#46CDCF] data-[state=checked]:border-[#46CDCF]"
+                      />
                     </div>
                   </motion.div>
                 );
@@ -636,19 +771,6 @@ export function RoleManagementPage() {
               </div>
             </div>
 
-            <div className="p-6 bg-white rounded-2xl border border-green-200 shadow-md">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
-                  <DollarSign className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-slate-900 mb-2">Billing Contact</h3>
-                  <p className="text-sm text-slate-600">
-                    Manages billing information and subscription settings. Can view and update payment methods and invoices.
-                  </p>
-                </div>
-              </div>
-            </div>
           </motion.div>
         </div>
       </div>
@@ -728,6 +850,127 @@ export function RoleManagementPage() {
                   className="px-6 py-2.5 rounded-xl bg-[#46CDCF] hover:bg-[#15ae99] text-white shadow-lg shadow-[#46CDCF]/20"
                 >
                   Save Pillars
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Module Assignment Modal */}
+      <AnimatePresence>
+        {showModuleModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={handleCloseModuleModal}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl max-h-[80vh] overflow-hidden flex flex-col"
+            >
+              {/* Header */}
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h3 className="text-3xl font-bold text-slate-900 mb-2">Assign Module</h3>
+                  <p className="text-slate-600">Select one or more modules to assign to this user</p>
+                </div>
+                <button
+                  onClick={handleCloseModuleModal}
+                  className="p-2 hover:bg-slate-100 rounded-xl transition-colors"
+                >
+                  <X className="w-5 h-5 text-slate-500" />
+                </button>
+              </div>
+
+              {/* Modules List */}
+              <div className="flex-1 overflow-y-auto pr-2 mb-6">
+                <div className="space-y-3">
+                  {AVAILABLE_MODULES.map((module) => {
+                    const isSelected = isModuleSelected(module.id);
+                    const currentPermission = getModulePermission(module.id);
+                    
+                    return (
+                      <div key={module.id}>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleModule(module.id)}
+                          disabled={module.comingSoon}
+                          className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                            module.comingSoon
+                              ? 'bg-slate-50 border-slate-200 cursor-not-allowed opacity-60'
+                              : isSelected
+                              ? 'bg-[#46CDCF]/10 border-[#46CDCF] shadow-md'
+                              : 'bg-white border-slate-200 hover:border-[#46CDCF]/50 hover:bg-slate-50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <span className={`font-medium ${isSelected ? 'text-[#46CDCF]' : 'text-slate-900'}`}>
+                                {module.name}
+                              </span>
+                              {module.comingSoon && (
+                                <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full">
+                                  Coming Soon
+                                </span>
+                              )}
+                            </div>
+                            {isSelected && !module.comingSoon && (
+                              <Check className="w-5 h-5 text-[#46CDCF]" />
+                            )}
+                          </div>
+                        </button>
+                        
+                        {/* Permission Selection for Usecase Module */}
+                        {isSelected && module.id === 'usecase' && !module.comingSoon && (
+                          <div className="mt-3 ml-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                            <p className="text-sm font-semibold text-slate-700 mb-3">Select Permission Level:</p>
+                            <div className="flex gap-3">
+                              {module.permissions.map((permission) => {
+                                const isPermissionSelected = currentPermission === permission;
+                                return (
+                                  <button
+                                    key={permission}
+                                    type="button"
+                                    onClick={() => handleChangeModulePermission(module.id, permission)}
+                                    className={`flex-1 px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
+                                      isPermissionSelected
+                                        ? 'bg-[#46CDCF] border-[#46CDCF] text-white shadow-md'
+                                        : 'bg-white border-slate-300 text-slate-700 hover:border-[#46CDCF]/50'
+                                    }`}
+                                  >
+                                    <span className="font-medium text-sm">{permission}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-4 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={handleCloseModuleModal}
+                  className="px-6 py-2.5 rounded-xl border-2 text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveModules}
+                  className="px-6 py-2.5 rounded-xl bg-[#46CDCF] hover:bg-[#15ae99] text-white shadow-lg shadow-[#46CDCF]/20"
+                >
+                  Save Modules
                 </Button>
               </div>
             </motion.div>

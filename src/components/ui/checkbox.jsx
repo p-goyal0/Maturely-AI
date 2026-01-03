@@ -1,5 +1,3 @@
-export * from '@/components/ui/checkbox'
-export { default } from '@/components/ui/checkbox'
 "use client"
 
 import * as React from 'react'
