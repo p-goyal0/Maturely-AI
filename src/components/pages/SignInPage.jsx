@@ -4,11 +4,11 @@ import { Eye, EyeOff, ArrowRight, AlertCircle, Lock } from 'lucide-react';
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuthStore } from "../../stores/authStore";
 
 export function SignInPage() {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const signIn = useAuthStore((state) => state.signIn);
   const [showPassword, setShowPassword] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");

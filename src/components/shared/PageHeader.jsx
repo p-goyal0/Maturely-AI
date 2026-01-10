@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuthStore } from "../../stores/authStore";
 import { LogOut, LayoutDashboard, Users, Settings, UserCog } from 'lucide-react';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '../ui/dropdown-menu';
@@ -24,7 +24,8 @@ export function PageHeader({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signOut, currentUser } = useAuth();
+  const signOut = useAuthStore((state) => state.signOut);
+  const currentUser = useAuthStore((state) => state.currentUser);
   const [isScrolled, setIsScrolled] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
 

@@ -242,12 +242,12 @@ export function SignUpPage() {
       };
 
       const result = await signUpAPI(signUpData);
-      
-      if (result.success) {
+    
+    if (result.success) {
         // Token is automatically stored by the service
         // Navigate to industry selection page
-        navigate("/industry");
-      } else {
+      navigate("/industry");
+    } else {
         setError(result.error || "Registration failed. Please try again.");
         setIsLoading(false);
       }
@@ -565,8 +565,8 @@ export function SignUpPage() {
                         style={{ color: '#15ae99' }}
                       >
                         Terms & Condition
-                      </button>
-                    </span>
+                                  </button>
+                                </span>
                   </div>
                           </>
                         )}

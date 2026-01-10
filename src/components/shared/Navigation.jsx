@@ -3,7 +3,7 @@ import { Menu, X, Sparkles, LogOut } from 'lucide-react';
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuthStore } from "../../stores/authStore";
 
 export function Navigation() {
   const navigate = useNavigate();

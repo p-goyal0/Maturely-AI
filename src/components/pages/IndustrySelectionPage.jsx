@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
 import { LogOut } from 'lucide-react';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
 import { StickyActionBar } from '../industry/StickyActionBar.jsx';
 import { getIndustries } from "../../services/industryService";
 import { PageHeader } from '../shared/PageHeader';
+import { useAuthStore } from "../../stores/authStore";
+import { useIndustryStore } from "../../stores/industryStore";
 
 /**
  * Convert industry name to ID (slug format)
@@ -45,21 +46,32 @@ const transformIndustriesData = (apiData) => {
 export function IndustrySelectionPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signOut, currentUser } = useAuth();
-  const [selectedIndustry, setSelectedIndustry] = useState(null);
-  const [selectedSubIndustry, setSelectedSubIndustry] = useState(null);
+  const signOut = useAuthStore((state) => state.signOut);
+  const currentUser = useAuthStore((state) => state.currentUser);
+  
+  // Zustand store for industry state
+  const selectedIndustry = useIndustryStore((state) => state.selectedIndustry);
+  const selectedSubIndustry = useIndustryStore((state) => state.selectedSubIndustry);
+  const industries = useIndustryStore((state) => state.industries);
+  const subIndustries = useIndustryStore((state) => state.subIndustries);
+  const isLoading = useIndustryStore((state) => state.isLoading);
+  const error = useIndustryStore((state) => state.error);
+  const setSelectedIndustry = useIndustryStore((state) => state.setSelectedIndustry);
+  const setSelectedSubIndustry = useIndustryStore((state) => state.setSelectedSubIndustry);
+  const setIndustries = useIndustryStore((state) => state.setIndustries);
+  const setSubIndustries = useIndustryStore((state) => state.setSubIndustries);
+  const setLoading = useIndustryStore((state) => state.setLoading);
+  const setError = useIndustryStore((state) => state.setError);
+  const canContinue = useIndustryStore((state) => state.canContinue);
+  
+  // Local UI state
   const [isOpen, setIsOpen] = useState(false);
   const [isSubIndustryOpen, setIsSubIndustryOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [industries, setIndustries] = useState([]);
-  const [subIndustries, setSubIndustries] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   const handleIndustrySelect = (industry) => {
     setSelectedIndustry(industry);
-    setSelectedSubIndustry(null); // Reset sub-industry when industry changes
     setIsOpen(false);
   };
 
@@ -69,19 +81,8 @@ export function IndustrySelectionPage() {
   };
 
   const handleContinue = () => {
-    if (selectedIndustry) {
-      // For "Other" industry, no sub-industry is required
-      // For other industries, sub-industry is required
-      const requiresSubIndustry = selectedIndustry.id !== 'other' && subIndustries[selectedIndustry.id];
-      
-      if (!requiresSubIndustry || selectedSubIndustry) {
-        navigate("/company-type", { 
-          state: { 
-            industry: selectedIndustry,
-            subIndustry: selectedSubIndustry 
-          } 
-        });
-      }
+    if (canContinue()) {
+      navigate("/company-type");
     }
   };
 
@@ -96,7 +97,7 @@ export function IndustrySelectionPage() {
   // Fetch industries from API
   useEffect(() => {
     const fetchIndustries = async () => {
-      setIsLoading(true);
+      setLoading(true);
       setError(null);
       
       const result = await getIndustries();
@@ -112,11 +113,11 @@ export function IndustrySelectionPage() {
         setSubIndustries({});
       }
       
-      setIsLoading(false);
+      setLoading(false);
     };
 
     fetchIndustries();
-  }, []);
+  }, [setLoading, setError, setIndustries, setSubIndustries]);
 
   // Scroll detection for header
   useEffect(() => {
@@ -154,9 +155,8 @@ export function IndustrySelectionPage() {
   }, [isOpen, isSubIndustryOpen]);
 
   // Get available sub-industries for selected industry
-  const availableSubIndustries = selectedIndustry && selectedIndustry.id !== 'other' 
-    ? subIndustries[selectedIndustry.id] || []
-    : [];
+  const getAvailableSubIndustries = useIndustryStore((state) => state.getAvailableSubIndustries);
+  const availableSubIndustries = getAvailableSubIndustries();
 
   return (
     <div className="min-h-screen bg-[#f3f2ed] text-gray-900 relative overflow-hidden">

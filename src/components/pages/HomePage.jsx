@@ -6,17 +6,17 @@ import Lottie from 'lottie-react';
 import { motion, AnimatePresence } from "motion/react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuthStore } from "../../stores/authStore";
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [currentCapability, setCurrentCapability] = useState(0);
-  const [typedText, setTypedText] = useState("");
-  const [showCursor, setShowCursor] = useState(true);
-  const [cursorVisible, setCursorVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [isAnnual, setIsAnnual] = useState(true);
+  const [currentHeadlineIndex, setCurrentHeadlineIndex] = useState(0);
+  const [activeSection, setActiveSection] = useState('hero');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -84,108 +84,71 @@ export default function HomePage() {
   ];
 
 
-  // Typing animation for description text
-  const fullDescriptionText = "Assess. Strategize. Execute AI with confidence across any industry. Enterprise-grade platform trusted by global leaders.";
-  
-  useEffect(() => {
-    setTypedText("");
-    setShowCursor(true);
-    
-    // First, show cursor and let it blink 2 times before starting
-    const startDelay = setTimeout(() => {
-      let currentIndex = 0;
-      
-      const typeNextChar = () => {
-        if (currentIndex < fullDescriptionText.length) {
-          const char = fullDescriptionText[currentIndex];
-          setTypedText(fullDescriptionText.slice(0, currentIndex + 1));
-          currentIndex++;
-          
-          // Determine delay based on character
-          let delay = 50; // Default typing speed (faster)
-          
-          // Longer pause after periods
-          if (char === '.') {
-            delay = 300;
-          }
-          // Medium pause after spaces (end of words)
-          else if (char === ' ') {
-            delay = 100;
-          }
-          // Slightly longer pause for capital letters
-          else if (char === char.toUpperCase() && char !== char.toLowerCase()) {
-            delay = 80;
-          }
-          
-          setTimeout(typeNextChar, delay);
-        } else {
-          // Hide cursor after typing is complete
-          setTimeout(() => setShowCursor(false), 800);
-        }
-      };
-      
-      // Start typing after initial cursor blink
-      typeNextChar();
-    }, 1000); // Wait 1 second (2 cursor blinks) before starting
+  // Rotating headlines data
+  const headlines = [
+    {
+      headline: "Most AI Roadmaps Fail. Ensure Yours Won't.",
+      subheadline: "Don't build your strategy on intuition. Audit your true AI readiness and unlock a data-backed plan to bridge the gap between hype and reality."
+    },
+    {
+      headline: "Stop Guessing. Start Scaling.",
+      subheadline: "Benchmark your AI adoption with precision. Get an unbiased readiness score and a battle-tested roadmap for execution—in under 10 minutes."
+    },
+    {
+      headline: "Your AI Strategy, Validated in 10 Minutes.",
+      subheadline: "Move from \"exploring\" to \"executing.\" Instantly generate your organization's AI Maturity Score and a personalized blueprint of high-impact use cases"
+    }
+  ];
 
-    return () => clearTimeout(startDelay);
+  // Rotate headlines every 15 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentHeadlineIndex((prev) => (prev + 1) % headlines.length);
+    }, 15000); // 15 seconds
+
+    return () => clearInterval(interval);
   }, []);
 
-  // Blinking cursor effect
+  // Scroll spy to detect active section
   useEffect(() => {
-    if (!showCursor) return;
+    const sections = ['hero', 'features', 'pricing'];
     
-    const cursorInterval = setInterval(() => {
-      setCursorVisible((prev) => !prev);
-    }, 500); // Blink every 500ms
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + 150; // Offset for header
 
-    return () => clearInterval(cursorInterval);
-  }, [showCursor]);
-
-  // Helper function to render typed text with styling
-  const renderTypedText = () => {
-    if (!typedText) return null;
-    
-    const parts = [];
-    const text = typedText;
-    
-    // Define styled words with their exact positions in the text
-    const styledWords = [
-      { word: "Assess", color: "text-cyan-600", start: 0, end: 6 },
-      { word: "Strategize", color: "text-teal-600", start: 8, end: 18 },
-      { word: "Execute", color: "text-cyan-600", start: 20, end: 27 },
-      { word: "grade", color: "text-teal-600", start: 79, end: 84 },
-      { word: "platform", color: "text-teal-600", start: 85, end: 93 },
-      { word: "trusted", color: "text-teal-600", start: 94, end: 101 },
-    ];
-
-    let i = 0;
-    while (i < text.length) {
-      const styledWord = styledWords.find(sw => i >= sw.start && i < sw.end);
-      
-      if (styledWord) {
-        // We're in a styled word
-        const endPos = Math.min(styledWord.end, text.length);
-        const wordText = text.slice(i, endPos);
-        parts.push(
-          <span key={i} className={`font-semibold ${styledWord.color}`}>
-            {wordText}
-          </span>
-        );
-        i = endPos;
-      } else {
-        // Regular text - find next styled word or end
-        const nextStyledWord = styledWords.find(sw => sw.start > i);
-        const endPos = nextStyledWord ? nextStyledWord.start : text.length;
-        const regularText = text.slice(i, endPos);
-        if (regularText) {
-          parts.push(regularText);
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const section = document.getElementById(sections[i]);
+        if (section) {
+          const sectionTop = section.offsetTop;
+          const sectionHeight = section.offsetHeight;
+          
+          if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+            setActiveSection(sections[i]);
+            break;
+          }
         }
-        i = endPos;
       }
-    }
+    };
 
-    return parts;
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Check on mount
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Smooth scroll to section
+  const scrollToSection = (sectionId) => {
+    const section = document.getElementById(sectionId);
+    if (section) {
+      const headerOffset = 100;
+      const elementPosition = section.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
   };
 
   return (
@@ -221,29 +184,92 @@ export default function HomePage() {
                 />
             </motion.button>
 
-            {/* Navigation Items - Center */}
-            <div className="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-              <Button
-                variant="ghost"
-                className="text-sm text-slate-700 hover:text-cyan-600 transition-colors font-medium"
+            {/* Navigation Items - Center - Scroll Spy Navigation */}
+            <div className="hidden lg:flex items-center gap-10 absolute left-1/2 -translate-x-1/2">
+              <button
+                onClick={() => scrollToSection('hero')}
+                className={`group relative text-sm font-medium transition-all duration-300 pb-1 ${
+                  activeSection === 'hero'
+                    ? 'text-cyan-600 font-semibold'
+                    : 'text-slate-700 hover:text-cyan-600'
+                }`}
                 style={{ fontFamily: 'Segoe UI, sans-serif' }}
               >
-                Services
-              </Button>
-              <Button
-                variant="ghost"
-                className="text-sm text-slate-700 hover:text-cyan-600 transition-colors font-medium"
+                Home
+                {/* Animated underline - expands from center */}
+                <span 
+                  className={`absolute -bottom-1 left-1/2 -translate-x-1/2 h-0.5 bg-cyan-600 transition-all duration-300 ease-out ${
+                    activeSection === 'hero'
+                      ? 'w-[120%]'
+                      : 'w-0 group-hover:w-[120%]'
+                  }`}
+                />
+                {/* Subtle glow effect when active */}
+                {activeSection === 'hero' && (
+                  <motion.span
+                    className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-0.5 bg-cyan-400 blur-sm opacity-50"
+                    initial={{ width: 0 }}
+                    animate={{ width: '120%' }}
+                    transition={{ duration: 0.3 }}
+                  />
+                )}
+              </button>
+              <button
+                onClick={() => scrollToSection('features')}
+                className={`group relative text-sm font-medium transition-all duration-300 pb-1 ${
+                  activeSection === 'features'
+                    ? 'text-cyan-600 font-semibold'
+                    : 'text-slate-700 hover:text-cyan-600'
+                }`}
                 style={{ fontFamily: 'Segoe UI, sans-serif' }}
               >
-                About
-              </Button>
-              <Button
-                variant="ghost"
-                className="text-sm text-slate-700 hover:text-cyan-600 transition-colors font-medium"
+                Features
+                {/* Animated underline - expands from center */}
+                <span 
+                  className={`absolute -bottom-1 left-1/2 -translate-x-1/2 h-0.5 bg-cyan-600 transition-all duration-300 ease-out ${
+                    activeSection === 'features'
+                      ? 'w-[120%]'
+                      : 'w-0 group-hover:w-[120%]'
+                  }`}
+                />
+                {/* Subtle glow effect when active */}
+                {activeSection === 'features' && (
+                  <motion.span
+                    className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-0.5 bg-cyan-400 blur-sm opacity-50"
+                    initial={{ width: 0 }}
+                    animate={{ width: '120%' }}
+                    transition={{ duration: 0.3 }}
+                  />
+                )}
+              </button>
+              <button
+                onClick={() => scrollToSection('pricing')}
+                className={`group relative text-sm font-medium transition-all duration-300 pb-1 ${
+                  activeSection === 'pricing'
+                    ? 'text-cyan-600 font-semibold'
+                    : 'text-slate-700 hover:text-cyan-600'
+                }`}
                 style={{ fontFamily: 'Segoe UI, sans-serif' }}
               >
-                Let's Talk
-              </Button>
+                Pricing
+                {/* Animated underline - expands from center */}
+                <span 
+                  className={`absolute -bottom-1 left-1/2 -translate-x-1/2 h-0.5 bg-cyan-600 transition-all duration-300 ease-out ${
+                    activeSection === 'pricing'
+                      ? 'w-[120%]'
+                      : 'w-0 group-hover:w-[120%]'
+                  }`}
+                />
+                {/* Subtle glow effect when active */}
+                {activeSection === 'pricing' && (
+                  <motion.span
+                    className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-0.5 bg-cyan-400 blur-sm opacity-50"
+                    initial={{ width: 0 }}
+                    animate={{ width: '120%' }}
+                    transition={{ duration: 0.3 }}
+                  />
+                )}
+              </button>
             </div>
 
             {/* Get Started Button - Right */}
@@ -278,7 +304,7 @@ export default function HomePage() {
       `}</style>
 
       {/* Hero Section - Light with gradient and grid pattern */}
-      <section className="relative pt-20 pb-12 lg:pt-24 lg:pb-16 overflow-visible bg-gradient-to-r from-cyan-50/50 via-white to-white" style={{ minHeight: 'calc(100vh - 80px)' }}>
+      <section id="hero" className="relative pt-20 pb-12 lg:pt-24 lg:pb-16 overflow-visible bg-gradient-to-r from-cyan-50/50 via-white to-white" style={{ minHeight: 'calc(100vh - 80px)' }}>
         {/* Grid Pattern Background with rounded rectangles - Embossed Tiles */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
           {/* Base tiles pattern */}
@@ -359,33 +385,35 @@ export default function HomePage() {
                         </Badge>
                       </motion.div>
           
-              {/* Headline */}
-              <motion.h1 
-                initial={{ opacity: 0, y: 20 }} 
-                animate={{ opacity: 1, y: 0 }} 
-                transition={{ delay: 0.2 }}
-                className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 leading-tight relative tracking-tight"
-                style={{ fontFamily: 'Segoe UI, sans-serif', zIndex: 21, fontWeight: 600, letterSpacing: '-0.02em' }}
-              >
-                <span className="block">Accelerate Your</span>
-                <span className="block text-slate-900">
-                          AI Transformation
-                        </span>
-              </motion.h1>
+              {/* Headline - Rotating */}
+              <AnimatePresence mode="wait">
+                <motion.h1 
+                  key={currentHeadlineIndex}
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.5 }}
+                  className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 leading-tight relative tracking-tight"
+                  style={{ fontFamily: 'Segoe UI, sans-serif', zIndex: 21, fontWeight: 600, letterSpacing: '-0.02em' }}
+                >
+                  {headlines[currentHeadlineIndex].headline}
+                </motion.h1>
+              </AnimatePresence>
 
-              {/* Description */}
-              <motion.p 
-                initial={{ opacity: 0, y: 20 }} 
-                animate={{ opacity: 1, y: 0 }} 
-                transition={{ delay: 0.3 }}
-                className="text-sm md:text-base text-slate-600 leading-relaxed max-w-xl relative font-normal"
-                style={{ fontFamily: 'Segoe UI, sans-serif', zIndex: 21, fontWeight: 400 }}
-              >
-                {renderTypedText()}
-                {showCursor && cursorVisible && (
-                  <span className="inline-block w-[2px] h-5 bg-slate-600 ml-1 align-middle"></span>
-                )}
-              </motion.p>
+              {/* Description - Rotating */}
+              <AnimatePresence mode="wait">
+                <motion.p 
+                  key={`subheadline-${currentHeadlineIndex}`}
+                  initial={{ opacity: 0, y: 20 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                  className="text-sm md:text-base text-slate-600 leading-relaxed max-w-xl relative font-normal"
+                  style={{ fontFamily: 'Segoe UI, sans-serif', zIndex: 21, fontWeight: 400 }}
+                >
+                  {headlines[currentHeadlineIndex].subheadline}
+                </motion.p>
+              </AnimatePresence>
 
               {/* Buttons */}
               <motion.div 
@@ -430,7 +458,7 @@ export default function HomePage() {
                   </section>
 
                   {/* Our Core AI Capabilities Section - WHITE with Auto-Rotating Carousel */}
-                  <section className="py-24 relative bg-white overflow-hidden">
+                  <section id="features" className="py-24 relative bg-white overflow-hidden">
                     {/* Gradient Background Behind Cards */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 0 }}>
                       <div 
@@ -897,7 +925,7 @@ export default function HomePage() {
                   </section> */}
 
                   {/* Pricing Section - DARK with teal/green theme */}
-                  <section className="py-20 relative overflow-hidden" style={{ background: 'linear-gradient(to bottom, #003941, #033C47)' }}>
+                  <section id="pricing" className="py-20 relative overflow-hidden" style={{ background: 'linear-gradient(to bottom, #003941, #033C47)' }}>
                     {/* Grid pattern background - positioned on top right */}
                     <div 
                       className="absolute top-0 right-0 w-1/2 h-2/3 opacity-70 pointer-events-none"
@@ -933,16 +961,23 @@ export default function HomePage() {
                         <div className="flex items-center justify-center gap-4 mb-12">
                           <span className="text-white font-medium">Monthly</span>
                           <label className="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" className="sr-only peer" defaultChecked />
+                            <input 
+                              type="checkbox" 
+                              className="sr-only peer" 
+                              checked={isAnnual}
+                              onChange={(e) => setIsAnnual(e.target.checked)}
+                            />
                             <div className="w-14 h-7 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-[#15ae99] peer-checked:to-[#46cdc6]"></div>
                           </label>
-                          <span className="text-white font-medium">Anually</span>
-                          <span className="text-[#46cdc6] text-sm bg-[#15ae99]/20 px-2 py-1 rounded">Save up to 20%</span>
+                          <span className="text-white font-medium">Annually</span>
+                          {isAnnual && (
+                            <span className="text-[#46cdc6] text-sm bg-[#15ae99]/20 px-2 py-1 rounded">Save 15%</span>
+                          )}
                         </div>
                       </motion.div>
 
                       <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                        {/* Small Plan */}
+                        {/* Starter Plan */}
                         <motion.div
                           initial={{ opacity: 0, y: 20 }}
                           whileInView={{ opacity: 1, y: 0 }}
@@ -966,32 +1001,32 @@ export default function HomePage() {
                             />
                 
                             <CardHeader>
-                              <CardTitle className="text-2xl text-white">Small</CardTitle>
+                              <CardTitle className="text-2xl text-white">Starter</CardTitle>
                               <div className="mt-4">
-                                <span className="text-4xl font-bold text-[#46cdc6]">$600</span>
-                                <span className="text-slate-400">/year</span>
+                                <span className="text-4xl font-bold text-[#46cdc6]">Free</span>
+                                <span className="text-slate-400"> / $0</span>
                               </div>
                               <CardDescription className="text-slate-300 mt-4">
-                                Perfect for small teams getting started
+                                For individuals and small founders validating their AI readiness.
                               </CardDescription>
                             </CardHeader>
                             <CardContent>
                               <ul className="space-y-3">
                                 <li className="flex items-start gap-2 text-slate-300">
                                   <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Up to 3 assessments per year</span>
+                                  <span>Single Assessment: One-time assessment of your AI maturity.</span>
                                 </li>
                                 <li className="flex items-start gap-2 text-slate-300">
                                   <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Basic roadmap generation</span>
+                                  <span>Basic Report: Summary of key strengths and weaknesses.</span>
                                 </li>
                                 <li className="flex items-start gap-2 text-slate-300">
                                   <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Access to use case library</span>
+                                  <span>Static Use-Case Bank: Access to 50+ common AI use cases.</span>
                                 </li>
                                 <li className="flex items-start gap-2 text-slate-300">
                                   <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Email support</span>
+                                  <span>Email Support.</span>
                                 </li>
                               </ul>
                               <Button 
@@ -999,7 +1034,7 @@ export default function HomePage() {
                                 style={{ backgroundColor: '#15ae99' }}
                                 onMouseEnter={(e) => e.target.style.backgroundColor = '#0d8a7a'}
                                 onMouseLeave={(e) => e.target.style.backgroundColor = '#15ae99'}
-                    onClick={() => navigate("/signup")}
+                                onClick={() => navigate("/signup")}
                               >
                                 Get Started
                               </Button>
@@ -1007,7 +1042,7 @@ export default function HomePage() {
                           </Card>
                         </motion.div>
 
-                        {/* Medium Plan */}
+                        {/* Plus Plan */}
                         <motion.div
                           initial={{ opacity: 0, y: 20 }}
                           whileInView={{ opacity: 1, y: 0 }}
@@ -1031,39 +1066,61 @@ export default function HomePage() {
                             />
                 
                             <div className="absolute top-0 right-0 bg-gradient-to-br from-[#15ae99] to-[#46cdc6] text-white px-4 py-1 text-sm font-semibold">
-                              Popular
+                              Recommended
                             </div>
                             <CardHeader>
-                              <CardTitle className="text-2xl text-white">Medium</CardTitle>
+                              <CardTitle className="text-2xl text-white">Plus</CardTitle>
                               <div className="mt-4">
-                                <span className="text-4xl font-bold text-[#46cdc6]">$999</span>
-                                <span className="text-slate-300">/year</span>
+                                {isAnnual ? (
+                                  <>
+                                    <span className="text-4xl font-bold text-[#46cdc6]">$2,030</span>
+                                    <span className="text-slate-300">/year</span>
+                                    <div className="text-sm text-slate-400 mt-1 line-through">$2,388/year</div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className="text-4xl font-bold text-[#46cdc6]">$199</span>
+                                    <span className="text-slate-300">/month</span>
+                                  </>
+                                )}
                               </div>
                               <CardDescription className="text-slate-200 mt-4">
-                                Ideal for growing organizations
+                                For growing teams that need actionable insights and continuous improvement.
                               </CardDescription>
                             </CardHeader>
                             <CardContent>
                               <ul className="space-y-3">
                                 <li className="flex items-start gap-2 text-slate-200">
                                   <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Unlimited assessments</span>
+                                  <span>Everything in Starter</span>
                                 </li>
                                 <li className="flex items-start gap-2 text-slate-200">
                                   <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Advanced roadmap generation</span>
+                                  <span>Continuous Assessments: Retake the assessments monthly to track progress.</span>
                                 </li>
                                 <li className="flex items-start gap-2 text-slate-200">
                                   <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Full use case library access</span>
+                                  <span>Detailed Strategic Report: Deep dive into AI, Data, Security and Governance readiness.</span>
                                 </li>
                                 <li className="flex items-start gap-2 text-slate-200">
                                   <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Benchmarking & analytics</span>
+                                  <span>Custom Roadmap: Step-by-step execution plan based on your score.</span>
                                 </li>
                                 <li className="flex items-start gap-2 text-slate-200">
                                   <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Priority support</span>
+                                  <span>Industry Benchmarking: Compare your score with similar sized peers within the same industry.</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-slate-200">
+                                  <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
+                                  <span>Trend Analysis: Visualize your improvement over time</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-slate-200">
+                                  <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
+                                  <span>Export to PDF: Presentation-ready reports.</span>
+                                </li>
+                                <li className="flex items-start gap-2 text-slate-200">
+                                  <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
+                                  <span>Priority Support: 72 hrs turn around on emails</span>
                                 </li>
                               </ul>
                               <Button 
@@ -1071,7 +1128,7 @@ export default function HomePage() {
                                 style={{ background: 'linear-gradient(to right, #15ae99, #46cdc6)' }}
                                 onMouseEnter={(e) => e.target.style.background = 'linear-gradient(to right, #0d8a7a, #15ae99)'}
                                 onMouseLeave={(e) => e.target.style.background = 'linear-gradient(to right, #15ae99, #46cdc6)'}
-                    onClick={() => navigate("/signup")}
+                                onClick={() => navigate("/signup")}
                               >
                                 Get Started
                               </Button>
@@ -1079,7 +1136,7 @@ export default function HomePage() {
                           </Card>
                         </motion.div>
 
-                        {/* Enterprise Plan */}
+                        {/* Pro Plan */}
                         <motion.div
                           initial={{ opacity: 0, y: 20 }}
                           whileInView={{ opacity: 1, y: 0 }}
@@ -1103,41 +1160,52 @@ export default function HomePage() {
                             />
                 
                             <CardHeader>
-                              <CardTitle className="text-2xl text-white">Enterprise</CardTitle>
+                              <CardTitle className="text-2xl text-white">Pro</CardTitle>
                               <div className="mt-4">
-                                <span className="text-3xl font-bold text-[#46cdc6]">Contact Us</span>
+                                {isAnnual ? (
+                                  <>
+                                    <span className="text-4xl font-bold text-[#46cdc6]">$3,050</span>
+                                    <span className="text-slate-300">/year</span>
+                                    <div className="text-sm text-slate-400 mt-1 line-through">$3,588/year</div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className="text-4xl font-bold text-[#46cdc6]">$299</span>
+                                    <span className="text-slate-300">/month</span>
+                                  </>
+                                )}
                               </div>
                               <CardDescription className="text-slate-300 mt-4">
-                                Custom solutions for large enterprises
+                                For large organizations and agencies requiring customization and control.
                               </CardDescription>
                             </CardHeader>
                             <CardContent>
                               <ul className="space-y-3">
                                 <li className="flex items-start gap-2 text-slate-300">
                                   <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Everything in Medium</span>
+                                  <span>Everything in Plus</span>
                                 </li>
                                 <li className="flex items-start gap-2 text-slate-300">
                                   <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Custom AI maturity frameworks</span>
+                                  <span>White-Label Reports: Use your branding and colors</span>
                                 </li>
                                 <li className="flex items-start gap-2 text-slate-300">
                                   <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Dedicated account manager</span>
+                                  <span>Custom Use-Case Creation: Build your own internal AI Use case library.</span>
                                 </li>
                                 <li className="flex items-start gap-2 text-slate-300">
                                   <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Role-based access controls</span>
+                                  <span>Single Sign-On (SSO): Enterprise-grade security.</span>
                                 </li>
                                 <li className="flex items-start gap-2 text-slate-300">
                                   <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>24/7 premium support</span>
+                                  <span>Priority Support: 24 hrs turn around on emails</span>
                                 </li>
                               </ul>
                               <Button 
                                 variant="outline"
                                 className="w-full mt-6 border-[#15ae99] text-[#46cdc6] hover:bg-[#15ae99]/20 hover:text-white"
-                    onClick={() => navigate("/signup")}
+                                onClick={() => navigate("/signup")}
                               >
                                 Contact Sales
                               </Button>
@@ -1181,7 +1249,7 @@ export default function HomePage() {
                   {/* Footer - Teal/Cyan Gradient */}
                   <footer className="border-t border-[#15ae99]/30 py-12 relative" style={{ background: 'linear-gradient(to bottom, #003941, #033C47)' }}>
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                      <div className="grid md:grid-cols-4 gap-8 mb-8">
+                      <div className="grid md:grid-cols-3 gap-8 mb-8">
                         <motion.div
                           initial={{ opacity: 0, y: 20 }}
                           whileInView={{ opacity: 1, y: 0 }}
@@ -1230,19 +1298,6 @@ export default function HomePage() {
                                 Use Cases
                               </button>
                             </li>
-                          </ul>
-                        </motion.div>
-                        <motion.div
-                          initial={{ opacity: 0, y: 20 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ delay: 0.1 }}
-                        >
-                          <h4 className="mb-4 text-sm font-semibold text-white">Resources</h4>
-                          <ul className="space-y-2 text-sm text-white/70">
-                            <li><a href="#" className="hover:text-[#46cdc6] transition-colors">Documentation</a></li>
-                            <li><a href="#" className="hover:text-[#46cdc6] transition-colors">API Reference</a></li>
-                            <li><a href="#" className="hover:text-[#46cdc6] transition-colors">Support</a></li>
                           </ul>
                         </motion.div>
                         <motion.div

@@ -1,8 +1,8 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuthStore } from "../stores/authStore";
 
 export function ProtectedRoute({ children }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuthStore();
 
   // Wait for authentication check to complete
   if (isLoading) {

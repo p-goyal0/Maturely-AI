@@ -2,48 +2,36 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from '../shared/PageHeader';
+import { useIndustryStore } from "../../stores/industryStore";
+import { useCompanyStore } from "../../stores/companyStore";
 
 export function CompanyTypePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [companyType, setCompanyType] = useState(null); // 'public' or 'private'
-  const [isListed, setIsListed] = useState(false);
-  const [stockTicker, setStockTicker] = useState('');
-
-  // Get industry and subIndustry from previous page
-  const industry = location.state?.industry;
-  const subIndustry = location.state?.subIndustry;
+  
+  // Zustand stores
+  const selectedIndustry = useIndustryStore((state) => state.selectedIndustry);
+  const companyType = useCompanyStore((state) => state.companyType);
+  const isListed = useCompanyStore((state) => state.isListed);
+  const stockTicker = useCompanyStore((state) => state.stockTicker);
+  const setCompanyType = useCompanyStore((state) => state.setCompanyType);
+  const setIsListed = useCompanyStore((state) => state.setIsListed);
+  const setStockTicker = useCompanyStore((state) => state.setStockTicker);
+  const canContinueFromTypePage = useCompanyStore((state) => state.canContinueFromTypePage);
 
   const handleContinue = () => {
-    if (companyType) {
-      const companyData = {
-        industry,
-        subIndustry,
-        companyType,
-        isListed: companyType === 'public' ? isListed : false,
-        stockTicker: companyType === 'public' && isListed ? stockTicker : ''
-      };
-      navigate("/company-info", { state: companyData });
+    if (canContinueFromTypePage()) {
+      navigate("/company-info");
     }
   };
 
 
-  // Reset stock ticker when company type changes
-  useEffect(() => {
-    if (companyType !== 'public') {
-      setIsListed(false);
-      setStockTicker('');
-    }
-  }, [companyType]);
-
   // Redirect if no industry selected
   useEffect(() => {
-    if (!industry) {
+    if (!selectedIndustry) {
       navigate("/industry");
     }
-  }, [industry, navigate]);
-
-  const canContinue = companyType && (companyType === 'private' || (companyType === 'public' && (!isListed || stockTicker.trim())));
+  }, [selectedIndustry, navigate]);
 
   return (
     <div className="min-h-screen bg-[#f3f2ed] text-gray-900 relative overflow-hidden">
@@ -195,7 +183,7 @@ export function CompanyTypePage() {
       </main>
 
       {/* Sticky Action Bar */}
-      {canContinue && (
+      {canContinueFromTypePage() && (
         <motion.div
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}

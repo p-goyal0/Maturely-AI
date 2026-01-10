@@ -1,9 +1,9 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuthStore } from "../stores/authStore";
 import { useEffect } from "react";
 
 export function PublicRoute({ children }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuthStore();
   const location = useLocation();
 
   // Wait for authentication check to complete

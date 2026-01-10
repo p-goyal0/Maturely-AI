@@ -3,13 +3,25 @@ import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { PageHeader } from '../shared/PageHeader';
 import { ChevronDown } from 'lucide-react';
+import { useIndustryStore } from "../../stores/industryStore";
+import { useCompanyStore } from "../../stores/companyStore";
 
 export function CompanyInfoPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [totalHeadcountRange, setTotalHeadcountRange] = useState('');
-  const [marketCapRange, setMarketCapRange] = useState('');
-  const [annualRevenueRange, setAnnualRevenueRange] = useState('');
+  
+  // Zustand stores
+  const selectedIndustry = useIndustryStore((state) => state.selectedIndustry);
+  const companyType = useCompanyStore((state) => state.companyType);
+  const totalHeadcountRange = useCompanyStore((state) => state.totalHeadcountRange);
+  const marketCapRange = useCompanyStore((state) => state.marketCapRange);
+  const annualRevenueRange = useCompanyStore((state) => state.annualRevenueRange);
+  const setTotalHeadcountRange = useCompanyStore((state) => state.setTotalHeadcountRange);
+  const setMarketCapRange = useCompanyStore((state) => state.setMarketCapRange);
+  const setAnnualRevenueRange = useCompanyStore((state) => state.setAnnualRevenueRange);
+  const canContinueFromInfoPage = useCompanyStore((state) => state.canContinueFromInfoPage);
+  
+  // Local UI state
   const [isHeadcountOpen, setIsHeadcountOpen] = useState(false);
   const [isMarketCapOpen, setIsMarketCapOpen] = useState(false);
   const [isRevenueOpen, setIsRevenueOpen] = useState(false);
@@ -43,8 +55,7 @@ export function CompanyInfoPage() {
     { value: '>100M', label: '> $100M' },
   ];
 
-  // Get data from previous pages
-  const { industry, subIndustry, companyType, isListed, stockTicker } = location.state || {};
+  // Get data from stores (no longer from location.state)
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -68,28 +79,17 @@ export function CompanyInfoPage() {
 
 
   const handleContinue = () => {
-    const companyData = {
-      industry,
-      subIndustry,
-      companyType,
-      isListed,
-      stockTicker,
-      totalHeadcountRange,
-      marketCapRange,
-      annualRevenueRange,
-    };
-    navigate("/offerings", { state: companyData });
+    // All data is in Zustand stores, no need to pass via navigation state
+    navigate("/offerings");
   };
 
 
   // Redirect if no previous data
   useEffect(() => {
-    if (!industry || !companyType) {
+    if (!selectedIndustry || !companyType) {
       navigate("/industry");
     }
-  }, [industry, companyType, navigate]);
-
-  const canContinue = totalHeadcountRange !== '';
+  }, [selectedIndustry, companyType, navigate]);
 
   return (
     <div className="min-h-screen bg-[#f3f2ed] text-gray-900 relative overflow-hidden">
@@ -301,7 +301,7 @@ export function CompanyInfoPage() {
       </main>
 
       {/* Sticky Action Bar */}
-      {canContinue && (
+      {canContinueFromInfoPage() && (
         <motion.div
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}

@@ -162,10 +162,10 @@ const AVAILABLE_PILLARS = [
 ];
 
 // Available modules
-const AVAILABLE_MODULES = [
-  { id: 'usecase', name: 'Usecase Module', permissions: ['Read only', 'Create/Edit'] },
-  { id: 'roadmap', name: 'Roadmap Module', comingSoon: true }
-];
+  const AVAILABLE_MODULES = [
+    { id: 'usecase', name: 'Usecase Module' },
+    { id: 'roadmap', name: 'Roadmap Module', comingSoon: true }
+  ];
 
 export function RoleManagementPage() {
   // Transform users data to include their current roles
@@ -316,12 +316,6 @@ export function RoleManagementPage() {
     return selectedModules.some(m => m.moduleId === moduleId);
   };
 
-  // Get module permission
-  const getModulePermission = (moduleId) => {
-    const module = selectedModules.find(m => m.moduleId === moduleId);
-    return module?.permission || null;
-  };
-
   // Handle closing module assignment modal
   const handleCloseModuleModal = () => {
     setShowModuleModal(null);
@@ -338,22 +332,8 @@ export function RoleManagementPage() {
       if (exists) {
         return prev.filter(m => m.moduleId !== moduleId);
       } else {
-        // For usecase module, default to "Read only"
-        return [...prev, { moduleId, permission: moduleId === 'usecase' ? 'Read only' : null }];
-      }
-    });
-  };
-
-  // Handle changing module permission
-  const handleChangeModulePermission = (moduleId, permission) => {
-    setSelectedModules(prev => {
-      const exists = prev.find(m => m.moduleId === moduleId);
-      if (exists) {
-        return prev.map(m => 
-          m.moduleId === moduleId ? { ...m, permission } : m
-        );
-      } else {
-        return [...prev, { moduleId, permission }];
+        // Directly select module without permission selection
+        return [...prev, { moduleId }];
       }
     });
   };
@@ -893,7 +873,6 @@ export function RoleManagementPage() {
                 <div className="space-y-3">
                   {AVAILABLE_MODULES.map((module) => {
                     const isSelected = isModuleSelected(module.id);
-                    const currentPermission = getModulePermission(module.id);
                     
                     return (
                       <div key={module.id}>
@@ -925,32 +904,6 @@ export function RoleManagementPage() {
                             )}
                           </div>
                         </button>
-                        
-                        {/* Permission Selection for Usecase Module */}
-                        {isSelected && module.id === 'usecase' && !module.comingSoon && (
-                          <div className="mt-3 ml-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                            <p className="text-sm font-semibold text-slate-700 mb-3">Select Permission Level:</p>
-                            <div className="flex gap-3">
-                              {module.permissions.map((permission) => {
-                                const isPermissionSelected = currentPermission === permission;
-                                return (
-                                  <button
-                                    key={permission}
-                                    type="button"
-                                    onClick={() => handleChangeModulePermission(module.id, permission)}
-                                    className={`flex-1 px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
-                                      isPermissionSelected
-                                        ? 'bg-[#46CDCF] border-[#46CDCF] text-white shadow-md'
-                                        : 'bg-white border-slate-300 text-slate-700 hover:border-[#46CDCF]/50'
-                                    }`}
-                                  >
-                                    <span className="font-medium text-sm">{permission}</span>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     );
                   })}

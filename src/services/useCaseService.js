@@ -4,7 +4,7 @@
  */
 
 import api from './api';
-import { handleError, getErrorMessage } from './errorHandler';
+import { getErrorMessage } from './errorHandler';
 
 /**
  * Get all use cases
