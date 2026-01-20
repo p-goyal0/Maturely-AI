@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { updateOnboardingDetails } from '../utils/onboardingStorage';
 
 /**
  * Company Store using Zustand
@@ -23,6 +24,12 @@ export const useCompanyStore = create(
           // Reset listed status and ticker if switching to private
           ...(type === 'private' ? { isListed: false, stockTicker: '' } : {})
         });
+        
+        // Update sessionStorage
+        updateOnboardingDetails({
+          ownership_type: type,
+          ...(type === 'private' ? { is_listed: false, stock_ticker: '' } : {}),
+        });
       },
       
       setIsListed: (isListed) => {
@@ -31,10 +38,21 @@ export const useCompanyStore = create(
           // Reset ticker if unlisted
           ...(isListed ? {} : { stockTicker: '' })
         });
+        
+        // Update sessionStorage
+        updateOnboardingDetails({
+          is_listed: isListed,
+          ...(isListed ? {} : { stock_ticker: '' }),
+        });
       },
       
       setStockTicker: (ticker) => {
         set({ stockTicker: ticker });
+        
+        // Update sessionStorage
+        updateOnboardingDetails({
+          stock_ticker: ticker,
+        });
       },
       
       setTotalHeadcountRange: (range) => {

@@ -62,6 +62,8 @@ export function PageHeader({
 
   // Get user display name (full name or formatted username)
   const getUserDisplayName = () => {
+    // Check API response field first
+    if (currentUser?.full_name) return currentUser.full_name;
     if (currentUser?.name) return currentUser.name;
     if (currentUser?.fullName) return currentUser.fullName;
     // Format username: "sarah.johnson" -> "Sarah Johnson"
@@ -84,14 +86,21 @@ export function PageHeader({
     return 'user@company.com';
   };
 
-  // Get user role
+  // Get user role from API response or fallback
   const getUserRole = () => {
-    return currentUser?.role || 'SUPER_ADMIN';
+    // Check API response fields first
+    if (currentUser?.is_super_admin === true) return 'Super Admin';
+    if (currentUser?.is_billing_admin === true) return 'Billing Admin';
+    // Fallback to role field
+    if (currentUser?.role) return currentUser.role;
+    return 'User';
   };
 
-  // Format role for display
+  // Format role for display (already formatted from getUserRole)
   const formatRole = (role) => {
     if (!role) return 'User';
+    // If already formatted (from API), return as is
+    if (role.includes(' ')) return role;
     // Convert "SUPER_ADMIN" to "Super Admin", "MODULE_OWNER" to "Module Owner", etc.
     return role.split('_').map(word => 
       word.charAt(0) + word.slice(1).toLowerCase()
@@ -176,14 +185,17 @@ export function PageHeader({
             {/* Right - User Avatar with Dropdown */}
             <div className="flex items-center gap-3">
               <span className="text-gray-900 font-semibold text-sm">
-                {currentUser?.username || 'User'}
+                {getUserDisplayName()}
               </span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="cursor-pointer flex items-center gap-2 hover:opacity-80 transition-opacity outline-none">
                     <Avatar className="h-10 w-10 bg-[#46cdc6]">
                       <AvatarFallback className="bg-[#46cdc6] text-white font-semibold">
-                        {currentUser?.username?.charAt(0).toUpperCase() || 'U'}
+                        {(() => {
+                          const displayName = getUserDisplayName();
+                          return displayName?.charAt(0).toUpperCase() || 'U';
+                        })()}
                       </AvatarFallback>
                     </Avatar>
                   </button>
@@ -197,7 +209,7 @@ export function PageHeader({
                     <div className="text-xs text-gray-600 mt-0.5">
                       {getUserEmail()}
                     </div>
-                    <div className="text-xs text-cyan-600 font-medium mt-1">
+                    <div className="text-xs text-cyan-600 font-medium mt-1 underline">
                       {formatRole(getUserRole())}
                     </div>
                   </div>

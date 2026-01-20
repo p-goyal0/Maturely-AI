@@ -17,14 +17,10 @@ export const signIn = async (credentials) => {
   try {
     const response = await api.post('/auth/signin', credentials);
     
-    // Store token if present in response
-    if (response.data?.token) {
-      const currentUser = {
-        ...response.data,
-        token: response.data.token,
-      };
-      localStorage.setItem('currentUser', JSON.stringify(currentUser));
-      localStorage.setItem('isAuthenticated', 'true');
+    // Store full user data in sessionStorage (includes maturity_model_id, maturity_model_name, ongoing_assessment_id, etc.)
+    if (response.data) {
+      sessionStorage.setItem('currentUser', JSON.stringify(response.data));
+      sessionStorage.setItem('isAuthenticated', 'true');
     }
     
     return {

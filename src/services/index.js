@@ -11,4 +11,7 @@ export * from './roleService';
 export * from './teamService';
 export * from './settingsService';
 export * from './industryService';
+export * from './commonService';
+export * from './onboardingService';
+export * from './assessmentService';
 

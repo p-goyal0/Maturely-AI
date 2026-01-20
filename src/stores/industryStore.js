@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { updateOnboardingDetails } from '../utils/onboardingStorage';
 
 /**
  * Industry Store using Zustand
@@ -22,12 +23,29 @@ export const useIndustryStore = create(
           selectedIndustry: industry,
           selectedSubIndustry: null, // Reset sub-industry when industry changes
         });
+        
+        // Update sessionStorage
+        if (industry) {
+          updateOnboardingDetails({
+            industry: industry.name || industry,
+            sub_industry: null, // Reset sub-industry when industry changes
+          });
+        }
       },
       
       setSelectedSubIndustry: (subIndustry) => {
         set({
           selectedSubIndustry: subIndustry,
         });
+        
+        // Update sessionStorage
+        const { selectedIndustry } = get();
+        if (subIndustry && selectedIndustry) {
+          updateOnboardingDetails({
+            industry: selectedIndustry.name || selectedIndustry,
+            sub_industry: subIndustry,
+          });
+        }
       },
       
       setIndustries: (industries) => {

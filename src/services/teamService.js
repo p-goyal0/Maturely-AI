@@ -170,3 +170,26 @@ export const searchTeamMembers = async (query) => {
   }
 };
 
+/**
+ * Invite organization member
+ * @param {string} organizationId - Organization ID
+ * @param {string} email - Email address to invite
+ */
+export const inviteOrganizationMember = async (organizationId, email) => {
+  try {
+    const response = await api.post(`/organization/${organizationId}/members/invite`, {
+      email,
+    });
+    return {
+      success: true,
+      data: response.data,
+      message: response.message,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: getErrorMessage(error),
+    };
+  }
+};
+

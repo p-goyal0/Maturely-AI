@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Globe, Users, BarChart3, ClipboardList, Lightbulb, ArrowUpRight } from 'lucide-react';
+import { FileText, Globe, Users, BarChart3, ClipboardList, Lightbulb, ArrowUpRight, AlertCircle } from 'lucide-react';
 import Lottie from 'lottie-react';
 import { PageHeader } from '../shared/PageHeader';
+import { startAssessment } from '../../services/assessmentService';
+import { useAssessmentStore } from '../../stores/assessmentStore';
+import { useAuthStore } from '../../stores/authStore';
 
 // Premium cards data for section 2
 const premiumCards = [
@@ -27,6 +30,11 @@ const premiumCards = [
 
 export function OfferingsPage() {
   const navigate = useNavigate();
+  const currentUser = useAuthStore((state) => state.currentUser);
+  const updateOngoingAssessmentId = useAuthStore((state) => state.updateOngoingAssessmentId);
+  const { setAssessmentData, setLoading, setError } = useAssessmentStore();
+  const [isStartingAssessment, setIsStartingAssessment] = useState(false);
+  const [assessmentError, setAssessmentError] = useState(null);
   const [lottieAnimations, setLottieAnimations] = useState({
     document: null,
     globe: null,
@@ -128,14 +136,14 @@ export function OfferingsPage() {
         
         <div className="mx-auto px-4 sm:px-6 lg:px-8">
           {/* Hero Content */}
-          <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-start">
+          <div className="relative flex justify-center items-start">
 
             {/* Left Column - Content */}
             <motion.div 
               initial={{ opacity: 0, x: -20 }} 
               animate={{ opacity: 1, x: 0 }} 
               transition={{ duration: 0.6 }}
-              className="space-y-3 lg:space-y-4 relative z-20 text-center ml-10 lg:text-left"
+              className="space-y-3 lg:space-y-4 relative z-20 text-center w-full max-w-4xl mx-auto"
             >
               {/* Small Badge */}
               <div className="inline-block">
@@ -152,12 +160,13 @@ export function OfferingsPage() {
               </div>
 
               {/* Description */}
-              <p className="text-base md:text-lg text-slate-600 leading-relaxed max-w-lg font-medium">
+              <p className="text-base md:text-lg text-slate-600 leading-relaxed max-w-3xl mx-auto font-medium">
                 Take our comprehensive assessment to understand your organization's AI readiness across 6 critical dimensions. Get personalized insights and actionable recommendations.
               </p>
             </motion.div>
 
-            {/* Right Column - Stats Grid */}
+            {/* Right Column - Stats Grid - Hidden for now */}
+            {false && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -276,6 +285,7 @@ export function OfferingsPage() {
                 </div>
               </div>
             </motion.div>
+            )}
           </div>
         </div>
       </section>
@@ -303,8 +313,48 @@ export function OfferingsPage() {
                       backgroundColor: card.bgColor,
                       borderColor: card.borderColor,
                     }}
-                    onClick={() => {
-                      if (index === 0) navigate("/assessments");
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (index === 0) {
+                        // Start or continue assessment API call
+                        const ongoingAssessmentId = currentUser?.ongoing_assessment_id;
+                        const isContinuing = !!ongoingAssessmentId;
+                        
+                        setIsStartingAssessment(true);
+                        setAssessmentError(null);
+                        setLoading(true);
+                        
+                        try {
+                          // Pass assessment_id if continuing existing assessment
+                          const result = await startAssessment(
+                            currentUser?.maturity_model_id,
+                            ongoingAssessmentId
+                          );
+                          
+                          if (result.success) {
+                            // Store assessment data in Zustand store (pillar questions fetched on-demand when navigating)
+                            setAssessmentData(result.data);
+                            
+                            // If starting a new assessment (not continuing), update ongoing_assessment_id
+                            if (!isContinuing && result.data?.assessment_id) {
+                              updateOngoingAssessmentId(result.data.assessment_id);
+                            }
+                            
+                            navigate("/assessments");
+                          } else {
+                            setAssessmentError(result.error || `Failed to ${isContinuing ? 'continue' : 'start'} assessment. Please try again.`);
+                            setError(result.error);
+                          }
+                        } catch (error) {
+                          console.error(`Error ${isContinuing ? 'continuing' : 'starting'} assessment:`, error);
+                          const errorMsg = 'An unexpected error occurred. Please try again.';
+                          setAssessmentError(errorMsg);
+                          setError(errorMsg);
+                        } finally {
+                          setIsStartingAssessment(false);
+                          setLoading(false);
+                        }
+                      }
                       if (index === 1) navigate("/usecases");
                     }}
                   >
@@ -342,7 +392,9 @@ export function OfferingsPage() {
                         className="text-2xl mb-4 min-h-[72px] flex items-start transition-colors duration-300"
                         style={{ color: '#1e293b' }}
                       >
-                        {card.title}
+                        {index === 0 && currentUser?.ongoing_assessment_id 
+                          ? 'Continue Assessment' 
+                          : card.title}
                       </h3>
                       <p 
                         className="leading-relaxed text-base"
@@ -354,20 +406,39 @@ export function OfferingsPage() {
 
                     {/* Premium Circular Button at Bottom */}
                     <div className="flex justify-start mt-auto pt-6 relative z-10">
-                      <button 
-                        className="relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 border-2 bg-white group-hover:scale-110"
-                        style={{ borderColor: card.borderColor }}
-                      >
-                        <div 
-                          className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                          style={{ backgroundColor: card.accentColor }}
-                        />
-                        <ArrowUpRight 
-                          className="w-5 h-5 relative z-10 transition-colors duration-300" 
-                          style={{ color: '#1e293b' }}
-                        />
-                      </button>
+                      {index === 0 && isStartingAssessment ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 border-2 border-[#46cdc6]/30 border-t-[#46cdc6] rounded-full animate-spin" />
+                          <span className="text-sm text-gray-600">
+                            {currentUser?.ongoing_assessment_id ? 'Continuing...' : 'Starting...'}
+                          </span>
+                        </div>
+                      ) : (
+                        <button 
+                          className="relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 border-2 bg-white group-hover:scale-110"
+                          style={{ borderColor: card.borderColor }}
+                        >
+                          <div 
+                            className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                            style={{ backgroundColor: card.accentColor }}
+                          />
+                          <ArrowUpRight 
+                            className="w-5 h-5 relative z-10 transition-colors duration-300" 
+                            style={{ color: '#1e293b' }}
+                          />
+                        </button>
+                      )}
                     </div>
+                    
+                    {/* Error message */}
+                    {index === 0 && assessmentError && (
+                      <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <div className="flex items-center gap-2 text-red-600 text-sm">
+                          <AlertCircle className="w-4 h-4" />
+                          <span>{assessmentError}</span>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Decorative corner accent */}
                     <div 

@@ -70,6 +70,13 @@ export function IndustrySelectionPage() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
 
+  // Redirect to offerings if onboarding is already complete
+  useEffect(() => {
+    if (currentUser?.is_onboarding_complete === true) {
+      navigate("/offerings", { replace: true });
+    }
+  }, [currentUser?.is_onboarding_complete, navigate]);
+
   const handleIndustrySelect = (industry) => {
     setSelectedIndustry(industry);
     setIsOpen(false);

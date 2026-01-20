@@ -5,10 +5,15 @@ import { PageHeader } from '../shared/PageHeader';
 import { ChevronDown } from 'lucide-react';
 import { useIndustryStore } from "../../stores/industryStore";
 import { useCompanyStore } from "../../stores/companyStore";
+import { useAuthStore } from "../../stores/authStore";
+import { updateOnboardingDetails, getOnboardingDetails } from "../../utils/onboardingStorage";
+import { submitOnboarding } from "../../services/onboardingService";
+import { AlertCircle } from 'lucide-react';
 
 export function CompanyInfoPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const currentUser = useAuthStore((state) => state.currentUser);
   
   // Zustand stores
   const selectedIndustry = useIndustryStore((state) => state.selectedIndustry);
@@ -20,6 +25,52 @@ export function CompanyInfoPage() {
   const setMarketCapRange = useCompanyStore((state) => state.setMarketCapRange);
   const setAnnualRevenueRange = useCompanyStore((state) => state.setAnnualRevenueRange);
   const canContinueFromInfoPage = useCompanyStore((state) => state.canContinueFromInfoPage);
+  
+  // Additional fields state
+  const [currentJobTitle, setCurrentJobTitle] = useState('');
+  const [reportingPersonName, setReportingPersonName] = useState('');
+  const [reportingPersonDesignation, setReportingPersonDesignation] = useState('');
+  
+  // Onboarding submission state
+  const [isSubmittingOnboarding, setIsSubmittingOnboarding] = useState(false);
+  const [onboardingError, setOnboardingError] = useState('');
+
+  // Load existing values from sessionStorage
+  useEffect(() => {
+    const details = getOnboardingDetails();
+    if (details.current_job_title) setCurrentJobTitle(details.current_job_title);
+    if (details.reporting_person_name) setReportingPersonName(details.reporting_person_name);
+    if (details.reporting_person_designation) setReportingPersonDesignation(details.reporting_person_designation);
+  }, []);
+
+  // Wrapper functions to update both Zustand and sessionStorage
+  const handleHeadcountChange = (range) => {
+    setTotalHeadcountRange(range);
+    updateOnboardingDetails({ total_head_count_range: range });
+  };
+  
+  const handleMarketCapChange = (range) => {
+    setMarketCapRange(range);
+    updateOnboardingDetails({ market_cap_range_in_usd: range });
+  };
+  
+  const handleRevenueChange = (range) => {
+    setAnnualRevenueRange(range);
+    updateOnboardingDetails({ annual_revenue_range_in_usd: range });
+  };
+
+  // Update sessionStorage when additional fields change
+  useEffect(() => {
+    updateOnboardingDetails({ current_job_title: currentJobTitle });
+  }, [currentJobTitle]);
+
+  useEffect(() => {
+    updateOnboardingDetails({ reporting_person_name: reportingPersonName });
+  }, [reportingPersonName]);
+
+  useEffect(() => {
+    updateOnboardingDetails({ reporting_person_designation: reportingPersonDesignation });
+  }, [reportingPersonDesignation]);
   
   // Local UI state
   const [isHeadcountOpen, setIsHeadcountOpen] = useState(false);
@@ -78,11 +129,44 @@ export function CompanyInfoPage() {
   }, [isHeadcountOpen, isMarketCapOpen, isRevenueOpen]);
 
 
-  const handleContinue = () => {
-    // All data is in Zustand stores, no need to pass via navigation state
-    navigate("/offerings");
+  const handleContinue = async () => {
+    // Validate required fields
+    if (!totalHeadcountRange) {
+      setOnboardingError('Please select total headcount range');
+      return;
+    }
+
+    setIsSubmittingOnboarding(true);
+    setOnboardingError('');
+
+    try {
+      // Get all onboarding data from sessionStorage
+      const onboardingData = getOnboardingDetails();
+
+      // Submit onboarding data to API
+      const result = await submitOnboarding(onboardingData);
+
+      if (result.success) {
+        // Navigate to offerings page on success
+        navigate("/offerings");
+      } else {
+        setOnboardingError(result.error || 'Failed to submit onboarding data. Please try again.');
+        setIsSubmittingOnboarding(false);
+      }
+    } catch (error) {
+      console.error('Onboarding submission error:', error);
+      setOnboardingError('An unexpected error occurred. Please try again.');
+      setIsSubmittingOnboarding(false);
+    }
   };
 
+
+  // Redirect to offerings if onboarding is already complete
+  useEffect(() => {
+    if (currentUser?.is_onboarding_complete === true) {
+      navigate("/offerings", { replace: true });
+    }
+  }, [currentUser?.is_onboarding_complete, navigate]);
 
   // Redirect if no previous data
   useEffect(() => {
@@ -99,7 +183,7 @@ export function CompanyInfoPage() {
       {/* Main content */}
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-10 sm:py-12 md:py-16 min-h-screen pt-24 pb-24">
         <div className="text-center mx-auto w-full px-2 sm:px-4 md:px-6">
-          <h1 className="text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] xl:text-[4rem] tracking-[-0.05rem] font-regular leading-[1] mb-8 text-[#1a1a1a] mx-auto w-[90%] sm:w-[80%] md:w-[70%] lg:w-[60%]">
+          <h1 className="text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] xl:text-[4rem] tracking-[-0.05rem] font-regular leading-[1] mb-8 mt-8 sm:mt-12 text-[#1a1a1a] mx-auto w-[90%] sm:w-[80%] md:w-[70%] lg:w-[60%]">
             Tell us about<br />
             your company
           </h1>
@@ -144,10 +228,10 @@ export function CompanyInfoPage() {
                       <button
                         key={range.value}
                         type="button"
-                        onClick={() => {
-                          setTotalHeadcountRange(range.value);
-                          setIsHeadcountOpen(false);
-                        }}
+                          onClick={() => {
+                            handleHeadcountChange(range.value);
+                            setIsHeadcountOpen(false);
+                          }}
                         className={`
                           w-full px-4 py-3
                           text-left
@@ -213,7 +297,7 @@ export function CompanyInfoPage() {
                           key={range.value}
                           type="button"
                           onClick={() => {
-                            setMarketCapRange(range.value);
+                            handleMarketCapChange(range.value);
                             setIsMarketCapOpen(false);
                           }}
                           className={`
@@ -275,7 +359,7 @@ export function CompanyInfoPage() {
                         key={range.value}
                         type="button"
                         onClick={() => {
-                          setAnnualRevenueRange(range.value);
+                          handleRevenueChange(range.value);
                           setIsRevenueOpen(false);
                         }}
                         className={`
@@ -296,9 +380,76 @@ export function CompanyInfoPage() {
                 Annual revenue in USD
               </p>
             </div>
+
+            {/* Additional Fields */}
+            <div className="pt-6 border-t border-gray-200 space-y-6">
+              {/* Current Job Title */}
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
+                  Current Job Title
+                </label>
+                <input
+                  type="text"
+                  value={currentJobTitle}
+                  onChange={(e) => setCurrentJobTitle(e.target.value)}
+                  placeholder="Enter your job title"
+                  className="w-full px-4 py-3 bg-white rounded-lg shadow-sm border-2 border-gray-200 focus:border-[#46cdc6] focus:ring-2 focus:ring-[#46cdc6] outline-none transition-all duration-200 text-[#1a1a1a] placeholder-gray-400"
+                />
+              </div>
+
+              {/* Reporting Person Name */}
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
+                  Reporting Person Name
+                </label>
+                <input
+                  type="text"
+                  value={reportingPersonName}
+                  onChange={(e) => setReportingPersonName(e.target.value)}
+                  placeholder="Enter reporting person's name"
+                  className="w-full px-4 py-3 bg-white rounded-lg shadow-sm border-2 border-gray-200 focus:border-[#46cdc6] focus:ring-2 focus:ring-[#46cdc6] outline-none transition-all duration-200 text-[#1a1a1a] placeholder-gray-400"
+                />
+              </div>
+
+              {/* Reporting Person Designation */}
+              <div className="mb-8 sm:mb-12">
+                <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
+                  Reporting Person Designation
+                </label>
+                <input
+                  type="text"
+                  value={reportingPersonDesignation}
+                  onChange={(e) => setReportingPersonDesignation(e.target.value)}
+                  placeholder="Enter reporting person's designation"
+                  className="w-full px-4 py-3 bg-white rounded-lg shadow-sm border-2 border-gray-200 focus:border-[#46cdc6] focus:ring-2 focus:ring-[#46cdc6] outline-none transition-all duration-200 text-[#1a1a1a] placeholder-gray-400"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </main>
+
+      {/* Error Message */}
+      {onboardingError && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed top-24 left-1/2 -translate-x-1/2 z-50 max-w-md mx-auto px-4"
+        >
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3 shadow-lg">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+            <p className="text-sm text-red-600 flex-1">{onboardingError}</p>
+            <button
+              onClick={() => setOnboardingError('')}
+              className="text-red-600 hover:text-red-800"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </motion.div>
+      )}
 
       {/* Sticky Action Bar */}
       {canContinueFromInfoPage() && (
@@ -314,20 +465,25 @@ export function CompanyInfoPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-500 text-sm mb-0.5">Company Information</p>
-                <p className="text-gray-900 font-medium text-sm">Ready to continue</p>
+                <p className="text-gray-900 font-medium text-sm">
+                  {isSubmittingOnboarding ? 'Submitting...' : 'Ready to continue'}
+                </p>
               </div>
               <motion.button
                 onClick={handleContinue}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-                className="relative group px-6 py-2.5 rounded-xl overflow-hidden"
+                disabled={isSubmittingOnboarding}
+                whileHover={!isSubmittingOnboarding ? { scale: 1.05 } : {}}
+                whileTap={!isSubmittingOnboarding ? { scale: 0.98 } : {}}
+                className={`relative group px-6 py-2.5 rounded-xl overflow-hidden ${
+                  isSubmittingOnboarding ? 'opacity-75 cursor-not-allowed' : ''
+                }`}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-[#46cdc6] to-[#46cdc6]/80" />
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-[#46cdc6]/80 to-[#46cdc6]"
-                  animate={{
+                  animate={!isSubmittingOnboarding ? {
                     x: ['-100%', '100%'],
-                  }}
+                  } : {}}
                   transition={{
                     duration: 2,
                     repeat: Infinity,
@@ -336,15 +492,24 @@ export function CompanyInfoPage() {
                 />
                 <div className="absolute inset-0 bg-[#46cdc6] blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-300" />
                 <div className="relative flex items-center gap-2 text-[#101010] font-semibold">
-                  <span>Continue</span>
-                  <motion.div
-                    animate={{ x: [0, 4, 0] }}
-                    transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </motion.div>
+                  {isSubmittingOnboarding ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-[#101010]/30 border-t-[#101010] rounded-full animate-spin" />
+                      <span>Submitting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Continue</span>
+                      <motion.div
+                        animate={{ x: [0, 4, 0] }}
+                        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </motion.div>
+                    </>
+                  )}
                 </div>
               </motion.button>
             </div>

@@ -327,41 +327,43 @@ export function UseCaseLibrary() {
                         </button>
                       </div>
                       <div className="space-y-4">
-                        {/* Visibility Selection */}
+                        {/* Visibility Selection - Toggle */}
                         <div>
                           <label className={`block text-sm font-semibold mb-3 ${formData.visibility === 'private' ? 'text-white' : 'text-gray-900'}`}>Visibility</label>
-                          <div className="grid grid-cols-2 gap-4">
-                            <button
-                              type="button"
-                              onClick={() => handleFormChange('visibility', 'private')}
-                              className={`p-4 rounded-xl border-2 transition-all duration-200 text-left ${
-                                formData.visibility === 'private'
-                                  ? 'bg-gray-700 border-gray-500 shadow-md'
-                                  : 'bg-white border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <div className="flex items-center gap-3 mb-2">
-                                <Lock className={`w-5 h-5 ${formData.visibility === 'private' ? 'text-gray-200' : 'text-gray-500'}`} />
-                                <span className={`font-bold ${formData.visibility === 'private' ? 'text-white' : 'text-gray-700'}`}>Private</span>
-                              </div>
-                              <p className={`text-xs ${formData.visibility === 'private' ? 'text-gray-300' : 'text-gray-600'}`}>Keep this use case private to your company only</p>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleFormChange('visibility', 'public')}
-                              className={`p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                          <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                              <Lock className={`w-4 h-4 ${formData.visibility === 'private' ? 'text-gray-300' : 'text-gray-500'}`} />
+                              <span className={`text-sm font-medium ${formData.visibility === 'private' ? 'text-white' : 'text-gray-600'}`}>Private</span>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                              <input 
+                                type="checkbox" 
+                                className="sr-only peer" 
+                                checked={formData.visibility === 'public'}
+                                onChange={(e) => handleFormChange('visibility', e.target.checked ? 'public' : 'private')}
+                              />
+                              <div className={`w-14 h-7 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#46cdc6] transition-all duration-300 ${
                                 formData.visibility === 'public'
-                                  ? 'bg-[#46cdc6]/20 border-[#46cdc6] shadow-md'
-                                  : 'bg-white border-gray-200 hover:border-[#46cdc6]/30'
-                              }`}
-                            >
-                              <div className="flex items-center gap-3 mb-2">
-                                <Globe className={`w-5 h-5 ${formData.visibility === 'public' ? 'text-[#46cdc6]' : 'text-gray-500'}`} />
-                                <span className={`font-bold ${formData.visibility === 'public' ? 'text-[#46cdc6]' : 'text-gray-700'}`}>Public</span>
+                                  ? 'bg-gradient-to-r from-[#15ae99] to-[#46cdc6]'
+                                  : formData.visibility === 'private'
+                                    ? 'bg-gray-600'
+                                    : 'bg-gray-300'
+                              }`}>
+                                <div className={`absolute top-[2px] left-[2px] bg-white rounded-full h-6 w-6 transition-all duration-300 ${
+                                  formData.visibility === 'public' ? 'translate-x-7' : 'translate-x-0'
+                                }`}></div>
                               </div>
-                              <p className="text-xs text-gray-600">Share in 'Inspire Me' pool for all companies to see</p>
-                            </button>
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <Globe className={`w-4 h-4 ${formData.visibility === 'public' ? 'text-[#46cdc6]' : 'text-gray-500'}`} />
+                              <span className={`text-sm font-medium ${formData.visibility === 'public' ? 'text-[#46cdc6]' : 'text-gray-600'}`}>Public</span>
+                            </div>
                           </div>
+                          <p className={`text-xs mt-2 ${formData.visibility === 'private' ? 'text-gray-300' : 'text-gray-600'}`}>
+                            {formData.visibility === 'private' 
+                              ? 'Keep this use case private to your company only' 
+                              : 'Share in "Inspire Me" pool for all companies to see'}
+                          </p>
                         </div>
                         <div className="grid md:grid-cols-2 gap-4">
                           <div>

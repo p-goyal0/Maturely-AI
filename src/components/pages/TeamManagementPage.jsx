@@ -13,11 +13,14 @@ import {
   Shield,
   X,
   Trash2,
-  Power
+  Power,
+  AlertCircle
 } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
 import { Button } from '../ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '../ui/dropdown-menu';
+import { inviteOrganizationMember } from '../../services/teamService';
+import { useAuthStore } from '../../stores/authStore';
 
 // Mock data for team members
 const MOCK_TEAM_MEMBERS = [
@@ -80,11 +83,14 @@ const MOCK_TEAM_MEMBERS = [
 ];
 
 export function TeamManagementPage() {
+  const currentUser = useAuthStore((state) => state.currentUser);
   const [teamMembers, setTeamMembers] = useState(MOCK_TEAM_MEMBERS);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState(null);
   const [inviteEmail, setInviteEmail] = useState('');
+  const [isSendingInvite, setIsSendingInvite] = useState(false);
+  const [inviteError, setInviteError] = useState('');
 
   const handleResendInvite = (userId) => {
     // In a real app, this would call an API
@@ -122,23 +128,53 @@ export function TeamManagementPage() {
     alert('User deactivated successfully');
   };
 
-  const handleSendInvite = () => {
+  const handleSendInvite = async () => {
     if (!inviteEmail) {
-      alert('Please enter an email address');
+      setInviteError('Please enter an email address');
       return;
     }
-    // In a real app, this would call an API
-    const newMember = {
-      id: `user${Date.now()}`,
-      name: inviteEmail.split('@')[0],
-      email: inviteEmail,
-      role: '', // No role assigned at invitation time
-      status: 'pending'
-    };
-    setTeamMembers([...teamMembers, newMember]);
-    setShowInviteModal(false);
-    setInviteEmail('');
-    alert('Invitation sent successfully!');
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(inviteEmail)) {
+      setInviteError('Please enter a valid email address');
+      return;
+    }
+
+    if (!currentUser?.organization_id) {
+      setInviteError('Organization ID not found');
+      return;
+    }
+
+    setIsSendingInvite(true);
+    setInviteError('');
+
+    try {
+      const result = await inviteOrganizationMember(currentUser.organization_id, inviteEmail);
+      
+      if (result.success) {
+        // Add new member to the list with pending status
+        const newMember = {
+          id: `user${Date.now()}`,
+          name: inviteEmail.split('@')[0],
+          email: inviteEmail,
+          role: '', // No role assigned at invitation time
+          status: 'pending'
+        };
+        setTeamMembers([...teamMembers, newMember]);
+        setShowInviteModal(false);
+        setInviteEmail('');
+        setInviteError('');
+        alert('Invitation sent successfully!');
+      } else {
+        setInviteError(result.error || 'Failed to send invitation. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error sending invite:', error);
+      setInviteError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsSendingInvite(false);
+    }
   };
 
   const filteredMembers = teamMembers.filter(member => {
@@ -601,24 +637,46 @@ export function TeamManagementPage() {
                     type="email"
                     placeholder="colleague@company.com"
                     value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
+                    onChange={(e) => {
+                      setInviteEmail(e.target.value);
+                      setInviteError(''); // Clear error when user types
+                    }}
                     className="w-full px-5 py-4 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#46CDCF] focus:border-transparent text-slate-900 placeholder:text-slate-400"
                   />
+                  {inviteError && (
+                    <div className="mt-2 flex items-center gap-2 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{inviteError}</span>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex gap-4 mt-8">
                 <Button
                   variant="outline"
-                  onClick={() => setShowInviteModal(false)}
-                  className="flex-1 h-14 rounded-xl border-2"
+                  onClick={() => {
+                    setShowInviteModal(false);
+                    setInviteEmail('');
+                    setInviteError('');
+                  }}
+                  disabled={isSendingInvite}
+                  className="flex-1 h-14 rounded-xl border-2 border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleSendInvite}
-                  className="flex-1 h-14 rounded-xl bg-[#46CDCF] hover:bg-[#15ae99] text-white shadow-lg shadow-[#46CDCF]/20"
+                  disabled={isSendingInvite}
+                  className="flex-1 h-14 rounded-xl bg-[#46CDCF] hover:bg-[#15ae99] text-white shadow-lg shadow-[#46CDCF]/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Send Invite
+                  {isSendingInvite ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Sending...
+                    </span>
+                  ) : (
+                    'Send Invite'
+                  )}
                 </Button>
               </div>
             </motion.div>

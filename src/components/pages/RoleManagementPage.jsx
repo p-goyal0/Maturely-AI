@@ -5,6 +5,10 @@ import { PageHeader } from '../shared/PageHeader';
 import { Button } from '../ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../ui/dropdown-menu';
 import { Checkbox } from '../ui/checkbox';
+import { getOrganizationMembers, getOrganizationPillars, updateMemberPillars } from '../../services/roleService';
+import { useAuthStore } from '../../stores/authStore';
+import { LoadingSpinner } from '../shared/LoadingSpinner';
+import { ErrorDisplay } from '../shared/ErrorDisplay';
 
 // Hardcoded JSON data (will be replaced with API data later)
 const ROLES_DATA = {
@@ -168,39 +172,77 @@ const AVAILABLE_PILLARS = [
   ];
 
 export function RoleManagementPage() {
-  // Transform users data to include their current roles
-  const getUsersWithRoles = () => {
-    return ROLES_DATA.users.map(user => {
-      // Find which role this user is assigned to
-      const assignedRole = ROLES_DATA.roles.find(role => 
-        role.assignedUsers.includes(user.id)
-      );
-      let roleName = assignedRole ? assignedRole.name : '';
-      // Convert removed roles to "Regular member" since they're no longer in dropdown
-      const removedRoles = ['Billing Contact', 'Module Assignment', 'Data Module', 'Security Module'];
-      if (removedRoles.includes(roleName)) {
-        roleName = 'Regular member';
-      }
-      return {
-        ...user,
-        role: roleName,
-        status: 'active' // Default status
-      };
-    });
-  };
-
-  const [users, setUsers] = useState(getUsersWithRoles().map(user => ({
-    ...user,
-    assignedPillars: [], // Initialize with empty array for assigned pillars
-    assignedModules: [] // Initialize with empty array for assigned modules
-  })));
+  const currentUser = useAuthStore((state) => state.currentUser);
+  const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState(ROLES_DATA.roles);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(true);
+  const [membersError, setMembersError] = useState(null);
   const [showPillarModal, setShowPillarModal] = useState(null); // userId for which modal is open
   const [showModuleModal, setShowModuleModal] = useState(null); // userId for which module modal is open
   const [selectedPillars, setSelectedPillars] = useState([]); // Temporary selection in modal
   const [selectedModules, setSelectedModules] = useState([]); // Temporary selection in module modal
   const [openRoleDropdown, setOpenRoleDropdown] = useState(null); // userId for which role dropdown is open
   const [openActionMenu, setOpenActionMenu] = useState(null); // userId for which action menu is open
+  const [availablePillars, setAvailablePillars] = useState([]); // Pillars fetched from API
+  const [isLoadingPillars, setIsLoadingPillars] = useState(false); // Loading state for pillars
+  const [pillarsError, setPillarsError] = useState(null); // Error state for pillars
+  const [isSavingPillars, setIsSavingPillars] = useState(false); // Loading state for saving pillars
+  const [savePillarsError, setSavePillarsError] = useState(null); // Error state for saving pillars
+
+  // Fetch organization members from API
+  useEffect(() => {
+    const fetchMembers = async () => {
+      if (!currentUser?.organization_id) {
+        setMembersError('Organization ID not found');
+        setIsLoadingMembers(false);
+        return;
+      }
+
+      setIsLoadingMembers(true);
+      setMembersError(null);
+
+      try {
+        const result = await getOrganizationMembers(currentUser.organization_id);
+        
+        if (result.success) {
+          // Transform API data to match component structure
+          const transformedUsers = (result.data || []).map((member) => {
+            // Determine role based on API flags
+            let roleName = '';
+            if (member.IsSuperAdmin === true) {
+              roleName = 'Super Admin';
+            } else if (member.IsViewOnly === true) {
+              roleName = ''; // View Only (empty string)
+            } else {
+              roleName = 'Regular member';
+            }
+            
+            return {
+              id: member.user_id,
+              name: member.full_name || member.email,
+              email: member.email,
+              role: roleName,
+              status: member.status || 'active',
+              assignedPillars: member.assigned_pillars || [],
+              assignedModules: member.assigned_modules || [],
+              isBillingContact: member.IsBillingAdmin === true || false,
+            };
+          });
+          
+          setUsers(transformedUsers);
+        } else {
+          setMembersError(result.error || 'Failed to load organization members');
+        }
+      } catch (error) {
+        console.error('Error fetching members:', error);
+        setMembersError('An unexpected error occurred while loading members');
+      } finally {
+        setIsLoadingMembers(false);
+      }
+    };
+
+    fetchMembers();
+  }, [currentUser?.organization_id]);
 
   // Get role icon component
   const getRoleIcon = (roleName) => {
@@ -261,16 +303,42 @@ export function RoleManagementPage() {
   };
 
   // Handle opening pillar assignment modal
-  const handleOpenPillarModal = (userId) => {
+  const handleOpenPillarModal = async (userId) => {
     const user = users.find(u => u.id === userId);
     setSelectedPillars(user?.assignedPillars || []);
     setShowPillarModal(userId);
+    
+    // Fetch pillars from API when modal opens
+    setIsLoadingPillars(true);
+    setPillarsError(null);
+    
+    try {
+      const result = await getOrganizationPillars();
+      if (result.success) {
+        // Sort pillars by order if available
+        const sortedPillars = (result.data || []).sort((a, b) => (a.order || 0) - (b.order || 0));
+        setAvailablePillars(sortedPillars);
+      } else {
+        setPillarsError(result.error || 'Failed to load pillars');
+        // Fallback to hardcoded pillars if API fails
+        setAvailablePillars(AVAILABLE_PILLARS.map(name => ({ name, description: '' })));
+      }
+    } catch (error) {
+      console.error('Error fetching pillars:', error);
+      setPillarsError('An unexpected error occurred while loading pillars');
+      // Fallback to hardcoded pillars if API fails
+      setAvailablePillars(AVAILABLE_PILLARS.map(name => ({ name, description: '' })));
+    } finally {
+      setIsLoadingPillars(false);
+    }
   };
 
   // Handle closing pillar assignment modal
   const handleClosePillarModal = () => {
     setShowPillarModal(null);
     setSelectedPillars([]);
+    setSavePillarsError(null);
+    setAvailablePillars([]); // Clear pillars when closing
   };
 
   // Handle toggling pillar selection
@@ -283,14 +351,44 @@ export function RoleManagementPage() {
   };
 
   // Handle saving pillar assignments
-  const handleSavePillars = () => {
-    if (showPillarModal) {
-      setUsers(users.map(u => 
-        u.id === showPillarModal 
-          ? { ...u, assignedPillars: selectedPillars }
-          : u
-      ));
-      handleClosePillarModal();
+  const handleSavePillars = async () => {
+    if (!showPillarModal) return;
+
+    if (!currentUser?.organization_id) {
+      setSavePillarsError('Organization ID not found');
+      return;
+    }
+
+    setIsSavingPillars(true);
+    setSavePillarsError(null);
+
+    try {
+      // Map selected pillar names to their IDs
+      const pillarIds = selectedPillars
+        .map(pillarName => {
+          const pillar = availablePillars.find(p => p.name === pillarName);
+          return pillar?.id;
+        })
+        .filter(id => id !== undefined); // Remove any undefined values
+
+      const result = await updateMemberPillars(currentUser.organization_id, showPillarModal, pillarIds);
+
+      if (result.success) {
+        // Update local state with the selected pillars (using names for display)
+        setUsers(users.map(u => 
+          u.id === showPillarModal 
+            ? { ...u, assignedPillars: selectedPillars }
+            : u
+        ));
+        handleClosePillarModal();
+      } else {
+        setSavePillarsError(result.error || 'Failed to save pillar assignments. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error saving pillars:', error);
+      setSavePillarsError('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsSavingPillars(false);
     }
   };
 
@@ -358,6 +456,30 @@ export function RoleManagementPage() {
         : u
     ));
   };
+
+  // Show loading state
+  if (isLoadingMembers) {
+    return (
+      <div className="min-h-screen bg-white relative overflow-hidden">
+        <PageHeader />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <LoadingSpinner />
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (membersError) {
+    return (
+      <div className="min-h-screen bg-white relative overflow-hidden">
+        <PageHeader />
+        <div className="flex items-center justify-center min-h-[60vh] px-4">
+          <ErrorDisplay message={membersError} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden">
@@ -788,48 +910,93 @@ export function RoleManagementPage() {
 
               {/* Pillars List */}
               <div className="flex-1 overflow-y-auto pr-2 mb-6">
-                <div className="space-y-2">
-                  {AVAILABLE_PILLARS.map((pillar) => {
-                    const isSelected = selectedPillars.includes(pillar);
-                    return (
-                      <button
-                        key={pillar}
-                        type="button"
-                        onClick={() => handleTogglePillar(pillar)}
-                        className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
-                          isSelected
-                            ? 'bg-[#46CDCF]/10 border-[#46CDCF] shadow-md'
-                            : 'bg-white border-slate-200 hover:border-[#46CDCF]/50 hover:bg-slate-50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className={`font-medium ${isSelected ? 'text-[#46CDCF]' : 'text-slate-900'}`}>
-                            {pillar}
-                          </span>
-                          {isSelected && (
-                            <Check className="w-5 h-5 text-[#46CDCF]" />
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                {isLoadingPillars ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-8 h-8 border-4 border-[#46CDCF]/30 border-t-[#46CDCF] rounded-full animate-spin" />
+                      <p className="text-sm text-slate-600">Loading pillars...</p>
+                    </div>
+                  </div>
+                ) : pillarsError ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="flex flex-col items-center gap-3 text-center">
+                      <AlertCircle className="w-8 h-8 text-amber-500" />
+                      <p className="text-sm text-slate-600">{pillarsError}</p>
+                    </div>
+                  </div>
+                ) : availablePillars.length === 0 ? (
+                  <div className="flex items-center justify-center py-12">
+                    <p className="text-sm text-slate-600">No pillars available</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {availablePillars.map((pillar) => {
+                      const pillarName = pillar.name || pillar;
+                      const isSelected = selectedPillars.includes(pillarName);
+                      return (
+                        <button
+                          key={pillar.id || pillarName}
+                          type="button"
+                          onClick={() => handleTogglePillar(pillarName)}
+                          className={`w-full p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+                            isSelected
+                              ? 'bg-[#46CDCF]/10 border-[#46CDCF] shadow-md'
+                              : 'bg-white border-slate-200 hover:border-[#46CDCF]/50 hover:bg-slate-50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <span className={`font-medium block ${isSelected ? 'text-[#46CDCF]' : 'text-slate-900'}`}>
+                                {pillarName}
+                              </span>
+                              {pillar.description && (
+                                <span className="text-xs text-slate-500 mt-1 block">
+                                  {pillar.description}
+                                </span>
+                              )}
+                            </div>
+                            {isSelected && (
+                              <Check className="w-5 h-5 text-[#46CDCF] ml-3 flex-shrink-0" />
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
+
+              {/* Error message */}
+              {savePillarsError && (
+                <div className="mb-4 flex items-center gap-2 text-red-600 text-sm bg-red-50 p-3 rounded-xl border border-red-200">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{savePillarsError}</span>
+                </div>
+              )}
 
               {/* Actions */}
               <div className="flex items-center justify-end gap-4 pt-4 border-t">
                 <Button
                   variant="outline"
                   onClick={handleClosePillarModal}
-                  className="px-6 py-2.5 rounded-xl border-2 text-slate-700 hover:bg-slate-50"
+                  disabled={isSavingPillars}
+                  className="px-6 py-2.5 rounded-xl border-2 text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleSavePillars}
-                  className="px-6 py-2.5 rounded-xl bg-[#46CDCF] hover:bg-[#15ae99] text-white shadow-lg shadow-[#46CDCF]/20"
+                  disabled={isSavingPillars}
+                  className="px-6 py-2.5 rounded-xl bg-[#46CDCF] hover:bg-[#15ae99] text-white shadow-lg shadow-[#46CDCF]/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Save Pillars
+                  {isSavingPillars ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Saving...
+                    </span>
+                  ) : (
+                    'Save Pillars'
+                  )}
                 </Button>
               </div>
             </motion.div>

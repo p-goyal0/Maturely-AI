@@ -5,14 +5,17 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
+import { SignInLoader } from "../shared/SignInLoader";
+import { flushSync } from "react-dom";
 
 export function SignInPage() {
   const navigate = useNavigate();
   const signIn = useAuthStore((state) => state.signIn);
   const [showPassword, setShowPassword] = useState(false);
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showLoader, setShowLoader] = useState(false);
   const [error, setError] = useState("");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -48,17 +51,37 @@ export function SignInPage() {
   const handleSignIn = async (e) => {
     e.preventDefault();
     setError("");
-    setIsLoading(true);
     
-    const result = signIn(username, password);
+    // Force immediate render of loader using flushSync
+    flushSync(() => {
+      setShowLoader(true);
+      setIsLoading(true);
+    });
+    
+    const result = await signIn(email, password);
     
     if (result.success) {
-      navigate("/industry");
+      // Wait a moment for the loader to be visible, then navigate
+      setTimeout(() => {
+        // Check if onboarding is complete - if yes, go to offerings; otherwise go to industry selection
+        const userData = result.data || {};
+        if (userData.is_onboarding_complete === true) {
+          navigate("/offerings");
+        } else {
+          navigate("/industry");
+        }
+      }, 1500); // 1.5 second delay to show the loader
     } else {
       setError(result.error || "Invalid credentials");
       setIsLoading(false);
+      setShowLoader(false); // Hide loader on error
     }
   };
+
+  // Show loader screen when signing in (isLoading or showLoader)
+  if (isLoading || showLoader) {
+    return <SignInLoader />;
+  }
 
   return (
     <div className="h-screen flex overflow-hidden" style={{ backgroundColor: '#003941' }}>
@@ -161,17 +184,17 @@ export function SignInPage() {
             )}
 
             <form onSubmit={handleSignIn} className="space-y-3">
-              {/* Username Field */}
+              {/* Email Field */}
               <div className="space-y-1">
                 <div className="relative">
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
                     <span className="text-sm font-medium" style={{ color: '#15ae99' }}>@</span>
                   </div>
                   <Input
-                    type="text"
-                    placeholder="Username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="pl-12 h-11 bg-gray-50 !border !border-gray-300 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:!ring-0 focus:!ring-offset-0 focus:bg-gray-50 focus:!border-[#15ae99] focus:!border-2"
                     style={{ 
                       transition: 'all 0.2s ease-in-out',

@@ -1,11 +1,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-import { TrendingUp, Target, Users, Cpu, Database, Shield, Lock, ArrowRight, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
+import { TrendingUp, Target, Users, Cpu, Database, Shield, Lock, ArrowRight, CheckCircle2, AlertCircle, Sparkles, Download, Loader2 } from 'lucide-react';
 import { motion, useInView } from "motion/react";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { PageHeader } from '../shared/PageHeader';
+import { useAssessmentStore } from '../../stores/assessmentStore';
+import { useAuthStore } from '../../stores/authStore';
+import { generatePDFReport } from '../../services/reportService';
 import {
   Radar,
   RadarChart,
@@ -16,18 +19,70 @@ import {
   PieChart,
   Pie,
   Cell,
+  Tooltip,
 } from "recharts";
+
+// Pillar name mapping and icon mapping
+const PILLAR_ICON_MAP = {
+  "Strategic Value & Governance": Target,
+  "Workforce Skillset & Organization Structure": Users,
+  "Technology & Data": Database,
+  "Resilience, Performance & Impact": TrendingUp,
+  "Ethics, Trust & Responsible AI": Shield,
+  "Compliance, Security & Risk": Lock,
+  "Operations & Implementation": Cpu,
+};
+
+const PILLAR_SHORT_NAMES = {
+  "Strategic Value & Governance": "Strategy & Governance",
+  "Workforce Skillset & Organization Structure": "Organization & Workforce",
+  "Technology & Data": "Data & Technology",
+  "Resilience, Performance & Impact": "Performance & Impact",
+  "Ethics, Trust & Responsible AI": "Trust, Ethics & Responsible AI",
+  "Compliance, Security & Risk": "Security & Risk",
+  "Operations & Implementation": "Operations & Implementation",
+};
+
+const PILLAR_COLORS = [
+  '#46cdc6',
+  '#15ae99',
+  '#2a868c',
+  '#1a1a1a',
+  '#4ade80',
+  '#10b981',
+  '#f59e0b',
+];
+
+// Helper function to get status from maturity level
+const getStatusFromMaturity = (maturityLevel) => {
+  switch (maturityLevel) {
+    case "Initial":
+    case "Adopting":
+      return "needs-improvement";
+    case "Established":
+      return "moderate";
+    case "Advanced":
+    case "Transformational":
+      return "strong";
+    default:
+      return "moderate";
+  }
+};
 
 export function ResultsDashboard() {
   const navigate = useNavigate();
+  const { assessmentResults } = useAssessmentStore();
+  const { currentUser } = useAuthStore();
   const [selectedSegment, setSelectedSegment] = useState(null);
   const [animatedSections, setAnimatedSections] = useState(new Set());
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   
   // Refs for scroll detection - defined at component level to prevent re-creation
   const pillarScoresRef = useRef(null);
   const strengthsRef = useRef(null);
   const gapsRef = useRef(null);
   const recommendationsRef = useRef(null);
+  const chartContainerRef = useRef(null);
   
   // useInView hooks - defined at component level
   const pillarScoresInView = useInView(pillarScoresRef, { once: true, margin: "-100px", amount: 0.1 });
@@ -80,42 +135,105 @@ export function ResultsDashboard() {
     }
   }, [recommendationsInView]);
 
-  const pieChartData = [
-    { name: 'Strategy & Governance', value: 35, color: '#46cdc6' },
-    { name: 'Organization & Workforce', value: 12, color: '#15ae99' },
-    { name: 'Data & Technology', value: 28, color: '#2a868c' },
-    { name: 'Performance & Impact', value: 8, color: '#1a1a1a' },
-    { name: 'Trust, Ethics & Responsible AI', value: 10, color: '#4ade80' },
-    { name: 'Security & Risk', value: 7, color: '#10b981' },
-  ];
+  // Transform API data to component format
+  const pieChartData = useMemo(() => {
+    if (!assessmentResults?.pillar_results) return [];
+    
+    const sortedPillars = assessmentResults.pillar_results
+      .sort((a, b) => a.pillar_order - b.pillar_order);
+    
+    // Calculate total weighted score for normalization
+    const totalWeightedScore = sortedPillars.reduce((sum, p) => sum + p.weighted_score, 0);
+    
+    return sortedPillars.map((pillar, index) => {
+      // Use weighted_score normalized to 100 for pie chart (shows relative contribution)
+      const normalizedValue = totalWeightedScore > 0 
+        ? Math.round((pillar.weighted_score / totalWeightedScore) * 100) 
+        : 0;
+      
+      return {
+        name: PILLAR_SHORT_NAMES[pillar.pillar_name] || pillar.pillar_name,
+        value: normalizedValue,
+        color: PILLAR_COLORS[index % PILLAR_COLORS.length],
+        originalName: pillar.pillar_name,
+        averageScore: pillar.average_score,
+        weightedScore: pillar.weighted_score,
+      };
+    });
+  }, [assessmentResults]);
 
-  const totalScore = pieChartData.reduce((acc, curr) => acc + curr.value, 0);
-  const overallScore = 68;
+  const totalScore = useMemo(() => {
+    return pieChartData.reduce((acc, curr) => acc + curr.value, 0);
+  }, [pieChartData]);
+
+  const overallScore = useMemo(() => {
+    if (!assessmentResults?.overall_score) return 0;
+    // Convert from 0-5 scale to 0-100 scale
+    return Math.round((assessmentResults.overall_score / 5) * 100);
+  }, [assessmentResults]);
+
+  const overallMaturityLevel = assessmentResults?.overall_maturity_level || "Adopting";
   const maxScore = 100;
 
   useEffect(() => {
     if (pieChartData.length > 0 && !selectedSegment) {
       setSelectedSegment(pieChartData[0].name);
     }
-  }, []);
+  }, [pieChartData]);
 
-  const radarData = [
-    { pillar: "Strategy & Governance", score: 3.9, industry: 3.45 },
-    { pillar: "Organization & Workforce", score: 3.1, industry: 3.2 },
-    { pillar: "Data & Technology", score: 4.15, industry: 3.7 },
-    { pillar: "Performance & Impact", score: 2.9, industry: 3.0 },
-    { pillar: "Trust, Ethics & Responsible AI", score: 3.6, industry: 3.4 },
-    { pillar: "Security & Risk", score: 4.7, industry: 3.9 },
-  ];
+  // Radar chart data - using average_score from API
+  const radarData = useMemo(() => {
+    if (!assessmentResults?.pillar_results) return [];
+    
+    return assessmentResults.pillar_results
+      .sort((a, b) => a.pillar_order - b.pillar_order)
+      .map((pillar) => ({
+        pillar: PILLAR_SHORT_NAMES[pillar.pillar_name] || pillar.pillar_name,
+        score: pillar.average_score,
+      }));
+  }, [assessmentResults]);
 
-  const pillarScores = [
-    { icon: Target, title: "Strategy & Governance", score: 3.9, maxScore: 5, status: "strong", change: "+0.55" },
-    { icon: Users, title: "Organization & Workforce", score: 3.1, maxScore: 5, status: "moderate", change: "+0.2" },
-    { icon: Database, title: "Data & Technology", score: 4.15, maxScore: 5, status: "strong", change: "+0.85" },
-    { icon: TrendingUp, title: "Performance & Impact", score: 2.9, maxScore: 5, status: "needs-improvement", change: "-0.1" },
-    { icon: Shield, title: "Trust, Ethics & Responsible AI", score: 3.6, maxScore: 5, status: "moderate", change: "+0.3" },
-    { icon: Lock, title: "Security & Risk", score: 4.7, maxScore: 5, status: "strong", change: "+0.9" },
-  ];
+  // Pillar scores for the cards section
+  const pillarScores = useMemo(() => {
+    if (!assessmentResults?.pillar_results) return [];
+    
+    return assessmentResults.pillar_results
+      .sort((a, b) => a.pillar_order - b.pillar_order)
+      .map((pillar) => {
+        const Icon = PILLAR_ICON_MAP[pillar.pillar_name] || Target;
+        const shortName = PILLAR_SHORT_NAMES[pillar.pillar_name] || pillar.pillar_name;
+        const status = getStatusFromMaturity(pillar.maturity_level);
+        
+        return {
+          icon: Icon,
+          title: shortName,
+          score: parseFloat(pillar.average_score.toFixed(2)),
+          maxScore: 5,
+          status: status,
+          change: "", // Can be calculated if we have previous assessment data
+        };
+      });
+  }, [assessmentResults]);
+
+  // Show loading or fallback if no results
+  if (!assessmentResults || !assessmentResults.pillar_results || assessmentResults.pillar_results.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50">
+        <PageHeader 
+          centerItems={[
+            { label: "Industry", path: "/industry" }
+          ]}
+          zIndex="z-50"
+        />
+        <div className="pt-32 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-lg text-gray-600 mb-4">No assessment results available</div>
+            <Button onClick={() => navigate("/assessments")}>Go to Assessments</Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const strengths = [
     { title: "Advanced Security Infrastructure", description: "Industry-leading data protection and compliance frameworks", icon: Lock },
@@ -206,92 +324,202 @@ export function ResultsDashboard() {
       {/* Hero Section */}
       <section className="pt-32 pb-20 relative z-10">
         <div className="mx-auto px-4 sm:px-6 lg:px-8 ">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Left Column */}
-            <motion.div 
-              initial={{ opacity: 0, x: -60 }} 
-              animate={{ opacity: 1, x: 0 }} 
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-              className="space-y-6"
+          <motion.div 
+            initial={{ opacity: 0, x: -60 }} 
+            animate={{ opacity: 1, x: 0 }} 
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="space-y-6 max-w-4xl"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <div className="inline-flex items-center gap-2 bg-gradient-to-r from-[#46cdc6]/10 to-[#15ae99]/10 text-[#46cdc6] px-4 py-2 rounded-full text-sm font-medium border border-[#46cdc6]/20 shadow-sm">
-                  <motion.span
-                    animate={{ rotate: [0, 360] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                  >
-                    ✨
-                  </motion.span>
-                  <span>Assessment Complete</span>
-                </div>
-              </motion.div>
-              
-              <motion.h1 
-                className="text-5xl sm:text-6xl lg:text-7xl font-black text-gray-900 leading-tight"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-              >
-                Your AI Readiness
-                <span className="block bg-gradient-to-r from-[#46cdc6] to-[#15ae99] bg-clip-text text-transparent">
-                  Results
-                </span>
-              </motion.h1>
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-[#46cdc6]/10 to-[#15ae99]/10 text-[#46cdc6] px-4 py-2 rounded-full text-sm font-medium border border-[#46cdc6]/20 shadow-sm">
+                <motion.span
+                  animate={{ rotate: [0, 360] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                >
+                  ✨
+                </motion.span>
+                <span>Assessment Complete</span>
+              </div>
+            </motion.div>
+            
+            <motion.h1 
+              className="text-5xl sm:text-6xl lg:text-7xl font-black text-gray-900 leading-tight"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              Your AI Readiness
+              <span className="block bg-gradient-to-r from-[#46cdc6] to-[#15ae99] bg-clip-text text-transparent">
+                Results
+              </span>
+            </motion.h1>
 
-              <motion.p 
-                className="text-lg text-gray-600 leading-relaxed max-w-xl"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-              >
-                Based on your assessment, here's a comprehensive analysis of your organization's AI readiness and strategic recommendations.
-              </motion.p>
+            <motion.p 
+              className="text-lg text-gray-600 leading-relaxed max-w-xl"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
+              Based on your assessment, here's a comprehensive analysis of your organization's AI readiness and strategic recommendations.
+            </motion.p>
 
+            <motion.div 
+              className="flex items-start gap-4 p-6 bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-100"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+            >
               <motion.div 
-                className="flex items-start gap-4 p-6 bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-lg border border-gray-100"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.5 }}
-                whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+                className="w-14 h-14 bg-gradient-to-br from-[#46cdc6] to-[#15ae99] rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg"
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.6 }}
+              >
+                <TrendingUp className="w-7 h-7 text-white" />
+              </motion.div>
+              <div className="flex-1">
+                <div className="text-sm text-gray-600 mb-1 font-medium">Readiness Level</div>
+                <div className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
+                  {overallMaturityLevel}
+                </div>
+                <div className="text-sm text-gray-600 leading-relaxed">
+                  Your organization shows {overallMaturityLevel.toLowerCase()} readiness for AI transformation. Continue reading for detailed insights.
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+            >
+              <Button
+                onClick={async () => {
+                  if (!assessmentResults) {
+                    alert('No assessment results available to download');
+                    return;
+                  }
+
+                  setIsGeneratingReport(true);
+
+                  try {
+                    const companyName = currentUser?.company_name || currentUser?.name || 'Your Organization';
+                    const chartElement = chartContainerRef?.current || document.querySelector('[data-chart-container]');
+
+                    const result = await generatePDFReport(
+                      assessmentResults,
+                      chartElement,
+                      {
+                        companyName,
+                        date: new Date().toLocaleDateString(),
+                        includeCharts: !!chartElement,
+                      }
+                    );
+
+                    if (result.success) {
+                      console.log('Report downloaded successfully:', result.filename);
+                    } else {
+                      alert(`Failed to generate report: ${result.error}`);
+                    }
+                  } catch (error) {
+                    console.error('Error downloading report:', error);
+                    alert('An error occurred while generating the report. Please try again.');
+                  } finally {
+                    setIsGeneratingReport(false);
+                  }
+                }}
+                disabled={isGeneratingReport || !assessmentResults}
+                className="bg-gradient-to-r from-[#46cdc6] to-[#15ae99] hover:from-[#15ae99] hover:to-[#46cdc6] text-white px-6 py-3 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isGeneratingReport ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Generating Report...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    <span>Download Report</span>
+                  </>
+                )}
+              </Button>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Score Breakdown Section */}
+      <section className="py-20 relative" ref={chartContainerRef} data-chart-container>
+        <div className="mx-auto px-4 sm:px-6 lg:px-8 ">
+          <Card className="bg-white/30 backdrop-blur-sm rounded-3xl p-8 shadow-sm border border-gray-200/50">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+              {/* Left Column - Score Breakdown Cards (2 columns) */}
+              <motion.div
+                initial={{ opacity: 0, x: -60 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                className="relative"
+              >
+                <CardHeader className="pb-6 px-0">
+                  <CardTitle className="text-2xl font-bold text-gray-900">Score Breakdown</CardTitle>
+                </CardHeader>
+                <CardContent className="px-0">
+                  <div className="grid grid-cols-2 gap-3">
+                    {pieChartData.map((segment, index) => {
+                      const score = segment.averageScore ? parseFloat(segment.averageScore.toFixed(2)) : 0;
+                      const percentage = segment.value;
+                      return (
+                        <motion.button
+                          key={index}
+                          onClick={() => setSelectedSegment(selectedSegment === segment.name ? null : segment.name)}
+                          className={`flex items-center gap-3 text-left p-4 rounded-xl transition-all border ${
+                            selectedSegment === segment.name 
+                              ? 'bg-gray-50 border-gray-300 shadow-md' 
+                              : 'bg-white border-gray-200 hover:bg-gray-50 hover:shadow-sm'
+                          }`}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          {/* Circle on left */}
+                          <motion.div 
+                            className="w-5 h-5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: segment.color }}
+                            animate={selectedSegment === segment.name ? { scale: [1, 1.2, 1] } : {}}
+                            transition={{ duration: 0.5 }}
+                          />
+                          {/* Score breakdown on right */}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-semibold text-gray-900 mb-1 truncate">{segment.name}</div>
+                            <div className="text-xs text-gray-600">{score} / 5.0 • {percentage}%</div>
+                          </div>
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </motion.div>
+
+              {/* Right Column - Pie Chart (Circular Diagram) */}
+              <motion.div
+                initial={{ opacity: 0, x: 60 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+                className="relative"
               >
                 <motion.div 
-                  className="w-14 h-14 bg-gradient-to-br from-[#46cdc6] to-[#15ae99] rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg"
-                  whileHover={{ rotate: 360 }}
-                  transition={{ duration: 0.6 }}
-                >
-                  <TrendingUp className="w-7 h-7 text-white" />
-                </motion.div>
-                <div className="flex-1">
-                  <div className="text-sm text-gray-600 mb-1 font-medium">Readiness Level</div>
-                  <div className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
-                    Intermediate
-                  </div>
-                  <div className="text-sm text-gray-600 leading-relaxed">
-                    Your organization shows intermediate readiness for AI transformation. Continue reading for detailed insights.
-                  </div>
-                </div>
-              </motion.div>
-          </motion.div>
-
-            {/* Right Column - Pie Chart */}
-            <motion.div
-              initial={{ opacity: 0, x: 60 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
-              className="relative"
-            >
-              <motion.div 
-                className="absolute inset-0 bg-gradient-to-br from-[#46cdc6]/20 to-[#15ae99]/20 rounded-full blur-3xl"
-                animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
-                transition={{ duration: 4, repeat: Infinity }}
-              />
-              
-              <div className="relative bg-white/80 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-gray-100">
-                <div className="relative w-full flex items-center justify-center">
+                  className="absolute inset-0 bg-gradient-to-br from-[#46cdc6]/20 to-[#15ae99]/20 rounded-full blur-3xl"
+                  animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
+                  transition={{ duration: 4, repeat: Infinity }}
+                />
+                
+                <div className="relative w-full flex items-center justify-center" data-pie-chart>
                   <PieChart width={400} height={400}>
                     <Pie
                       data={pieChartData}
@@ -326,13 +554,15 @@ export function ResultsDashboard() {
                     {selectedSegment ? (
                       (() => {
                         const selectedData = pieChartData.find(seg => seg.name === selectedSegment);
-                        const percentage = selectedData ? ((selectedData.value / totalScore) * 100).toFixed(0) : 0;
+                        if (!selectedData) return null;
+                        const score = selectedData.averageScore ? parseFloat(selectedData.averageScore.toFixed(2)) : 0;
+                        const percentage = selectedData.value;
                         return (
                           <>
                             <div className="text-6xl font-bold bg-gradient-to-br from-gray-900 to-gray-700 bg-clip-text text-transparent mb-1">
-                              {selectedData?.value || 0}
+                              {score}
                             </div>
-                            <div className="text-lg text-gray-600 mb-2">points</div>
+                            <div className="text-lg text-gray-600 mb-2">/ 5.0</div>
                             <div className="text-4xl font-bold bg-gradient-to-r from-[#46cdc6] to-[#15ae99] bg-clip-text text-transparent">
                               {percentage}%
                             </div>
@@ -345,65 +575,63 @@ export function ResultsDashboard() {
                           {overallScore}
                         </div>
                         <div className="text-2xl text-gray-600">/ {maxScore}</div>
+                        <div className="text-lg text-gray-500 mt-2">{overallMaturityLevel}</div>
                       </>
                     )}
                   </motion.div>
                 </div>
-
-                <div className="mt-8">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">Score Breakdown</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    {pieChartData.map((segment, index) => {
-                      const percentage = ((segment.value / totalScore) * 100).toFixed(0);
-                      return (
-                        <motion.button
-                          key={index}
-                          onClick={() => setSelectedSegment(selectedSegment === segment.name ? null : segment.name)}
-                          className={`flex items-center gap-2 text-left p-3 rounded-xl transition-all border ${
-                            selectedSegment === segment.name 
-                              ? 'bg-gray-50 border-gray-300 shadow-md' 
-                              : 'border-gray-200 hover:bg-gray-50 hover:shadow-sm'
-                          }`}
-                          whileHover={{ scale: 1.03 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <motion.div 
-                            className="w-4 h-4 rounded-full flex-shrink-0"
-                            style={{ backgroundColor: segment.color }}
-                            animate={selectedSegment === segment.name ? { scale: [1, 1.2, 1] } : {}}
-                            transition={{ duration: 0.5 }}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-medium text-gray-900 truncate">{segment.name}</div>
-                            <div className="text-xs text-gray-600">{segment.value} pts • {percentage}%</div>
-                          </div>
-                        </motion.button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
+              </motion.div>
+            </div>
+          </Card>
         </div>
       </section>
 
       {/* Radar Chart Section */}
-      <section className="py-20 relative">
+      <section className="py-20 relative" data-radar-section>
         <div className="mx-auto px-4 sm:px-6 lg:px-8 ">
           <Card className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-2xl overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
               <CardTitle className="text-3xl text-gray-900 font-bold">Maturity Profile</CardTitle>
-              <CardDescription className="text-gray-600 text-base">Your scores compared to industry benchmarks</CardDescription>
+              <CardDescription className="text-gray-600 text-base">Your scores across all assessment pillars</CardDescription>
               </CardHeader>
-            <CardContent className="pt-8">
+            <CardContent className="pt-8" data-radar-chart>
               <ResponsiveContainer width="100%" height={450}>
                   <RadarChart data={radarData}>
                   <PolarGrid stroke="rgba(107, 114, 128, 0.2)" strokeWidth={1.5} />
                   <PolarAngleAxis dataKey="pillar" tick={{ fill: "#374151", fontSize: 13, fontWeight: 500 }} />
                   <PolarRadiusAxis angle={90} domain={[0, 5]} tick={{ fill: "#6b7280" }} />
-                  <Radar name="Your Score" dataKey="score" stroke="#46cdc6" fill="#46cdc6" fillOpacity={0.6} strokeWidth={2} />
-                  <Radar name="Industry Average" dataKey="industry" stroke="#2a868c" fill="#2a868c" fillOpacity={0.3} strokeWidth={2} />
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-white border border-gray-200 rounded-lg shadow-xl p-4 min-w-[200px]">
+                            <p className="font-semibold text-gray-900 mb-3 text-base">{label}</p>
+                            <div className="space-y-2">
+                              {payload.map((entry, index) => (
+                                <div key={index} className="flex items-center justify-between gap-4">
+                                  <div className="flex items-center gap-2">
+                                    <div
+                                      className="w-3 h-3 rounded-full"
+                                      style={{ backgroundColor: entry.color }}
+                                    />
+                                    <span className="text-sm text-gray-600 font-medium">
+                                      {entry.name}
+                                    </span>
+                                  </div>
+                                  <span className="text-sm font-bold text-gray-900">
+                                    {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value} / 5.0
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                    cursor={{ stroke: '#46cdc6', strokeWidth: 1, strokeDasharray: '3 3' }}
+                  />
+                  <Radar name="Your Score" dataKey="score" stroke="#46cdc6" fill="#46cdc6" fillOpacity={0.6} strokeWidth={2} dot={{ r: 4, fill: '#46cdc6' }} />
                   </RadarChart>
                 </ResponsiveContainer>
               </CardContent>

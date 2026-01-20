@@ -289,6 +289,12 @@ export default function HomePage() {
 
       {/* Global Animation Styles */}
       <style>{`
+        /* Individual hover tooltip styles - each popup shows only on its own item hover */
+        .hover-item:hover .popup-tooltip {
+          opacity: 1 !important;
+          visibility: visible !important;
+        }
+        
         @keyframes text-slide-up-1 { 0% { opacity: 0; transform: translateY(30px); } 100% { opacity: 1; transform: translateY(0); } }
         @keyframes text-slide-up-2 { 0% { opacity: 0; transform: translateY(30px); } 100% { opacity: 1; transform: translateY(0); } }
         @keyframes typewriter { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
@@ -372,19 +378,6 @@ export default function HomePage() {
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center w-full py-8">
             {/* Left Column - Text Content */}
             <div className="space-y-5 lg:space-y-6 relative" style={{ zIndex: 20 }}>
-              {/* Badge */}
-                      <motion.div
-                initial={{ opacity: 0, y: 20 }} 
-                animate={{ opacity: 1, y: 0 }} 
-                        transition={{ delay: 0.1 }}
-                className="relative"
-                style={{ zIndex: 21 }}
-                      >
-                <Badge className="bg-white text-black border-gray-200 px-4 py-2 rounded-full text-xs font-medium tracking-wider relative" style={{ zIndex: 22, fontFamily: 'Segoe UI, sans-serif', fontWeight: 500 }}>
-                          ✨ Enterprise AI Transformation Platform
-                        </Badge>
-                      </motion.div>
-          
               {/* Headline - Rotating */}
               <AnimatePresence mode="wait">
                 <motion.h1 
@@ -457,155 +450,8 @@ export default function HomePage() {
                     </div>
                   </section>
 
-                  {/* Our Core AI Capabilities Section - WHITE with Auto-Rotating Carousel */}
-                  <section id="features" className="py-24 relative bg-white overflow-hidden">
-                    {/* Gradient Background Behind Cards */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 0 }}>
-                      <div 
-                        className="w-full max-w-[1600px] h-[500px] mx-auto"
-                        style={{
-                          background: 'radial-gradient(ellipse 1200px 500px at center, rgba(175, 232, 221, 0.5) 0%, rgba(153, 246, 228, 0.4) 30%, transparent 60%)',
-                        }}
-                      />
-                    </div>
-
-                    <div className="container mx-auto px-6 sm:px-12 lg:px-20 relative z-10">
-                      {/* Section Header */}
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.6 }}
-                        className="text-center mb-16"
-                      >
-                        <h2 className="text-3xl lg:text-4xl mb-4 font-bold text-slate-900">
-                          See how we solve problems, <span className="text-slate-400">right on target</span>
-                        </h2>
-                      </motion.div>
-
-                      {/* Two Cards Side by Side */}
-                      <div className="grid md:grid-cols-2 gap-8 max-w-[1600px] mx-auto relative z-10">
-                        {/* Card 1 - Predictive Analytics */}
-                        <motion.div
-                          initial={{ opacity: 0, y: 20 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.6 }}
-                        >
-                          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 h-full overflow-hidden">
-                            <div className="grid md:grid-cols-2 gap-0 h-full min-h-[400px]">
-                              {/* Image - Left */}
-                              <div className="relative w-full h-full">
-                                <img
-                                  src="/modules/coreAI1.png"
-                                  alt="Predictive Analytics Dashboard"
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-
-                              {/* Text Content - Right */}
-                              <div className="p-8 flex flex-col justify-center">
-                                <div className="flex items-center gap-2 mb-3">
-                                  <div className="w-6 h-6 rounded bg-purple-500 flex items-center justify-center">
-                                    <Brain className="w-4 h-4 text-white" />
-                                  </div>
-                                  <span className="text-xs text-gray-500 font-medium">Predictive Analytics</span>
-                                </div>
-                                <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                                  Anticipate Market Trends
-                                </h3>
-                                <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                                  Our predictive models analyze historical and real-time data to forecast future outcomes with remarkable accuracy, giving you a critical competitive advantage.
-                                </p>
-                    
-                                <ul className="space-y-3">
-                                  <li className="flex items-start gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                      <CheckCircle2 className="w-3 h-3 text-gray-600" />
-                                    </div>
-                                    <span className="text-sm text-gray-600">Reduce risk with data-driven foresight.</span>
-                                  </li>
-                                  <li className="flex items-start gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                      <CheckCircle2 className="w-3 h-3 text-gray-600" />
-                                    </div>
-                                    <span className="text-sm text-gray-600">Optimize inventory and resource allocation.</span>
-                                  </li>
-                                  <li className="flex items-start gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                      <CheckCircle2 className="w-3 h-3 text-gray-600" />
-                                    </div>
-                                    <span className="text-sm text-gray-600">Identify new growth opportunities.</span>
-                                  </li>
-                                </ul>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-
-                        {/* Card 2 - Intelligent Automation */}
-                        <motion.div
-                          initial={{ opacity: 0, y: 20 }}
-                          whileInView={{ opacity: 1, y: 0 }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.2 }}
-                        >
-                          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 h-full overflow-hidden">
-                            <div className="grid md:grid-cols-2 gap-0 h-full min-h-[400px]">
-                              {/* Image - Left */}
-                              <div className="relative w-full h-full">
-                                <img
-                                  src="/modules/coreAI2.png"
-                                  alt="Intelligent Automation"
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-
-                              {/* Text Content - Right */}
-                              <div className="p-8 flex flex-col justify-center">
-                                <div className="flex items-center gap-2 mb-3">
-                                  <div className="w-6 h-6 rounded bg-purple-500 flex items-center justify-center">
-                                    <Lightbulb className="w-4 h-4 text-white" />
-                                  </div>
-                                  <span className="text-xs text-gray-500 font-medium">Intelligent Automation</span>
-                                </div>
-                                <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                                  Streamline Complex Processes
-                                </h3>
-                                <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                                  Implement AI-powered automation to handle repetitive tasks, streamline workflows, and free up your human capital for strategic initiatives.
-                                </p>
-                    
-                                <ul className="space-y-3">
-                                  <li className="flex items-start gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                      <CheckCircle2 className="w-3 h-3 text-gray-600" />
-                                    </div>
-                                    <span className="text-sm text-gray-600">Increase operational efficiency and reduce costs.</span>
-                                  </li>
-                                  <li className="flex items-start gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                      <CheckCircle2 className="w-3 h-3 text-gray-600" />
-                                    </div>
-                                    <span className="text-sm text-gray-600">Minimize human error and improve consistency.</span>
-                                  </li>
-                                  <li className="flex items-start gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                      <CheckCircle2 className="w-3 h-3 text-gray-600" />
-                                    </div>
-                                    <span className="text-sm text-gray-600">Scale your operations seamlessly.</span>
-                                  </li>
-                                </ul>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      </div>
-                    </div>
-                  </section>
-
                   {/* Capabilities Section - WHITE */}
-                  <section className="py-20 relative bg-white">
+                  <section id="features" className="py-20 relative bg-white">
                     <div className="container mx-auto px-20 sm:px-14 lg:px-26 relative z-10">
                       <motion.div
                         initial={{ opacity: 0 }}
@@ -621,7 +467,7 @@ export default function HomePage() {
                             </Badge>
                             <h2 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-slate-900 leading-tight" style={{ fontFamily: 'Segoe UI, sans-serif' }}>
                               <span className="block">Enterprise-Grade</span>
-                              <span className="block">AI Platform</span>
+                              <span className="block">AI assessment Platform</span>
                             </h2>
                           </div>
                           
@@ -924,21 +770,8 @@ export default function HomePage() {
                     </div>
                   </section> */}
 
-                  {/* Pricing Section - DARK with teal/green theme */}
-                  <section id="pricing" className="py-20 relative overflow-hidden" style={{ background: 'linear-gradient(to bottom, #003941, #033C47)' }}>
-                    {/* Grid pattern background - positioned on top right */}
-                    <div 
-                      className="absolute top-0 right-0 w-1/2 h-2/3 opacity-70 pointer-events-none"
-                      style={{
-                        backgroundImage: `
-                          linear-gradient(rgba(70, 205, 198, 0.4) 1.5px, transparent 1.5px),
-                          linear-gradient(90deg, rgba(70, 205, 198, 0.4) 1.5px, transparent 1.5px)
-                        `,
-                        backgroundSize: '60px 60px',
-                        maskImage: 'radial-gradient(ellipse 800px 400px at top right, black, transparent)',
-                        WebkitMaskImage: 'radial-gradient(ellipse 800px 400px at top right, black, transparent)'
-                      }}
-                    />
+                  {/* Pricing Section - WHITE background with #185D54 green theme */}
+                  <section id="pricing" className="py-20 relative overflow-hidden bg-white">
 
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                       <motion.div
@@ -947,19 +780,19 @@ export default function HomePage() {
                         viewport={{ once: true }}
                         className="text-center mb-12"
                       >
-                        <Badge className="mb-4 bg-[#15ae99]/10 text-[#46cdc6] border-[#15ae99]/20 backdrop-blur-sm">
+                        <Badge className="mb-4 bg-[#185D54]/10 text-[#185D54] border-[#185D54]/20">
                           Pricing
                         </Badge>
-                        <h2 className="text-3xl lg:text-4xl mb-4 font-bold text-white">
+                        <h2 className="text-3xl lg:text-4xl mb-4 font-bold text-gray-900">
                           Flexible Pricing Plans<br />for Every Need
                         </h2>
-                        <p className="text-lg text-slate-300 max-w-2xl mx-auto mb-8">
+                        <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
                           Choose the plan that best fits your requirements and<br />start optimizing your time today!
                         </p>
 
                         {/* Monthly/Annually Toggle */}
                         <div className="flex items-center justify-center gap-4 mb-12">
-                          <span className="text-white font-medium">Monthly</span>
+                          <span className="text-gray-700 font-medium">Monthly</span>
                           <label className="relative inline-flex items-center cursor-pointer">
                             <input 
                               type="checkbox" 
@@ -967,11 +800,11 @@ export default function HomePage() {
                               checked={isAnnual}
                               onChange={(e) => setIsAnnual(e.target.checked)}
                             />
-                            <div className="w-14 h-7 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gradient-to-r peer-checked:from-[#15ae99] peer-checked:to-[#46cdc6]"></div>
+                            <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-[#185D54]"></div>
                           </label>
-                          <span className="text-white font-medium">Annually</span>
+                          <span className="text-gray-700 font-medium">Annually</span>
                           {isAnnual && (
-                            <span className="text-[#46cdc6] text-sm bg-[#15ae99]/20 px-2 py-1 rounded">Save 15%</span>
+                            <span className="text-[#185D54] text-sm bg-[#185D54]/10 px-2 py-1 rounded">Save 15%</span>
                           )}
                         </div>
                       </motion.div>
@@ -985,55 +818,61 @@ export default function HomePage() {
                           transition={{ delay: 0.1 }}
                           whileHover={{ y: -8 }}
                         >
-                          <Card className="bg-gradient-to-b from-slate-800/50 to-slate-900/50 border-slate-700 backdrop-blur-sm hover:border-[#15ae99] hover:shadow-2xl hover:shadow-[#15ae99]/20 h-full transition-all duration-300 relative overflow-hidden">
-                            {/* Grid pattern on top right */}
-                            <div 
-                              className="absolute top-0 right-0 w-48 h-48 opacity-40 pointer-events-none"
-                              style={{
-                                backgroundImage: `
-                                  linear-gradient(rgba(70, 205, 198, 0.5) 1px, transparent 1px),
-                                  linear-gradient(90deg, rgba(70, 205, 198, 0.5) 1px, transparent 1px)
-                                `,
-                                backgroundSize: '40px 40px',
-                                maskImage: 'radial-gradient(ellipse at top right, black 0%, transparent 70%)',
-                                WebkitMaskImage: 'radial-gradient(ellipse at top right, black 0%, transparent 70%)'
-                              }}
-                            />
-                
+                          <Card className="bg-white border-2 border-gray-200 hover:border-[#185D54] hover:shadow-xl h-full transition-all duration-300 relative overflow-hidden">
                             <CardHeader>
-                              <CardTitle className="text-2xl text-white">Starter</CardTitle>
+                              <CardTitle className="text-2xl text-gray-900">Starter</CardTitle>
                               <div className="mt-4">
-                                <span className="text-4xl font-bold text-[#46cdc6]">Free</span>
-                                <span className="text-slate-400"> / $0</span>
+                                <span className="text-4xl font-bold" style={{ color: '#185D54' }}>Free</span>
+                                <span className="text-gray-500"> / for life</span>
                               </div>
-                              <CardDescription className="text-slate-300 mt-4">
-                                For individuals and small founders validating their AI readiness.
+                              <CardDescription className="text-gray-600 mt-4">
+                                For individuals and small launches validating their first releases.
                               </CardDescription>
                             </CardHeader>
                             <CardContent>
                               <ul className="space-y-3">
-                                <li className="flex items-start gap-2 text-slate-300">
-                                  <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Single Assessment: One-time assessment of your AI maturity.</span>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Single Assessment</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      One-time assessment of your AI maturity.
+                                    </span>
+                                  </div>
                                 </li>
-                                <li className="flex items-start gap-2 text-slate-300">
-                                  <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Basic Report: Summary of key strengths and weaknesses.</span>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Basic Report</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Summary of key strengths and weaknesses.
+                                    </span>
+                                  </div>
                                 </li>
-                                <li className="flex items-start gap-2 text-slate-300">
-                                  <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Static Use-Case Bank: Access to 50+ common AI use cases.</span>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Static Use-Case Bank</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Access to 50+ common AI use cases.
+                                    </span>
+                                  </div>
                                 </li>
-                                <li className="flex items-start gap-2 text-slate-300">
-                                  <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Email Support.</span>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Email Support</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Standard email support for your questions.
+                                    </span>
+                                  </div>
                                 </li>
                               </ul>
                               <Button 
                                 className="w-full mt-6 text-white"
-                                style={{ backgroundColor: '#15ae99' }}
-                                onMouseEnter={(e) => e.target.style.backgroundColor = '#0d8a7a'}
-                                onMouseLeave={(e) => e.target.style.backgroundColor = '#15ae99'}
+                                style={{ backgroundColor: '#185D54' }}
+                                onMouseEnter={(e) => e.target.style.backgroundColor = '#134a43'}
+                                onMouseLeave={(e) => e.target.style.backgroundColor = '#185D54'}
                                 onClick={() => navigate("/signup")}
                               >
                                 Get Started
@@ -1050,84 +889,111 @@ export default function HomePage() {
                           transition={{ delay: 0.2 }}
                           whileHover={{ y: -8 }}
                         >
-                          <Card className="bg-gradient-to-br from-[#003941]/50 to-[#033C47]/40 border-[#15ae99] backdrop-blur-sm hover:border-[#46cdc6] hover:shadow-2xl hover:shadow-[#46cdc6]/30 h-full relative overflow-hidden transition-all duration-300">
-                            {/* Grid pattern on top right - more visible on featured card */}
-                            <div 
-                              className="absolute top-0 right-0 w-48 h-48 opacity-50 pointer-events-none"
-                              style={{
-                                backgroundImage: `
-                                  linear-gradient(rgba(70, 205, 198, 0.6) 1px, transparent 1px),
-                                  linear-gradient(90deg, rgba(70, 205, 198, 0.6) 1px, transparent 1px)
-                                `,
-                                backgroundSize: '40px 40px',
-                                maskImage: 'radial-gradient(ellipse at top right, black 0%, transparent 70%)',
-                                WebkitMaskImage: 'radial-gradient(ellipse at top right, black 0%, transparent 70%)'
-                              }}
-                            />
-                
-                            <div className="absolute top-0 right-0 bg-gradient-to-br from-[#15ae99] to-[#46cdc6] text-white px-4 py-1 text-sm font-semibold">
-                              Recommended
+                          <Card className="bg-white border-2 border-[#185D54] hover:shadow-xl h-full relative overflow-hidden transition-all duration-300">
+                            <div className="absolute top-0 right-0 bg-[#185D54] text-white px-4 py-1.5 text-sm font-bold shadow-lg z-10 rounded-bl-lg flex items-center gap-1">
+                              <span>★</span>
+                              <span>Recommended</span>
                             </div>
                             <CardHeader>
-                              <CardTitle className="text-2xl text-white">Plus</CardTitle>
+                              <CardTitle className="text-2xl text-gray-900">Plus</CardTitle>
                               <div className="mt-4">
                                 {isAnnual ? (
                                   <>
-                                    <span className="text-4xl font-bold text-[#46cdc6]">$2,030</span>
-                                    <span className="text-slate-300">/year</span>
-                                    <div className="text-sm text-slate-400 mt-1 line-through">$2,388/year</div>
+                                    <span className="text-4xl font-bold" style={{ color: '#185D54' }}>$2,030</span>
+                                    <span className="text-gray-500">/ year</span>
+                                    <div className="text-sm text-gray-400 mt-1 line-through">$2,388/year</div>
                                   </>
                                 ) : (
                                   <>
-                                    <span className="text-4xl font-bold text-[#46cdc6]">$199</span>
-                                    <span className="text-slate-300">/month</span>
+                                    <span className="text-4xl font-bold" style={{ color: '#185D54' }}>$199</span>
+                                    <span className="text-gray-500">/month</span>
                                   </>
                                 )}
                               </div>
-                              <CardDescription className="text-slate-200 mt-4">
+                              <CardDescription className="text-gray-600 mt-4">
                                 For growing teams that need actionable insights and continuous improvement.
                               </CardDescription>
                             </CardHeader>
                             <CardContent>
                               <ul className="space-y-3">
-                                <li className="flex items-start gap-2 text-slate-200">
-                                  <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Everything in Starter</span>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Static Use-Case Bank</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Access to 50+ common AI use cases.
+                                    </span>
+                                  </div>
                                 </li>
-                                <li className="flex items-start gap-2 text-slate-200">
-                                  <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Continuous Assessments: Retake the assessments monthly to track progress.</span>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Continuous Assessments</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Retake the assessments monthly to track progress.
+                                    </span>
+                                  </div>
                                 </li>
-                                <li className="flex items-start gap-2 text-slate-200">
-                                  <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Detailed Strategic Report: Deep dive into AI, Data, Security and Governance readiness.</span>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Detailed Strategic Report</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Deep dive into AI, Data, Security and Governance readiness.
+                                    </span>
+                                  </div>
                                 </li>
-                                <li className="flex items-start gap-2 text-slate-200">
-                                  <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Custom Roadmap: Step-by-step execution plan based on your score.</span>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Custom Roadmap</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Step-by-step execution plan based on your score.
+                                    </span>
+                                  </div>
                                 </li>
-                                <li className="flex items-start gap-2 text-slate-200">
-                                  <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Industry Benchmarking: Compare your score with similar sized peers within the same industry.</span>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Industry Benchmarking</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Compare your score with similar sized peers within the same industry.
+                                    </span>
+                                  </div>
                                 </li>
-                                <li className="flex items-start gap-2 text-slate-200">
-                                  <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Trend Analysis: Visualize your improvement over time</span>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Trend Analysis</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Visualize your improvement over time.
+                                    </span>
+                                  </div>
                                 </li>
-                                <li className="flex items-start gap-2 text-slate-200">
-                                  <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Export to PDF: Presentation-ready reports.</span>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Export to PDF</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Presentation-ready reports.
+                                    </span>
+                                  </div>
                                 </li>
-                                <li className="flex items-start gap-2 text-slate-200">
-                                  <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Priority Support: 72 hrs turn around on emails</span>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Priority Support</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      72 hrs turn around on emails.
+                                    </span>
+                                  </div>
                                 </li>
                               </ul>
                               <Button 
                                 className="w-full mt-6 text-white"
-                                style={{ background: 'linear-gradient(to right, #15ae99, #46cdc6)' }}
-                                onMouseEnter={(e) => e.target.style.background = 'linear-gradient(to right, #0d8a7a, #15ae99)'}
-                                onMouseLeave={(e) => e.target.style.background = 'linear-gradient(to right, #15ae99, #46cdc6)'}
+                                style={{ backgroundColor: '#185D54' }}
+                                onMouseEnter={(e) => e.target.style.backgroundColor = '#134a43'}
+                                onMouseLeave={(e) => e.target.style.backgroundColor = '#185D54'}
                                 onClick={() => navigate("/signup")}
                               >
                                 Get Started
@@ -1144,67 +1010,132 @@ export default function HomePage() {
                           transition={{ delay: 0.3 }}
                           whileHover={{ y: -8 }}
                         >
-                          <Card className="bg-gradient-to-b from-slate-800/50 to-slate-900/50 border-slate-700 backdrop-blur-sm hover:border-[#15ae99] hover:shadow-2xl hover:shadow-[#15ae99]/20 h-full transition-all duration-300 relative overflow-hidden">
-                            {/* Grid pattern on top right */}
-                            <div 
-                              className="absolute top-0 right-0 w-48 h-48 opacity-40 pointer-events-none"
-                              style={{
-                                backgroundImage: `
-                                  linear-gradient(rgba(70, 205, 198, 0.5) 1px, transparent 1px),
-                                  linear-gradient(90deg, rgba(70, 205, 198, 0.5) 1px, transparent 1px)
-                                `,
-                                backgroundSize: '40px 40px',
-                                maskImage: 'radial-gradient(ellipse at top right, black 0%, transparent 70%)',
-                                WebkitMaskImage: 'radial-gradient(ellipse at top right, black 0%, transparent 70%)'
-                              }}
-                            />
-                
+                          <Card className="bg-white border-2 border-gray-200 hover:border-[#185D54] hover:shadow-xl h-full transition-all duration-300 relative overflow-hidden">
                             <CardHeader>
-                              <CardTitle className="text-2xl text-white">Pro</CardTitle>
+                              <CardTitle className="text-2xl text-gray-900">Pro</CardTitle>
                               <div className="mt-4">
                                 {isAnnual ? (
                                   <>
-                                    <span className="text-4xl font-bold text-[#46cdc6]">$3,050</span>
-                                    <span className="text-slate-300">/year</span>
-                                    <div className="text-sm text-slate-400 mt-1 line-through">$3,588/year</div>
+                                    <span className="text-4xl font-bold" style={{ color: '#185D54' }}>$3,050</span>
+                                    <span className="text-gray-500">/ year</span>
+                                    <div className="text-sm text-gray-400 mt-1 line-through">$3,588/year</div>
                                   </>
                                 ) : (
                                   <>
-                                    <span className="text-4xl font-bold text-[#46cdc6]">$299</span>
-                                    <span className="text-slate-300">/month</span>
+                                    <span className="text-4xl font-bold" style={{ color: '#185D54' }}>$299</span>
+                                    <span className="text-gray-500">/month</span>
                                   </>
                                 )}
                               </div>
-                              <CardDescription className="text-slate-300 mt-4">
+                              <CardDescription className="text-gray-600 mt-4">
                                 For large organizations and agencies requiring customization and control.
                               </CardDescription>
                             </CardHeader>
                             <CardContent>
                               <ul className="space-y-3">
-                                <li className="flex items-start gap-2 text-slate-300">
-                                  <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Everything in Plus</span>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Static Use-Case Bank</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Access to 50+ common AI use cases.
+                                    </span>
+                                  </div>
                                 </li>
-                                <li className="flex items-start gap-2 text-slate-300">
-                                  <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>White-Label Reports: Use your branding and colors</span>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Continuous Assessments</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Retake the assessments monthly to track progress.
+                                    </span>
+                                  </div>
                                 </li>
-                                <li className="flex items-start gap-2 text-slate-300">
-                                  <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Custom Use-Case Creation: Build your own internal AI Use case library.</span>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Detailed Strategic Report</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Deep dive into AI, Data, Security and Governance readiness.
+                                    </span>
+                                  </div>
                                 </li>
-                                <li className="flex items-start gap-2 text-slate-300">
-                                  <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Single Sign-On (SSO): Enterprise-grade security.</span>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Custom Roadmap</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Step-by-step execution plan based on your score.
+                                    </span>
+                                  </div>
                                 </li>
-                                <li className="flex items-start gap-2 text-slate-300">
-                                  <CheckCircle2 className="w-5 h-5 text-[#46cdc6] mt-0.5 flex-shrink-0" />
-                                  <span>Priority Support: 24 hrs turn around on emails</span>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Industry Benchmarking</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Compare your score with similar sized peers within the same industry.
+                                    </span>
+                                  </div>
+                                </li>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Trend Analysis</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Visualize your improvement over time.
+                                    </span>
+                                  </div>
+                                </li>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Export to PDF</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Presentation-ready reports.
+                                    </span>
+                                  </div>
+                                </li>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">White-Label Reports</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Use your branding and colors.
+                                    </span>
+                                  </div>
+                                </li>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Custom Use-Case Creation</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Build your own internal AI Use case library.
+                                    </span>
+                                  </div>
+                                </li>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Single Sign-On (SSO)</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Enterprise-grade security.
+                                    </span>
+                                  </div>
+                                </li>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Priority Support</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      24 hrs turn around on emails.
+                                    </span>
+                                  </div>
                                 </li>
                               </ul>
                               <Button 
                                 variant="outline"
-                                className="w-full mt-6 border-[#15ae99] text-[#46cdc6] hover:bg-[#15ae99]/20 hover:text-white"
+                                className="w-full mt-6 border-[#185D54] text-[#185D54] hover:bg-[#185D54] hover:text-white"
                                 onClick={() => navigate("/signup")}
                               >
                                 Contact Sales

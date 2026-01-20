@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { ROLES } from '../constants/roles';
 import usersConfig from '../config/users.json';
+import { signIn as signInAPI } from '../services/authService';
 
 // Get initial users from config file
 const initialUsers = usersConfig.users || [];
@@ -39,6 +40,8 @@ export const useAuthStore = create(
       
       return {
         // State
+        // currentUser from sign-in API includes: id, email, full_name, organization_id,
+        // maturity_model_id, maturity_model_name, ongoing_assessment_id, token, is_super_admin, is_billing_admin, etc.
         isAuthenticated: false,
         currentUser: null,
         isLoading: true,
@@ -53,24 +56,33 @@ export const useAuthStore = create(
           });
         },
         
-        signIn: (username, password) => {
-          const users = get().users;
-          const user = users.find(
-            (u) => u.username === username && u.password === password
-          );
-
-          if (user) {
-            const userData = { username: user.username, role: user.role };
-            set({
-              currentUser: userData,
-              isAuthenticated: true,
-              isLoading: false,
-            });
-            localStorage.setItem("isAuthenticated", "true");
-            localStorage.setItem("currentUser", JSON.stringify(userData));
-            return { success: true };
-          } else {
-            return { success: false, error: "Invalid username or password" };
+        signIn: async (email, password) => {
+          try {
+            set({ isLoading: true });
+            
+            // Call API signin
+            const result = await signInAPI({ email, password });
+            
+            if (result.success) {
+              // User data is automatically stored in sessionStorage by authService
+              // Extract full user data from response
+              const userData = result.data || {};
+              
+              // Store in Zustand state
+              set({
+                currentUser: userData,
+                isAuthenticated: true,
+                isLoading: false,
+              });
+              
+              return { success: true, data: result.data };
+            } else {
+              set({ isLoading: false });
+              return { success: false, error: result.error || "Sign in failed" };
+            }
+          } catch (error) {
+            set({ isLoading: false });
+            return { success: false, error: error.message || "An error occurred during sign in" };
           }
         },
         
@@ -122,6 +134,25 @@ export const useAuthStore = create(
           set({ isLoading: loading });
         },
         
+        // Update ongoing_assessment_id (onboarding assessment ID) when starting a new assessment
+        updateOngoingAssessmentId: (assessmentId) => {
+          const currentUser = get().currentUser;
+          if (currentUser) {
+            const updatedUser = {
+              ...currentUser,
+              ongoing_assessment_id: assessmentId,
+            };
+            
+            // Update Zustand state
+            set({
+              currentUser: updatedUser,
+            });
+            
+            // Update sessionStorage
+            sessionStorage.setItem('currentUser', JSON.stringify(updatedUser));
+          }
+        },
+        
         // Helper: Get user role
         getUserRole: () => {
           const user = get().currentUser;
@@ -130,8 +161,9 @@ export const useAuthStore = create(
         
         // Helper: Check if user is Super Admin
         isSuperAdmin: () => {
-          const role = get().getUserRole();
-          return role === ROLES.SUPER_ADMIN;
+          const user = get().currentUser;
+          // Check API response field first, then fallback to role
+          return user?.is_super_admin === true || user?.role === ROLES.SUPER_ADMIN;
         },
       };
     },
@@ -143,8 +175,22 @@ export const useAuthStore = create(
         currentUser: state.currentUser,
       }),
       onRehydrateStorage: () => (state) => {
-        // After rehydration, set loading to false
+        // After rehydration, check sessionStorage for user data
         if (state) {
+          try {
+            const sessionUser = sessionStorage.getItem('currentUser');
+            const sessionAuth = sessionStorage.getItem('isAuthenticated');
+            
+            // If sessionStorage has user data, use it (takes precedence)
+            if (sessionUser && sessionAuth === 'true') {
+              const userData = JSON.parse(sessionUser);
+              state.currentUser = userData;
+              state.isAuthenticated = true;
+            }
+          } catch (error) {
+            console.error('Error reading sessionStorage:', error);
+          }
+          
           state.isLoading = false;
         }
       },

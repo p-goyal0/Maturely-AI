@@ -7,17 +7,30 @@ import { handleError, isAuthError } from './errorHandler';
 
 // Get API configuration from environment variables
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://4f044d2b-8253-497d-a364-c0f7a4b57202.mock.pstmn.io/api/v1';
-const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '30000', 10);
+const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '60000', 10); // Increased to 60 seconds default
 
 /**
  * Get authentication token from storage
+ * Checks sessionStorage first, then localStorage as fallback
  */
 const getAuthToken = () => {
   try {
-    const currentUser = localStorage.getItem('currentUser');
-    if (currentUser) {
-      const user = JSON.parse(currentUser);
-      return user.token || null;
+    // Check sessionStorage first (for API-authenticated users)
+    const sessionUser = sessionStorage.getItem('currentUser');
+    if (sessionUser) {
+      const user = JSON.parse(sessionUser);
+      if (user.token) {
+        return user.token;
+      }
+    }
+    
+    // Fallback to localStorage (for legacy/local users)
+    const localUser = localStorage.getItem('currentUser');
+    if (localUser) {
+      const user = JSON.parse(localUser);
+      if (user.token) {
+        return user.token;
+      }
     }
   } catch (error) {
     console.error('Error getting auth token:', error);
