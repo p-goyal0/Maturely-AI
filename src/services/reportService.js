@@ -122,6 +122,20 @@ export async function generatePDFReport(assessmentResults, chartElement = null, 
         // Wait longer for charts to fully render
         await new Promise(resolve => setTimeout(resolve, 2000));
         
+        // Check available space on current page before adding radar chart
+        const availableHeight = pageHeight - yPosition - margin;
+        const titleSpace = 20; // Space for title
+        const minChartHeight = 120; // Minimum height for chart to be visible
+        
+        // If not enough space on current page, add new page
+        if (availableHeight < minChartHeight + titleSpace) {
+          pdf.addPage();
+          yPosition = margin;
+          // Re-add the section title on new page
+          addText('Visual Analytics', 16, true, [0, 0, 0]);
+          yPosition += 3;
+        }
+        
         // Helper function to capture chart
         const captureChart = async (selector, chartName, fallbackSelectors = []) => {
           let element = null;
@@ -211,7 +225,9 @@ export async function generatePDFReport(assessmentResults, chartElement = null, 
             
             const imgData = canvas.toDataURL('image/png', 0.95);
             const maxWidth = contentWidth;
-            const imgWidth = Math.min(maxWidth, 80);
+            // For radar chart fallback, make it much larger
+            const isRadarChart = chartName === 'Radar Chart';
+            const imgWidth = isRadarChart ? maxWidth : Math.min(maxWidth, 80);
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
             
             if (imgHeight > 0 && imgHeight < pageHeight - margin * 2) {
@@ -231,81 +247,13 @@ export async function generatePDFReport(assessmentResults, chartElement = null, 
           return false;
         };
         
-        // Capture Pie Chart with Score Breakdown Cards
-        checkPageBreak(120);
-        addText('Score Breakdown Chart', 12, true, [0, 0, 0]);
-        yPosition += 5;
+        // Capture Radar Chart - Make it large but fit on current page
+        // Calculate available space on current page
+        const availableSpace = pageHeight - yPosition - margin - 20; // 20mm for footer
+        const radarTitleSpace = 10;
+        const maxChartHeight = Math.min(availableSpace - radarTitleSpace, (pageHeight - margin * 2) * 0.85);
         
-        // Try to capture the entire score breakdown section (chart + cards)
-        let pieSection = chartElement?.closest('section[data-chart-container]') || 
-                        document.querySelector('section[data-chart-container]');
-        
-        if (pieSection) {
-          try {
-            const canvas = await html2canvas(pieSection, {
-              backgroundColor: '#ffffff',
-              scale: 2,
-              logging: false,
-              useCORS: true,
-              allowTaint: true,
-              windowWidth: window.innerWidth,
-              windowHeight: window.innerHeight,
-            });
-            
-            if (canvas && canvas.width > 0 && canvas.height > 0) {
-              const imgData = canvas.toDataURL('image/png', 0.95);
-              const maxWidth = contentWidth;
-              const imgWidth = maxWidth;
-              const imgHeight = (canvas.height * imgWidth) / canvas.width;
-              
-              if (imgHeight > 0 && imgHeight < pageHeight - margin * 2) {
-                checkPageBreak(imgHeight + 20);
-                pdf.addImage(imgData, 'PNG', margin, yPosition, imgWidth, imgHeight);
-                yPosition += imgHeight + 15;
-                console.log('Score breakdown section successfully added to PDF');
-              }
-            }
-          } catch (error) {
-            console.warn('Error capturing score breakdown section:', error);
-            // Fallback to just the pie chart
-            const pieCaptured = await captureChart(
-              '[data-pie-chart]',
-              'Pie Chart',
-              [
-                '.recharts-wrapper',
-                'svg.recharts-surface',
-                'div:has(> svg.recharts-surface)',
-                'section[data-chart-container] .recharts-wrapper'
-              ]
-            );
-            
-            if (!pieCaptured) {
-              addText('Score breakdown chart could not be captured.', 10, false, [150, 150, 150]);
-              yPosition += 5;
-            }
-          }
-        } else {
-          // Fallback to just the pie chart
-          const pieCaptured = await captureChart(
-            '[data-pie-chart]',
-            'Pie Chart',
-            [
-              '.recharts-wrapper',
-              'svg.recharts-surface',
-              'div:has(> svg.recharts-surface)',
-              'section[data-chart-container] .recharts-wrapper'
-            ]
-          );
-          
-          if (!pieCaptured) {
-            addText('Score breakdown chart could not be captured.', 10, false, [150, 150, 150]);
-            yPosition += 5;
-          }
-        }
-
-        // Capture Radar Chart - Make it half page size
-        checkPageBreak(pageHeight / 2);
-        addText('Maturity Profile (Radar Chart)', 12, true, [0, 0, 0]);
+        addText('Maturity Profile (Radar Chart)', 14, true, [0, 0, 0]);
         yPosition += 5;
         
         // Try to capture the entire radar chart section
@@ -316,7 +264,7 @@ export async function generatePDFReport(assessmentResults, chartElement = null, 
           try {
             const canvas = await html2canvas(radarSection, {
               backgroundColor: '#ffffff',
-              scale: 2,
+              scale: 3, // Increased scale for better quality
               logging: false,
               useCORS: true,
               allowTaint: true,
@@ -326,21 +274,59 @@ export async function generatePDFReport(assessmentResults, chartElement = null, 
             
             if (canvas && canvas.width > 0 && canvas.height > 0) {
               const imgData = canvas.toDataURL('image/png', 0.95);
-              // Make radar chart half page width
+              // Make radar chart use full content width and fit available space on current page
               const maxWidth = contentWidth;
-              const imgWidth = maxWidth;
-              const imgHeight = (canvas.height * imgWidth) / canvas.width;
+              // Use available space on current page, but ensure it's at least 80% of page height
+              const maxHeight = Math.max(maxChartHeight, (pageHeight - margin * 2) * 0.8);
               
-              // Ensure it's at least half page height
-              const minHeight = (pageHeight - margin * 2) / 2;
-              const finalHeight = Math.max(imgHeight, minHeight);
-              const finalWidth = (canvas.width * finalHeight) / canvas.height;
+              // Calculate dimensions maintaining aspect ratio
+              const aspectRatio = canvas.width / canvas.height;
+              
+              // Start with maximum dimensions and scale down if needed
+              let imgWidth = maxWidth; // Full width
+              let imgHeight = imgWidth / aspectRatio;
+              
+              // If height exceeds max, use max height and calculate width
+              if (imgHeight > maxHeight) {
+                imgHeight = maxHeight;
+                imgWidth = imgHeight * aspectRatio;
+              }
+              
+              // Force it to be very large - use maximum available space
+              // Ensure it uses at least 98% of content width and 80% of page height
+              const minWidth = contentWidth * 0.98; // At least 98% of content width
+              const minHeight = (pageHeight - margin * 2) * 0.8; // At least 80% of page height
+              
+              // Prioritize making it as large as possible
+              if (imgWidth < minWidth) {
+                imgWidth = minWidth;
+                imgHeight = imgWidth / aspectRatio;
+                // If this makes height too large, use max height instead
+                if (imgHeight > maxHeight) {
+                  imgHeight = maxHeight;
+                  imgWidth = imgHeight * aspectRatio;
+                }
+              }
+              
+              if (imgHeight < minHeight) {
+                imgHeight = minHeight;
+                imgWidth = imgHeight * aspectRatio;
+                // If this makes width too large, use max width instead
+                if (imgWidth > maxWidth) {
+                  imgWidth = maxWidth;
+                  imgHeight = imgWidth / aspectRatio;
+                }
+              }
+              
+              // Final dimensions - use maximum available space
+              const finalWidth = Math.min(imgWidth, maxWidth);
+              const finalHeight = Math.min(imgHeight, maxHeight);
               
               if (finalHeight > 0 && finalHeight < pageHeight - margin * 2) {
                 checkPageBreak(finalHeight + 20);
-                pdf.addImage(imgData, 'PNG', margin, yPosition, Math.min(finalWidth, maxWidth), finalHeight);
+                pdf.addImage(imgData, 'PNG', margin, yPosition, finalWidth, finalHeight);
                 yPosition += finalHeight + 15;
-                console.log('Radar chart successfully added to PDF (half page size)');
+                console.log(`Radar chart successfully added to PDF (very large size: ${finalWidth.toFixed(1)}mm x ${finalHeight.toFixed(1)}mm)`);
               }
             }
           } catch (error) {

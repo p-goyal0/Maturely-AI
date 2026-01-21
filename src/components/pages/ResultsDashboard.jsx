@@ -221,7 +221,7 @@ export function ResultsDashboard() {
       <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50">
         <PageHeader 
           centerItems={[
-            { label: "Industry", path: "/industry" }
+            { label: "Home", path: "/offerings" }
           ]}
           zIndex="z-50"
         />
@@ -316,7 +316,7 @@ export function ResultsDashboard() {
       {/* Header */}
       <PageHeader 
         centerItems={[
-          { label: "Industry", path: "/industry" }
+          { label: "Home", path: "/offerings" }
         ]}
         zIndex="z-50"
       />

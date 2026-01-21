@@ -134,13 +134,25 @@ export const useAuthStore = create(
           set({ isLoading: loading });
         },
         
-        // Update ongoing_assessment_id (onboarding assessment ID) when starting a new assessment
+        // Update ongoing_assessment_ids (onboarding assessment ID) when starting a new assessment
+        // Handles both old single value format and new array format
         updateOngoingAssessmentId: (assessmentId) => {
           const currentUser = get().currentUser;
           if (currentUser) {
+            // Get existing ongoing_assessment_ids array or create from single value
+            const existingIds = currentUser?.ongoing_assessment_ids || 
+                               (currentUser?.ongoing_assessment_id ? [currentUser.ongoing_assessment_id] : []);
+            
+            // Add new assessment ID if not already present
+            const updatedIds = existingIds.includes(assessmentId) 
+              ? existingIds 
+              : [...existingIds, assessmentId];
+            
             const updatedUser = {
               ...currentUser,
-              ongoing_assessment_id: assessmentId,
+              ongoing_assessment_ids: updatedIds,
+              // Keep backward compatibility with single value
+              ongoing_assessment_id: updatedIds[0] || null,
             };
             
             // Update Zustand state

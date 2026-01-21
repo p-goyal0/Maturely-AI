@@ -1,6 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import { useEffect } from "react";
+import { PageHeader } from "./shared/PageHeader";
 
 export function PublicRoute({ children }) {
   const { isAuthenticated, isLoading } = useAuthStore();
@@ -9,8 +10,16 @@ export function PublicRoute({ children }) {
   // Wait for authentication check to complete
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
+      <div className="min-h-screen relative" style={{ backgroundColor: '#d3f4ee' }}>
+        {/* Header */}
+        <PageHeader
+          zIndex="z-50"
+        />
+        
+        {/* Loading Content */}
+        <div className="flex items-center justify-center min-h-screen pt-20">
+          <div className="text-gray-900 text-lg font-medium">Loading...</div>
+        </div>
       </div>
     );
   }

@@ -9,6 +9,7 @@ import { useAssessmentStore } from '../../stores/assessmentStore';
 import { getPillarQuestions, submitAnswer, getAssessmentResults } from '../../services/assessmentService';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { ErrorDisplay } from '../shared/ErrorDisplay';
+import { Skeleton } from 'antd';
 
 // Lottie animations will be loaded dynamically
 // Questions and answers come only from API (GET /assessment/questions/:pillar_id); no fallback JSON.
@@ -93,6 +94,10 @@ export function AssessmentsDashboard() {
                     q.is_submitted === true ||
                     (q.answer_options || []).some((o) => o.is_selected === true)
                 ),
+                // Include progress data from API (prefer API data over calculated)
+                isPillarCompleted: p.is_pillar_completed || false,
+                completedQuestionCount: p.completed_question_count ?? (qData.total_count ?? qList.length),
+                totalQuestionCount: p.total_question_count ?? (qData.total_count ?? qList.length),
               };
             }
             // No API question data yet (loading) or API returned empty; never use fallback JSON
@@ -103,6 +108,10 @@ export function AssessmentsDashboard() {
               order: p.pillar_order,
               questions: [],
               questionOptions: {},
+              // Include progress data from API
+              isPillarCompleted: p.is_pillar_completed || false,
+              completedQuestionCount: p.completed_question_count || 0,
+              totalQuestionCount: p.total_question_count || 0,
             };
           })
       : [];
@@ -147,13 +156,56 @@ export function AssessmentsDashboard() {
     });
   }, [pillarQuestionsMap]);
 
+  // On mount, jump to first non-completed pillar OR redirect to results if all completed
+  useEffect(() => {
+    if (!pillarData?.length || assessmentPillars.length === 0 || !assessmentId) return;
+    
+    const sorted = [...pillarData].sort((a, b) => (a.pillar_order || 0) - (b.pillar_order || 0));
+    const firstIncompleteIndex = sorted.findIndex((p) => !p.is_pillar_completed);
+    
+    // If all pillars are completed, fetch results and redirect to results page
+    if (firstIncompleteIndex === -1) {
+      // All pillars are completed - fetch results and navigate
+      setIsLoadingResults(true);
+      setResultsError(null);
+      
+      getAssessmentResults(assessmentId)
+        .then((result) => {
+          if (result.success && result.data) {
+            // Store results first
+            setAssessmentResults(result.data);
+            // Navigate to results page
+            navigate('/results');
+          } else {
+            setResultsError(result.error || 'Failed to fetch assessment results');
+            console.error('Failed to fetch assessment results:', result.error);
+          }
+        })
+        .catch((error) => {
+          setResultsError(error.message || 'An error occurred while fetching results');
+          console.error('Error fetching assessment results:', error);
+        })
+        .finally(() => {
+          setIsLoadingResults(false);
+        });
+    } else if (firstIncompleteIndex !== currentPillarIndex) {
+      // Jump to first incomplete pillar
+      setCurrentPillarIndex(firstIncompleteIndex);
+    }
+  }, [pillarData, assessmentPillars.length, assessmentId, navigate, setAssessmentResults]); // Only run when pillarData is loaded and assessmentPillars are built
+
   // Fetch questions for the current pillar when we land on it (on mount, or when pillar changes via other means like timeline)
-  // Note: handleNextStep and handlePreviousStep fetch questions directly, so this is mainly for initial load and timeline clicks
+  // Skip fetching if pillar is already completed (unless user explicitly navigates to it)
   useEffect(() => {
     if (!pillarData?.length || currentPillarIndex < 0 || currentPillarIndex >= pillarData.length) return;
     const sorted = [...pillarData].sort((a, b) => (a.pillar_order || 0) - (b.pillar_order || 0));
-    const pillarId = sorted[currentPillarIndex]?.pillar_id;
-    if (pillarId && !pillarQuestionsMap?.[pillarId]) {
+    const currentPillarFromData = sorted[currentPillarIndex];
+    const pillarId = currentPillarFromData?.pillar_id;
+    
+    // Only fetch questions if:
+    // 1. Pillar is not completed, OR
+    // 2. Questions are not already loaded (user might navigate to completed pillar)
+    if (pillarId && !pillarQuestionsMap?.[pillarId] && !currentPillarFromData?.is_pillar_completed) {
       fetchAndSetPillarQuestions(pillarId);
     }
   }, [pillarData, currentPillarIndex, pillarQuestionsMap, fetchAndSetPillarQuestions]);
@@ -166,8 +218,9 @@ export function AssessmentsDashboard() {
 
   // Auto-advance to next pillar when all questions in current pillar are answered
   // Note: For the last pillar (7th), we don't auto-advance - user must click "View Results" button
+  // Skips completed pillars automatically
   useEffect(() => {
-    if (!currentPillar || !currentPillar.questions?.length || assessmentPillars.length === 0) return;
+    if (!currentPillar || !currentPillar.questions?.length || assessmentPillars.length === 0 || !pillarData?.length) return;
 
     const allQuestionsAnswered = currentPillar.questions.every((_, qIndex) => {
       const questionKey = `${currentPillar.id}-${qIndex}`;
@@ -177,15 +230,42 @@ export function AssessmentsDashboard() {
     // Only auto-advance if NOT the last pillar
     if (allQuestionsAnswered && currentPillar.questions.length > 0 && currentPillarIndex < assessmentPillars.length - 1) {
       // Wait a bit before auto-advancing to next pillar
-      const timer = setTimeout(() => {
+      const timer = setTimeout(async () => {
         setCompletedPillars(prev => new Set([...prev, currentPillarIndex]));
-        setCurrentPillarIndex(prev => prev + 1);
+        
+        // Find next non-completed pillar
+        let nextPillarIndex = currentPillarIndex + 1;
+        while (nextPillarIndex < assessmentPillars.length) {
+          const pillar = assessmentPillars[nextPillarIndex];
+          const pillarFromData = pillarData.find(p => p.pillar_id === pillar?.id);
+          // Skip if pillar is completed
+          if (!pillarFromData?.is_pillar_completed) {
+            break;
+          }
+          nextPillarIndex++;
+        }
+        
+        // If all remaining pillars are completed, go to last pillar
+        if (nextPillarIndex >= assessmentPillars.length) {
+          nextPillarIndex = assessmentPillars.length - 1;
+        }
+        
+        const nextPillar = assessmentPillars[nextPillarIndex];
+        const pillarFromData = pillarData.find(p => p.pillar_id === nextPillar?.id);
+        
+        // Set the pillar index first
+        setCurrentPillarIndex(nextPillarIndex);
+        
+        // Only fetch questions if pillar is not completed and questions aren't already loaded
+        if (nextPillar?.id && !pillarFromData?.is_pillar_completed && !pillarQuestionsMap?.[nextPillar.id]) {
+          await fetchAndSetPillarQuestions(nextPillar.id);
+        }
       }, 800); // Slightly longer delay for pillar transition
 
       return () => clearTimeout(timer);
     }
     // For the last pillar, do nothing - wait for user to click "View Results" button
-  }, [answers, currentPillar, currentPillarIndex, assessmentPillars.length]);
+  }, [answers, currentPillar, currentPillarIndex, assessmentPillars.length, pillarData, pillarQuestionsMap, fetchAndSetPillarQuestions]);
 
   const handleAnswerSelect = async (questionKey, level) => {
     console.log('Answer selected:', questionKey, level); // Debug log
@@ -252,11 +332,28 @@ export function AssessmentsDashboard() {
 
   const handleNextStep = async () => {
     if (currentPillarIndex < assessmentPillars.length - 1) {
-      const nextPillarIndex = currentPillarIndex + 1;
-      const nextPillar = assessmentPillars[nextPillarIndex];
+      // Find next non-completed pillar
+      let nextPillarIndex = currentPillarIndex + 1;
+      while (nextPillarIndex < assessmentPillars.length) {
+        const pillar = assessmentPillars[nextPillarIndex];
+        const pillarFromData = pillarData?.find(p => p.pillar_id === pillar?.id);
+        // Skip if pillar is completed
+        if (!pillarFromData?.is_pillar_completed) {
+          break;
+        }
+        nextPillarIndex++;
+      }
       
-      // Always fetch questions for the next pillar to update data
-      if (nextPillar?.id) {
+      // If all remaining pillars are completed, go to last pillar
+      if (nextPillarIndex >= assessmentPillars.length) {
+        nextPillarIndex = assessmentPillars.length - 1;
+      }
+      
+      const nextPillar = assessmentPillars[nextPillarIndex];
+      const pillarFromData = pillarData?.find(p => p.pillar_id === nextPillar?.id);
+      
+      // Only fetch questions if pillar is not completed
+      if (nextPillar?.id && !pillarFromData?.is_pillar_completed) {
         await fetchAndSetPillarQuestions(nextPillar.id);
       }
       
@@ -333,24 +430,47 @@ export function AssessmentsDashboard() {
     setCurrentQuestionIndex(prev => Math.max(0, prev - 1));
   };
 
-  // Calculate pillar status based on answered questions
+  // Calculate pillar status based on API data (is_pillar_completed, completed_question_count, total_question_count)
+  // Always prioritize local answers for real-time progress updates
   const getPillarStatus = (pillarIndex) => {
     const pillar = assessmentPillars[pillarIndex];
-    if (!pillar || !pillar.questions?.length) return { status: 'waiting', answeredCount: 0, totalCount: 0, remainingCount: 0 };
+    if (!pillar) return { status: 'waiting', answeredCount: 0, totalCount: 0, remainingCount: 0 };
     
-    const totalCount = pillar.questions.length;
-    const answeredCount = pillar.questions.filter((_, qIndex) => {
-      const questionKey = `${pillar.id}-${qIndex}`;
-      return !!answers[questionKey];
-    }).length;
+    const totalCount = pillar.totalQuestionCount || pillar.questions?.length || 0;
+    const isCompleted = pillar.isPillarCompleted || false;
+    
+    // Always calculate from local answers first for real-time updates
+    // This ensures the timeline shows current progress as questions are answered
+    let answeredCount = 0;
+    if (pillar.questions?.length) {
+      // Count questions that have been answered locally
+      answeredCount = pillar.questions.filter((_, qIndex) => {
+        const questionKey = `${pillar.id}-${qIndex}`;
+        // Check if answered locally OR marked as submitted in API data
+        return !!answers[questionKey] || pillar.questionIsSubmitted?.[qIndex] === true;
+      }).length;
+    } else if (totalCount > 0) {
+      // If questions aren't loaded yet, count from answers using pillar ID
+      // This handles cases where questions haven't been fetched but answers exist
+      answeredCount = Array.from({ length: totalCount }, (_, qIndex) => {
+        const questionKey = `${pillar.id}-${qIndex}`;
+        return !!answers[questionKey];
+      }).filter(Boolean).length;
+    }
+    
+    // Fallback to API data only if no local answers found
+    if (answeredCount === 0 && pillar.completedQuestionCount > 0) {
+      answeredCount = pillar.completedQuestionCount;
+    }
+    
     const remainingCount = totalCount - answeredCount;
     
-    if (answeredCount === 0) {
-      return { status: 'waiting', answeredCount, totalCount, remainingCount };
-    } else if (answeredCount === totalCount) {
+    if (isCompleted || (answeredCount > 0 && answeredCount === totalCount)) {
       return { status: 'completed', answeredCount, totalCount, remainingCount };
-    } else {
+    } else if (answeredCount > 0) {
       return { status: 'in_progress', answeredCount, totalCount, remainingCount };
+    } else {
+      return { status: 'waiting', answeredCount, totalCount, remainingCount };
     }
   };
 
@@ -374,6 +494,16 @@ export function AssessmentsDashboard() {
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden">
+      {/* Loading overlay when redirecting to results */}
+      {isLoadingResults && (
+        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-[100] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <LoadingSpinner />
+            <p className="text-gray-600 font-medium">Loading assessment results...</p>
+          </div>
+        </div>
+      )}
+      
       {/* Background elements similar to homepage */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#46cdc6]/10 rounded-full blur-[120px]" />
@@ -456,7 +586,20 @@ export function AssessmentsDashboard() {
                           />
                         )}
                         
-                        <div className="flex items-start w-full">
+                        <div 
+                          className="flex items-start w-full cursor-pointer"
+                          onClick={async () => {
+                            // Allow navigation to any pillar, but only fetch questions if not completed
+                            const pillarFromData = pillarData?.find(p => p.pillar_id === pillar.id);
+                            if (index !== currentPillarIndex) {
+                              setCurrentPillarIndex(index);
+                              // Only fetch questions if pillar is not completed
+                              if (pillar.id && !pillarFromData?.is_pillar_completed && !pillarQuestionsMap?.[pillar.id]) {
+                                await fetchAndSetPillarQuestions(pillar.id);
+                              }
+                            }
+                          }}
+                        >
                           {/* Pillar Icon */}
                           <div className="relative z-10 flex items-center justify-center">
                             <div 
@@ -515,7 +658,7 @@ export function AssessmentsDashboard() {
                               {isCompleted 
                                 ? 'Completed' 
                                 : isInProgress 
-                                  ? `In Progress (${pillarStatus.remainingCount} ${pillarStatus.remainingCount === 1 ? 'question' : 'questions'} remaining)`
+                                  ? `${pillarStatus.answeredCount}/${pillarStatus.totalCount} questions completed`
                                   : 'Waiting'}
                             </div>
                           </div>
@@ -582,9 +725,46 @@ export function AssessmentsDashboard() {
               {/* Question Carousel - One Question at a Time; questions only from API */}
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 overflow-visible">
                 {!pillarQuestionsMap?.[currentPillar?.id] ? (
-                  <div className="flex flex-col items-center justify-center py-16" aria-busy="true">
-                    <LoadingSpinner />
-                    <p className="mt-3 text-sm text-gray-500">Loading questions...</p>
+                  <div className="min-h-[400px]" aria-busy="true">
+                    {/* Progress Indicators Skeleton */}
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <Skeleton.Input active size="default" style={{ width: 200, height: 24 }} />
+                        <div className="flex items-center gap-3">
+                          <Skeleton.Input active size="default" style={{ width: 120, height: 20 }} />
+                          <div className="flex items-center gap-1">
+                            {Array.from({ length: 7 }, (_, i) => (
+                              <Skeleton.Button key={i} active size="small" shape="round" style={{ width: 24, height: 6 }} />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Question Header Skeleton */}
+                    <div className="flex items-start gap-3 mb-6">
+                      <Skeleton.Avatar active size="default" shape="circle" style={{ width: 32, height: 32 }} />
+                      <div className="flex-1">
+                        <Skeleton active paragraph={{ rows: 2, width: ['100%', '90%'] }} title={false} />
+                      </div>
+                    </div>
+                    
+                    {/* Options Skeleton - 5 options matching the card structure */}
+                    <div className="space-y-3">
+                      {Array.from({ length: 5 }, (_, index) => (
+                        <div
+                          key={index}
+                          className="flex items-start gap-3 p-4 rounded-lg border-2 border-gray-200 bg-white"
+                        >
+                          {/* Radio button skeleton */}
+                          <Skeleton.Avatar active size="small" shape="circle" style={{ width: 20, height: 20, marginTop: 2 }} />
+                          {/* Option text skeleton */}
+                          <div className="flex-1 min-w-0">
+                            <Skeleton active paragraph={{ rows: 1, width: ['60%', '40%'] }} title={false} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : !(currentPillar.questions?.length) ? (
                   <div className="flex flex-col items-center justify-center py-16 text-gray-500">

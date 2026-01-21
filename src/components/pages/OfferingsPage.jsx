@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { FileText, Globe, Users, BarChart3, ClipboardList, Lightbulb, ArrowUpRight, AlertCircle } from 'lucide-react';
 import Lottie from 'lottie-react';
 import { PageHeader } from '../shared/PageHeader';
-import { startAssessment } from '../../services/assessmentService';
+import { startAssessment, getAssessmentResults } from '../../services/assessmentService';
 import { useAssessmentStore } from '../../stores/assessmentStore';
 import { useAuthStore } from '../../stores/authStore';
 
@@ -32,9 +32,19 @@ export function OfferingsPage() {
   const navigate = useNavigate();
   const currentUser = useAuthStore((state) => state.currentUser);
   const updateOngoingAssessmentId = useAuthStore((state) => state.updateOngoingAssessmentId);
-  const { setAssessmentData, setLoading, setError } = useAssessmentStore();
+  const { setAssessmentData, setAssessmentResults, setLoading, setError } = useAssessmentStore();
   const [isStartingAssessment, setIsStartingAssessment] = useState(false);
+  const [isViewingResults, setIsViewingResults] = useState(false);
   const [assessmentError, setAssessmentError] = useState(null);
+  
+  // Get assessment IDs from arrays (handle both old single value and new array format)
+  const ongoingAssessmentIds = currentUser?.ongoing_assessment_ids || (currentUser?.ongoing_assessment_id ? [currentUser.ongoing_assessment_id] : []);
+  const completedAssessmentIds = currentUser?.completed_assessment_ids || [];
+  const firstOngoingAssessmentId = ongoingAssessmentIds.length > 0 ? ongoingAssessmentIds[0] : null;
+  const firstCompletedAssessmentId = completedAssessmentIds.length > 0 ? completedAssessmentIds[0] : null;
+  
+  // Determine if we should show "View Results" button
+  const hasCompletedAssessment = !!firstCompletedAssessmentId;
   const [lottieAnimations, setLottieAnimations] = useState({
     document: null,
     globe: null,
@@ -316,43 +326,71 @@ export function OfferingsPage() {
                     onClick={async (e) => {
                       e.stopPropagation();
                       if (index === 0) {
-                        // Start or continue assessment API call
-                        const ongoingAssessmentId = currentUser?.ongoing_assessment_id;
-                        const isContinuing = !!ongoingAssessmentId;
-                        
-                        setIsStartingAssessment(true);
-                        setAssessmentError(null);
-                        setLoading(true);
-                        
-                        try {
-                          // Pass assessment_id if continuing existing assessment
-                          const result = await startAssessment(
-                            currentUser?.maturity_model_id,
-                            ongoingAssessmentId
-                          );
+                        // If completed assessment exists, show results
+                        if (hasCompletedAssessment) {
+                          setIsViewingResults(true);
+                          setAssessmentError(null);
+                          setLoading(true);
                           
-                          if (result.success) {
-                            // Store assessment data in Zustand store (pillar questions fetched on-demand when navigating)
-                            setAssessmentData(result.data);
+                          try {
+                            const result = await getAssessmentResults(firstCompletedAssessmentId);
                             
-                            // If starting a new assessment (not continuing), update ongoing_assessment_id
-                            if (!isContinuing && result.data?.assessment_id) {
-                              updateOngoingAssessmentId(result.data.assessment_id);
+                            if (result.success) {
+                              // Store results in Zustand store
+                              setAssessmentResults(result.data);
+                              // Navigate to results page
+                              navigate("/results");
+                            } else {
+                              setAssessmentError(result.error || 'Failed to fetch assessment results. Please try again.');
+                              setError(result.error);
                             }
-                            
-                            navigate("/assessments");
-                          } else {
-                            setAssessmentError(result.error || `Failed to ${isContinuing ? 'continue' : 'start'} assessment. Please try again.`);
-                            setError(result.error);
+                          } catch (error) {
+                            console.error('Error fetching assessment results:', error);
+                            const errorMsg = 'An unexpected error occurred. Please try again.';
+                            setAssessmentError(errorMsg);
+                            setError(errorMsg);
+                          } finally {
+                            setIsViewingResults(false);
+                            setLoading(false);
                           }
-                        } catch (error) {
-                          console.error(`Error ${isContinuing ? 'continuing' : 'starting'} assessment:`, error);
-                          const errorMsg = 'An unexpected error occurred. Please try again.';
-                          setAssessmentError(errorMsg);
-                          setError(errorMsg);
-                        } finally {
-                          setIsStartingAssessment(false);
-                          setLoading(false);
+                        } else {
+                          // Start or continue assessment API call
+                          const isContinuing = !!firstOngoingAssessmentId;
+                          
+                          setIsStartingAssessment(true);
+                          setAssessmentError(null);
+                          setLoading(true);
+                          
+                          try {
+                            // Pass assessment_id if continuing existing assessment
+                            const result = await startAssessment(
+                              currentUser?.maturity_model_id,
+                              firstOngoingAssessmentId
+                            );
+                            
+                            if (result.success) {
+                              // Store assessment data in Zustand store (pillar questions fetched on-demand when navigating)
+                              setAssessmentData(result.data);
+                              
+                              // If starting a new assessment (not continuing), update ongoing_assessment_ids
+                              if (!isContinuing && result.data?.assessment_id) {
+                                updateOngoingAssessmentId(result.data.assessment_id);
+                              }
+                              
+                              navigate("/assessments");
+                            } else {
+                              setAssessmentError(result.error || `Failed to ${isContinuing ? 'continue' : 'start'} assessment. Please try again.`);
+                              setError(result.error);
+                            }
+                          } catch (error) {
+                            console.error(`Error ${isContinuing ? 'continuing' : 'starting'} assessment:`, error);
+                            const errorMsg = 'An unexpected error occurred. Please try again.';
+                            setAssessmentError(errorMsg);
+                            setError(errorMsg);
+                          } finally {
+                            setIsStartingAssessment(false);
+                            setLoading(false);
+                          }
                         }
                       }
                       if (index === 1) navigate("/usecases");
@@ -392,7 +430,9 @@ export function OfferingsPage() {
                         className="text-2xl mb-4 min-h-[72px] flex items-start transition-colors duration-300"
                         style={{ color: '#1e293b' }}
                       >
-                        {index === 0 && currentUser?.ongoing_assessment_id 
+                        {index === 0 && hasCompletedAssessment
+                          ? 'View Results'
+                          : index === 0 && firstOngoingAssessmentId
                           ? 'Continue Assessment' 
                           : card.title}
                       </h3>
@@ -406,11 +446,15 @@ export function OfferingsPage() {
 
                     {/* Premium Circular Button at Bottom */}
                     <div className="flex justify-start mt-auto pt-6 relative z-10">
-                      {index === 0 && isStartingAssessment ? (
+                      {index === 0 && (isStartingAssessment || isViewingResults) ? (
                         <div className="flex items-center gap-2">
                           <div className="w-5 h-5 border-2 border-[#46cdc6]/30 border-t-[#46cdc6] rounded-full animate-spin" />
                           <span className="text-sm text-gray-600">
-                            {currentUser?.ongoing_assessment_id ? 'Continuing...' : 'Starting...'}
+                            {isViewingResults 
+                              ? 'Loading Results...' 
+                              : firstOngoingAssessmentId 
+                              ? 'Continuing...' 
+                              : 'Starting...'}
                           </span>
                         </div>
                       ) : (
