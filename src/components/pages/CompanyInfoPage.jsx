@@ -17,6 +17,7 @@ export function CompanyInfoPage() {
   
   // Zustand stores
   const selectedIndustry = useIndustryStore((state) => state.selectedIndustry);
+  const sectorType = useCompanyStore((state) => state.sectorType);
   const companyType = useCompanyStore((state) => state.companyType);
   const totalHeadcountRange = useCompanyStore((state) => state.totalHeadcountRange);
   const marketCapRange = useCompanyStore((state) => state.marketCapRange);
@@ -170,10 +171,11 @@ export function CompanyInfoPage() {
 
   // Redirect if no previous data
   useEffect(() => {
-    if (!selectedIndustry || !companyType) {
+    // Allow access if either companyType is set (private sector) or sectorType is public-sector
+    if (!selectedIndustry || (!companyType && sectorType !== 'public-sector')) {
       navigate("/industry");
     }
-  }, [selectedIndustry, companyType, navigate]);
+  }, [selectedIndustry, companyType, sectorType, navigate]);
 
   return (
     <div className="min-h-screen bg-[#f3f2ed] text-gray-900 relative overflow-hidden">

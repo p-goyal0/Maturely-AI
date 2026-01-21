@@ -10,6 +10,7 @@ export const useCompanyStore = create(
   persist(
     (set, get) => ({
       // State
+      sectorType: null, // 'private-sector' or 'public-sector'
       companyType: null, // 'public' or 'private'
       isListed: false,
       stockTicker: '',
@@ -18,6 +19,18 @@ export const useCompanyStore = create(
       annualRevenueRange: '',
       
       // Actions
+      setSectorType: (sector) => {
+        set({ sectorType: sector });
+        // Clear company type when sector changes
+        if (sector === 'public-sector') {
+          set({ companyType: null, isListed: false, stockTicker: '' });
+          // Set ownership_type to 'public' when public sector is selected
+          updateOnboardingDetails({
+            ownership_type: 'public',
+          });
+        }
+      },
+      
       setCompanyType: (type) => {
         set({ 
           companyType: type,
@@ -98,6 +111,7 @@ export const useCompanyStore = create(
       name: 'company-storage', // localStorage key
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
+        sectorType: state.sectorType,
         companyType: state.companyType,
         isListed: state.isListed,
         stockTicker: state.stockTicker,

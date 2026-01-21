@@ -14,7 +14,6 @@ export function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
-    username: "",
     email: "",
     companyName: "",
     password: "",
@@ -164,7 +163,7 @@ export function SignUpPage() {
     
     if (currentStep === 1) {
       // Validate step 1
-      if (!formData.fullName || !formData.username || !formData.email) {
+      if (!formData.fullName || !formData.email) {
         setError("Please fill in all fields");
         return;
       }
@@ -235,7 +234,6 @@ export function SignUpPage() {
         email: formData.email,
         password: formData.password,
         full_name: formData.fullName,
-        user_name: formData.username,
         organization_name: formData.companyName,
         tos_accepted: formData.agreeToTerms ? "true" : "false",
         device_info: deviceInfo,
@@ -418,27 +416,6 @@ export function SignUpPage() {
                                 type="text"
                         placeholder="Full name"
                                 value={formData.fullName}
-                                onChange={handleInputChange}
-                        className="pl-12 h-11 bg-gray-50 !border !border-gray-300 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:!ring-0 focus:!ring-offset-0 focus:bg-gray-50 focus:!border-[#15ae99] focus:!border-2"
-                        style={{ 
-                          transition: 'all 0.2s ease-in-out',
-                          borderWidth: '1px'
-                        }}
-                                required
-                              />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <div className="relative">
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 z-10">
-                        <span className="text-sm font-medium" style={{ color: '#15ae99' }}>@</span>
-                      </div>
-                              <Input
-                        name="username"
-                        type="text"
-                        placeholder="Username"
-                        value={formData.username}
                                 onChange={handleInputChange}
                         className="pl-12 h-11 bg-gray-50 !border !border-gray-300 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:!ring-0 focus:!ring-offset-0 focus:bg-gray-50 focus:!border-[#15ae99] focus:!border-2"
                         style={{ 

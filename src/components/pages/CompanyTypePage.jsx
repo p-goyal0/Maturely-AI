@@ -17,9 +17,11 @@ export function CompanyTypePage() {
   
   // Zustand stores
   const selectedIndustry = useIndustryStore((state) => state.selectedIndustry);
+  const sectorType = useCompanyStore((state) => state.sectorType);
   const companyType = useCompanyStore((state) => state.companyType);
   const isListed = useCompanyStore((state) => state.isListed);
   const stockTicker = useCompanyStore((state) => state.stockTicker);
+  const setSectorType = useCompanyStore((state) => state.setSectorType);
   const setCompanyType = useCompanyStore((state) => state.setCompanyType);
   const setIsListed = useCompanyStore((state) => state.setIsListed);
   const setStockTicker = useCompanyStore((state) => state.setStockTicker);
@@ -65,7 +67,8 @@ export function CompanyTypePage() {
     const details = getOnboardingDetails();
     const questionnaire = details.onboarding_org_questionaire || [];
     
-    if (companyType === 'public') {
+    // Load public sector questions (division, employee size) when public sector is selected
+    if (sectorType === 'public-sector') {
       questionnaire.forEach((q) => {
         if (q.ownership === 'public') {
           switch (q.order) {
@@ -75,6 +78,16 @@ export function CompanyTypePage() {
             case 2:
               setPublicEmployeeSize(q.answer || '');
               break;
+          }
+        }
+      });
+    }
+    
+    // Load public company questions (role, review details, LinkedIn) when public company is selected
+    if (companyType === 'public') {
+      questionnaire.forEach((q) => {
+        if (q.ownership === 'public') {
+          switch (q.order) {
             case 3:
               // Handle checkbox answers (comma-separated)
               setPublicRoleOptions(q.answer ? q.answer.split(',').map(s => s.trim()) : []);
@@ -95,11 +108,11 @@ export function CompanyTypePage() {
         }
       });
     }
-  }, [companyType]);
+  }, [companyType, sectorType]);
 
   // Update questionnaire when public answers change
   useEffect(() => {
-    if (companyType === 'public') {
+    if (sectorType === 'public-sector') {
       if (publicDivision) {
         updateQuestionnaireAnswer(
           "Which division/government agency are you responsible for within your public sector organization?",
@@ -109,10 +122,10 @@ export function CompanyTypePage() {
         );
       }
     }
-  }, [publicDivision, companyType]);
+  }, [publicDivision, sectorType]);
 
   useEffect(() => {
-    if (companyType === 'public') {
+    if (sectorType === 'public-sector') {
       if (publicEmployeeSize) {
         updateQuestionnaireAnswer(
           "What is the employee size of your division/government agency within your public sector organization?",
@@ -122,7 +135,7 @@ export function CompanyTypePage() {
         );
       }
     }
-  }, [publicEmployeeSize, companyType]);
+  }, [publicEmployeeSize, sectorType]);
 
   useEffect(() => {
     if (companyType === 'public') {
@@ -179,18 +192,29 @@ export function CompanyTypePage() {
 
   // Clear opposite ownership questions when switching
   useEffect(() => {
+    if (sectorType === 'public-sector') {
+      clearQuestionnaireByOwnership('private');
+      setPrivateScope('');
+      // Clear company type when switching to public sector
+      if (companyType) {
+        setCompanyType(null);
+      }
+    } else if (sectorType === 'private-sector') {
+      // Clear public sector questions (division, employee size) when switching to private sector
+      setPublicDivision('');
+      setPublicEmployeeSize('');
+    }
+    
     if (companyType === 'public') {
       clearQuestionnaireByOwnership('private');
       setPrivateScope('');
     } else if (companyType === 'private') {
-      clearQuestionnaireByOwnership('public');
-      setPublicDivision('');
-      setPublicEmployeeSize('');
+      // Only clear public company questions (3, 4, 5), not public sector questions (1, 2)
       setPublicRoleOptions([]);
       setPublicReviewDetails('');
       setPublicLinkedInUrl('');
     }
-  }, [companyType]);
+  }, [companyType, sectorType]);
 
   const handlePublicRoleToggle = (role) => {
     setPublicRoleOptions((prev) => {
@@ -280,7 +304,12 @@ export function CompanyTypePage() {
   }, []);
 
   const handleContinue = () => {
+    // Check if can continue from private sector (company type selected)
     if (canContinueFromTypePage()) {
+      navigate("/company-info");
+    }
+    // Check if can continue from public sector (both fields filled)
+    else if (sectorType === 'public-sector' && publicDivision.trim() !== '' && publicEmployeeSize.trim() !== '') {
       navigate("/company-info");
     }
   };
@@ -309,85 +338,185 @@ export function CompanyTypePage() {
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-10 sm:py-12 md:py-16 min-h-screen pt-24 pb-24">
         <div className="text-center mx-auto w-full px-2 sm:px-4 md:px-6">
           <h1 className="text-[2rem] sm:text-[2.5rem] md:text-[3rem] lg:text-[3.5rem] xl:text-[4rem] tracking-[-0.05rem] font-regular leading-[1] mb-8 mt-8 sm:mt-12 text-[#1a1a1a] mx-auto w-[90%] sm:w-[80%] md:w-[70%] lg:w-[60%]">
-            Are you a public or private company?
+            {!sectorType 
+              ? "Are you in the private sector or public sector?"
+              : sectorType === 'private-sector'
+              ? "Are you a public or private company?"
+              : "Public Sector"
+            }
           </h1>
 
-          {/* Company Type Selection */}
-          <div className="w-[75%] sm:w-[65%] md:w-[55%] lg:w-[45%] xl:w-[35%] mx-auto space-y-4">
-            {/* Public Option */}
-            <button
-              onClick={() => setCompanyType('public')}
-              className={`
-                w-full px-6 py-4
-                bg-white
-                text-left
-                rounded-lg
-                shadow-sm
-                border-2
-                transition-all duration-200
-                flex items-center justify-between
-                ${companyType === 'public' 
-                  ? 'border-[#46cdc6] ring-2 ring-[#46cdc6]' 
-                  : 'border-gray-200 hover:border-[#46cdc6]'
-                }
-              `}
+          {/* Sector Type Selection - Always Visible */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="w-[75%] sm:w-[65%] md:w-[55%] lg:w-[45%] xl:w-[35%] mx-auto space-y-4 mb-8"
+          >
+              {/* Info Text */}
+              <p className="text-sm text-gray-600 mb-6 text-center">
+                We define "public sector" as owned and operated by the government, while "private sector" is owned by individuals or companies (corporate).
+              </p>
+
+              {/* Private Sector Option */}
+              <button
+                onClick={() => setSectorType('private-sector')}
+                className={`
+                  w-full px-6 py-4
+                  bg-white
+                  text-left
+                  rounded-lg
+                  shadow-sm
+                  border-2
+                  transition-all duration-200
+                  flex items-center justify-between
+                  ${sectorType === 'private-sector' 
+                    ? 'border-[#46cdc6] ring-2 ring-[#46cdc6]' 
+                    : 'border-gray-200 hover:border-[#46cdc6]'
+                  }
+                `}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`
+                    w-5 h-5 rounded-full border-2 flex items-center justify-center
+                    ${sectorType === 'private-sector' 
+                      ? 'border-[#46cdc6] bg-[#46cdc6]' 
+                      : 'border-gray-300'
+                    }
+                  `}>
+                    {sectorType === 'private-sector' && (
+                      <div className="w-2.5 h-2.5 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <span className={`font-medium ${sectorType === 'private-sector' ? 'text-[#46cdc6]' : 'text-[#1a1a1a]'}`}>
+                    Private Sector
+                  </span>
+                </div>
+              </button>
+
+              {/* Public Sector Option */}
+              <button
+                onClick={() => setSectorType('public-sector')}
+                className={`
+                  w-full px-6 py-4
+                  bg-white
+                  text-left
+                  rounded-lg
+                  shadow-sm
+                  border-2
+                  transition-all duration-200
+                  flex items-center justify-between
+                  ${sectorType === 'public-sector' 
+                    ? 'border-[#46cdc6] ring-2 ring-[#46cdc6]' 
+                    : 'border-gray-200 hover:border-[#46cdc6]'
+                  }
+                `}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`
+                    w-5 h-5 rounded-full border-2 flex items-center justify-center
+                    ${sectorType === 'public-sector' 
+                      ? 'border-[#46cdc6] bg-[#46cdc6]' 
+                      : 'border-gray-300'
+                    }
+                  `}>
+                    {sectorType === 'public-sector' && (
+                      <div className="w-2.5 h-2.5 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <span className={`font-medium ${sectorType === 'public-sector' ? 'text-[#46cdc6]' : 'text-[#1a1a1a]'}`}>
+                    Public Sector
+                  </span>
+                </div>
+              </button>
+          </motion.div>
+
+          {/* Company Type Selection - Shown only for Private Sector */}
+          {sectorType === 'private-sector' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="w-[75%] sm:w-[65%] md:w-[55%] lg:w-[45%] xl:w-[35%] mx-auto space-y-4 mt-8"
             >
-              <div className="flex items-center gap-3">
-                <div className={`
-                  w-5 h-5 rounded-full border-2 flex items-center justify-center
+              <h2 className="text-xl sm:text-2xl font-semibold text-[#1a1a1a] mb-4 text-center">
+                Are you a public or private company?
+              </h2>
+              
+              {/* Public Company Option */}
+              <button
+                onClick={() => setCompanyType('public')}
+                className={`
+                  w-full px-6 py-4
+                  bg-white
+                  text-left
+                  rounded-lg
+                  shadow-sm
+                  border-2
+                  transition-all duration-200
+                  flex items-center justify-between
                   ${companyType === 'public' 
-                    ? 'border-[#46cdc6] bg-[#46cdc6]' 
-                    : 'border-gray-300'
+                    ? 'border-[#46cdc6] ring-2 ring-[#46cdc6]' 
+                    : 'border-gray-200 hover:border-[#46cdc6]'
                   }
-                `}>
-                  {companyType === 'public' && (
-                    <div className="w-2.5 h-2.5 rounded-full bg-white" />
-                  )}
+                `}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`
+                    w-5 h-5 rounded-full border-2 flex items-center justify-center
+                    ${companyType === 'public' 
+                      ? 'border-[#46cdc6] bg-[#46cdc6]' 
+                      : 'border-gray-300'
+                    }
+                  `}>
+                    {companyType === 'public' && (
+                      <div className="w-2.5 h-2.5 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <span className={`font-medium ${companyType === 'public' ? 'text-[#46cdc6]' : 'text-[#1a1a1a]'}`}>
+                    Public Company
+                  </span>
                 </div>
-                <span className={`font-medium ${companyType === 'public' ? 'text-[#46cdc6]' : 'text-[#1a1a1a]'}`}>
-                  Public Company
-                </span>
-              </div>
-            </button>
+              </button>
 
-            {/* Private Option */}
-            <button
-              onClick={() => setCompanyType('private')}
-              className={`
-                w-full px-6 py-4
-                bg-white
-                text-left
-                rounded-lg
-                shadow-sm
-                border-2
-                transition-all duration-200
-                flex items-center justify-between
-                ${companyType === 'private' 
-                  ? 'border-[#46cdc6] ring-2 ring-[#46cdc6]' 
-                  : 'border-gray-200 hover:border-[#46cdc6]'
-                }
-              `}
-            >
-              <div className="flex items-center gap-3">
-                <div className={`
-                  w-5 h-5 rounded-full border-2 flex items-center justify-center
+              {/* Private Company Option */}
+              <button
+                onClick={() => setCompanyType('private')}
+                className={`
+                  w-full px-6 py-4
+                  bg-white
+                  text-left
+                  rounded-lg
+                  shadow-sm
+                  border-2
+                  transition-all duration-200
+                  flex items-center justify-between
                   ${companyType === 'private' 
-                    ? 'border-[#46cdc6] bg-[#46cdc6]' 
-                    : 'border-gray-300'
+                    ? 'border-[#46cdc6] ring-2 ring-[#46cdc6]' 
+                    : 'border-gray-200 hover:border-[#46cdc6]'
                   }
-                `}>
-                  {companyType === 'private' && (
-                    <div className="w-2.5 h-2.5 rounded-full bg-white" />
-                  )}
+                `}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`
+                    w-5 h-5 rounded-full border-2 flex items-center justify-center
+                    ${companyType === 'private' 
+                      ? 'border-[#46cdc6] bg-[#46cdc6]' 
+                      : 'border-gray-300'
+                    }
+                  `}>
+                    {companyType === 'private' && (
+                      <div className="w-2.5 h-2.5 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <span className={`font-medium ${companyType === 'private' ? 'text-[#46cdc6]' : 'text-[#1a1a1a]'}`}>
+                    Private Company
+                  </span>
                 </div>
-                <span className={`font-medium ${companyType === 'private' ? 'text-[#46cdc6]' : 'text-[#1a1a1a]'}`}>
-                  Private Company
-                </span>
-              </div>
-            </button>
+              </button>
 
-            {/* Conditional Fields for Public Company */}
-            {companyType === 'public' && (
+              {/* Conditional Fields for Public Company - Only show for Private Sector */}
+              {companyType === 'public' && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -471,34 +600,6 @@ export function CompanyTypePage() {
                 <div className="mt-8 space-y-6 pt-6 border-t border-gray-200">
                   <h2 className="text-xl font-semibold text-[#1a1a1a] mb-4">Additional Information</h2>
                   
-                  {/* Question 1: Division/Government Agency */}
-                  <div>
-                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
-                      Which division/government agency are you responsible for within your public sector organization?
-                    </label>
-                    <input
-                      type="text"
-                      value={publicDivision}
-                      onChange={(e) => setPublicDivision(e.target.value)}
-                      placeholder="Enter division or agency name"
-                      className="w-full px-4 py-3 bg-white rounded-lg shadow-sm border-2 border-gray-200 focus:border-[#46cdc6] focus:ring-2 focus:ring-[#46cdc6] outline-none transition-all duration-200 text-[#1a1a1a] placeholder-gray-400"
-                    />
-                  </div>
-
-                  {/* Question 2: Employee Size */}
-                  <div>
-                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
-                      What is the employee size of your division/government agency within your public sector organization?
-                    </label>
-                    <input
-                      type="text"
-                      value={publicEmployeeSize}
-                      onChange={(e) => setPublicEmployeeSize(e.target.value)}
-                      placeholder="Enter employee size"
-                      className="w-full px-4 py-3 bg-white rounded-lg shadow-sm border-2 border-gray-200 focus:border-[#46cdc6] focus:ring-2 focus:ring-[#46cdc6] outline-none transition-all duration-200 text-[#1a1a1a] placeholder-gray-400"
-                    />
-                  </div>
-
                   {/* Question 3: Current Role (Checkboxes) */}
                   <div>
                     <label className="block text-sm font-medium text-[#1a1a1a] mb-3">
@@ -550,8 +651,8 @@ export function CompanyTypePage() {
               </motion.div>
             )}
 
-            {/* Conditional Fields for Private Company */}
-            {companyType === 'private' && (
+              {/* Conditional Fields for Private Company - Only show for Private Sector */}
+              {companyType === 'private' && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -585,13 +686,52 @@ export function CompanyTypePage() {
                   </div>
                 </div>
               </motion.div>
-            )}
-          </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* Public Sector - Show questions */}
+          {sectorType === 'public-sector' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="w-[75%] sm:w-[65%] md:w-[55%] lg:w-[45%] xl:w-[35%] mx-auto mt-8 space-y-6"
+            >
+              {/* Question 1: Division/Government Agency */}
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
+                  Which division/government agency are you responsible for within your public sector organization?
+                </label>
+                <input
+                  type="text"
+                  value={publicDivision}
+                  onChange={(e) => setPublicDivision(e.target.value)}
+                  placeholder="Enter division or agency name"
+                  className="w-full px-4 py-3 bg-white rounded-lg shadow-sm border-2 border-gray-200 focus:border-[#46cdc6] focus:ring-2 focus:ring-[#46cdc6] outline-none transition-all duration-200 text-[#1a1a1a] placeholder-gray-400"
+                />
+              </div>
+
+              {/* Question 2: Employee Size */}
+              <div>
+                <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
+                  What is the employee size of your division/government agency within your public sector organization?
+                </label>
+                <input
+                  type="text"
+                  value={publicEmployeeSize}
+                  onChange={(e) => setPublicEmployeeSize(e.target.value)}
+                  placeholder="Enter employee size"
+                  className="w-full px-4 py-3 bg-white rounded-lg shadow-sm border-2 border-gray-200 focus:border-[#46cdc6] focus:ring-2 focus:ring-[#46cdc6] outline-none transition-all duration-200 text-[#1a1a1a] placeholder-gray-400"
+                />
+              </div>
+            </motion.div>
+          )}
         </div>
       </main>
 
       {/* Sticky Action Bar */}
-      {canContinueFromTypePage() && (
+      {(canContinueFromTypePage() || (sectorType === 'public-sector' && publicDivision.trim() !== '' && publicEmployeeSize.trim() !== '')) && (
         <motion.div
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
