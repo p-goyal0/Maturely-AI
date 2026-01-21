@@ -55,10 +55,9 @@ export function CompanyTypePage() {
 
   // Scope options for private
   const privateScopeOptions = [
-    "Enterprise",
-    "Division",
-    "Business Unit",
-    "Department",
+    "Enterprise-wide",
+    "Business unit/division within an enterprise",
+    "Region for a global enterprise",
     "Other"
   ];
 
@@ -676,7 +675,7 @@ export function CompanyTypePage() {
                       onChange={(e) => setPrivateScope(e.target.value)}
                       className="w-full px-4 py-3 bg-white rounded-lg shadow-sm border-2 border-gray-200 focus:border-[#46cdc6] focus:ring-2 focus:ring-[#46cdc6] outline-none transition-all duration-200 text-[#1a1a1a] cursor-pointer"
                     >
-                      <option value="">Select scope</option>
+                      <option value="">Select Value</option>
                       {privateScopeOptions.map((option) => (
                         <option key={option} value={option}>
                           {option}

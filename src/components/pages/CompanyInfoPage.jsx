@@ -130,10 +130,43 @@ export function CompanyInfoPage() {
   }, [isHeadcountOpen, isMarketCapOpen, isRevenueOpen]);
 
 
+  // Check if all required fields are filled
+  const areAllFieldsFilled = () => {
+    const baseFields = totalHeadcountRange && annualRevenueRange && currentJobTitle.trim() && reportingPersonName.trim() && reportingPersonDesignation.trim();
+    
+    // If public company, also require market cap
+    if (companyType === 'public') {
+      return baseFields && marketCapRange;
+    }
+    
+    // For non-public companies, only base fields are required
+    return baseFields;
+  };
+
   const handleContinue = async () => {
     // Validate required fields
     if (!totalHeadcountRange) {
       setOnboardingError('Please select total headcount range');
+      return;
+    }
+    if (companyType === 'public' && !marketCapRange) {
+      setOnboardingError('Please select market cap range');
+      return;
+    }
+    if (!annualRevenueRange) {
+      setOnboardingError('Please select annual revenue range');
+      return;
+    }
+    if (!currentJobTitle.trim()) {
+      setOnboardingError('Please enter your current job title');
+      return;
+    }
+    if (!reportingPersonName.trim()) {
+      setOnboardingError('Please enter reporting person name');
+      return;
+    }
+    if (!reportingPersonDesignation.trim()) {
+      setOnboardingError('Please enter reporting person designation');
       return;
     }
 
@@ -454,7 +487,7 @@ export function CompanyInfoPage() {
       )}
 
       {/* Sticky Action Bar */}
-      {canContinueFromInfoPage() && (
+      {areAllFieldsFilled() && (
         <motion.div
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}

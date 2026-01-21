@@ -468,9 +468,7 @@ export function AssessmentsDashboard() {
                                     : 'bg-white border-gray-300 text-gray-400'
                               }`}
                             >
-                              {isCompleted ? (
-                                <CheckCircle2 className="w-4 h-4" />
-                              ) : lottieAnimations.layers ? (
+                              {lottieAnimations.layers ? (
                                 <div 
                                   className="w-6 h-6"
                                   onMouseEnter={() => setHoveredStepIcon(index)}
@@ -562,16 +560,6 @@ export function AssessmentsDashboard() {
                       PILLAR {currentPillar.order || currentPillarIndex + 1}
                     </div>
                     <h2 className="text-xl font-bold text-gray-900">{currentPillar.title}</h2>
-                  </div>
-                  <div className="ml-auto bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 border">
-                    <div className="text-xs text-gray-600">Section {currentPillarIndex + 1}/{assessmentPillars.length}</div>
-                    <div className="text-sm font-semibold text-[#46cdc6]">
-                      {!pillarQuestionsMap?.[currentPillar?.id]
-                        ? '—/—'
-                        : `${currentPillar.questions.filter((_, qIndex) =>
-                            answers[`${currentPillar.id}-${qIndex}`] || currentPillar.questionIsSubmitted?.[qIndex]
-                          ).length}/${currentPillar.totalCount ?? currentPillar.questions.length} Complete`}
-                    </div>
                   </div>
                 </div>
                 
@@ -675,15 +663,6 @@ export function AssessmentsDashboard() {
                               {question}
                             </h4>
                           </div>
-                          {selectedAnswer && (
-                            <motion.div
-                              initial={{ scale: 0 }}
-                              animate={{ scale: 1 }}
-                                className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center"
-                            >
-                                <CheckCircle2 className="w-4 h-4 text-white" />
-          </motion.div>
-                          )}
                         </div>
                         
                           {/* Options */}

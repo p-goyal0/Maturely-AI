@@ -51,9 +51,9 @@ export default function HomePage() {
   }, []);
 
   const capabilities = [
-    { icon: Brain, lottieFile: '/lottieFiles/wired-outline-966-privacy-policy-hover-swipe.json', title: 'AI Maturity Assessments', description: 'Evaluate strategy, data, technology and governance to identify strengths and opportunities', bgColor: 'bg-blue-600', bgGradient: 'from-blue-600 to-blue-600' },
+    { icon: Brain, lottieFile: '/lottieFiles/wired-outline-966-privacy-policy-hover-swipe.json', title: 'AI Readiness Assessments', description: 'Evaluate strategy, data, technology and governance to identify strengths and opportunities', bgColor: 'bg-blue-600', bgGradient: 'from-blue-600 to-blue-600' },
     { icon: Lightbulb, lottieFile: '/lottieFiles/wired-outline-12-layers-hover-slide.json', title: 'Use Case Library', description: 'Curated industry-specific applications and proven solutions for immediate value', bgColor: '', bgGradient: 'from-purple-500 to-pink-500' },
-    { icon: Shield, lottieFile: '/lottieFiles/wired-outline-1383-sphere-hover-pinch.json', title: 'Responsible AI', description: 'Governance, compliance and privacy protection to build trust and mitigate risks', bgColor: 'bg-green-500', bgGradient: 'from-green-500 to-green-500' },
+    { icon: Shield, lottieFile: '/lottieFiles/wired-outline-1383-sphere-hover-pinch.json', title: 'Responsible AI', description: 'Governance, compliance and privacy determination to build trust and mitigate risks', bgColor: 'bg-green-500', bgGradient: 'from-green-500 to-green-500' },
   ];
 
   const industries = [
@@ -152,7 +152,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen relative bg-white">
+    <div className="min-h-screen relative bg-white overflow-x-hidden">
       {/* Landing Page Header */}
       <motion.header
         className="fixed top-0 left-0 right-0 z-50 bg-transparent"
@@ -160,9 +160,9 @@ export default function HomePage() {
         animate={{ y: isScrolled ? -100 : 0 }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
       >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 pt-4">
           {/* White rounded header strip */}
-          <div className="bg-white rounded-2xl shadow-lg px-6 lg:px-8 py-2">
+          <div className="bg-white rounded-2xl shadow-lg px-6 lg:px-8 2xl:px-10 py-2 w-full">
             <div className="flex items-center justify-between h-12 lg:h-14 relative">
             {/* Logo - Left */}
             <motion.button
@@ -374,7 +374,7 @@ export default function HomePage() {
           />
         </div>
 
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative h-full flex items-center" style={{ zIndex: 10 }}>
+        <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 relative h-full flex items-center" style={{ zIndex: 10 }}>
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center w-full py-8">
             {/* Left Column - Text Content */}
             <div className="space-y-5 lg:space-y-6 relative" style={{ zIndex: 20 }}>
@@ -386,7 +386,7 @@ export default function HomePage() {
                   animate={{ opacity: 1, y: 0 }} 
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.5 }}
-                  className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 leading-tight relative tracking-tight"
+                  className="text-4xl md:text-5xl lg:text-6xl 2xl:text-7xl font-black text-slate-900 leading-tight relative tracking-tight"
                   style={{ fontFamily: 'Segoe UI, sans-serif', zIndex: 21, fontWeight: 600, letterSpacing: '-0.02em' }}
                 >
                   {headlines[currentHeadlineIndex].headline}
@@ -401,7 +401,7 @@ export default function HomePage() {
                   animate={{ opacity: 1, y: 0 }} 
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.5, delay: 0.1 }}
-                  className="text-sm md:text-base text-slate-600 leading-relaxed max-w-xl relative font-normal"
+                  className="text-sm md:text-base lg:text-lg 2xl:text-xl text-slate-600 leading-relaxed max-w-xl 2xl:max-w-2xl relative font-normal"
                   style={{ fontFamily: 'Segoe UI, sans-serif', zIndex: 21, fontWeight: 400 }}
                 >
                   {headlines[currentHeadlineIndex].subheadline}
@@ -439,8 +439,7 @@ export default function HomePage() {
                 <img
                   src="/team-collaboration-working-together-technology-inn.jpg"
                   alt="AI Technology Team Collaboration"
-                  className="w-full h-auto object-cover"
-                  style={{ maxHeight: '450px', objectFit: 'cover' }}
+                  className="w-full h-auto object-cover max-h-[450px] 2xl:max-h-[520px]"
                 />
                 {/* Optional overlay with data visualizations effect */}
                 <div className="absolute inset-0 bg-gradient-to-t from-cyan-600/20 to-transparent pointer-events-none rounded-2xl" />
@@ -452,7 +451,7 @@ export default function HomePage() {
 
                   {/* Capabilities Section - WHITE */}
                   <section id="features" className="py-20 relative bg-white">
-                    <div className="container mx-auto px-20 sm:px-14 lg:px-26 relative z-10">
+                    <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 relative z-10">
                       <motion.div
                         initial={{ opacity: 0 }}
                         whileInView={{ opacity: 1 }}
@@ -467,7 +466,7 @@ export default function HomePage() {
                             </Badge>
                             <h2 className="text-3xl lg:text-4xl xl:text-5xl font-bold text-slate-900 leading-tight" style={{ fontFamily: 'Segoe UI, sans-serif' }}>
                               <span className="block">Enterprise-Grade</span>
-                              <span className="block">AI assessment Platform</span>
+                              <span className="block">AI readiness assessment Platform</span>
                             </h2>
                           </div>
                           
@@ -481,7 +480,7 @@ export default function HomePage() {
                       </motion.div>
 
                       {/* Cards Grid */}
-                      <div className="flex flex-col md:flex-row gap-6 max-w-7xl mx-auto">
+                      <div className="flex flex-col md:flex-row gap-6 w-full">
                         {capabilities.map((capability, index) => {
                           const isFirstTwo = index < 2;
                           const isThirdCard = index === 2;
@@ -747,7 +746,7 @@ export default function HomePage() {
                   {/* Stats Section - LIGHT
                   <section className="py-20 relative bg-white border-y border-slate-200">
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-6xl mx-auto">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-8 w-full">
                         {stats.map((stat, index) => (
                           <motion.div
                             key={index}
@@ -771,7 +770,7 @@ export default function HomePage() {
                   </section> */}
 
                   {/* Pricing Section - WHITE background with #185D54 green theme */}
-                  <section id="pricing" className="py-20 relative overflow-hidden bg-white">
+                  <section id="pricing" className="py-20 relative overflow-hidden bg-white border-t border-gray-100 shadow-[0_0_1px_0_rgba(0,0,0,0.05)]">
 
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                       <motion.div
@@ -787,7 +786,7 @@ export default function HomePage() {
                           Flexible Pricing Plans<br />for Every Need
                         </h2>
                         <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
-                          Choose the plan that best fits your requirements and<br />start optimizing your time today!
+                          Choose the plan that best fits your requirements and<br />to optimize your AI journey today
                         </p>
 
                         {/* Monthly/Annually Toggle */}
@@ -809,7 +808,7 @@ export default function HomePage() {
                         </div>
                       </motion.div>
 
-                      <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                      <div className="grid md:grid-cols-3 gap-8 w-full">
                         {/* Starter Plan */}
                         <motion.div
                           initial={{ opacity: 0, y: 20 }}
@@ -823,7 +822,6 @@ export default function HomePage() {
                               <CardTitle className="text-2xl text-gray-900">Starter</CardTitle>
                               <div className="mt-4">
                                 <span className="text-4xl font-bold" style={{ color: '#185D54' }}>Free</span>
-                                <span className="text-gray-500"> / for life</span>
                               </div>
                               <CardDescription className="text-gray-600 mt-4">
                                 For individuals and small launches validating their first releases.

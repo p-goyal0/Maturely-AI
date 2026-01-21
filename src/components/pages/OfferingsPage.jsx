@@ -12,7 +12,7 @@ import { useAuthStore } from '../../stores/authStore';
 const premiumCards = [
   {
     icon: ClipboardList,
-    title: 'Assessment',
+    title: 'AI readiness assessments',
     description: 'Take our comprehensive AI readiness assessment to understand your organization\'s capabilities across 7 critical pillars.',
     bgColor: '#ffffff',
     borderColor: '#e2e8f0',
@@ -20,7 +20,7 @@ const premiumCards = [
   },
   {
     icon: Lightbulb,
-    title: 'Use Cases',
+    title: 'Business Use Cases',
     description: 'Explore industry-specific AI implementations and proven solutions for immediate value in your organization.',
     bgColor: '#ffffff',
     borderColor: '#e2e8f0',
@@ -161,7 +161,7 @@ export function OfferingsPage() {
 
               {/* Description */}
               <p className="text-base md:text-lg text-slate-600 leading-relaxed max-w-3xl mx-auto font-medium">
-                Take our comprehensive assessment to understand your organization's AI readiness across 6 critical dimensions. Get personalized insights and actionable recommendations.
+                Take our comprehensive assessment to understand your organization's AI readiness across 7 critical dimensions. Get personalized insights and actionable recommendations.
               </p>
             </motion.div>
 
