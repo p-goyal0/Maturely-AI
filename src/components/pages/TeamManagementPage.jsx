@@ -40,6 +40,7 @@ export function TeamManagementPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState(null);
   const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteFullName, setInviteFullName] = useState('');
   const [isSendingInvite, setIsSendingInvite] = useState(false);
   const [inviteError, setInviteError] = useState('');
   const [inviteSuccessMessage, setInviteSuccessMessage] = useState(null); // Show antd Alert when set
@@ -102,6 +103,7 @@ export function TeamManagementPage() {
     const member = teamMembers.find(m => m.id === userId);
     if (member) {
       setInviteEmail(member.email);
+      setInviteFullName(member.name || '');
       setShowInviteModal(true);
     }
   };
@@ -119,6 +121,10 @@ export function TeamManagementPage() {
   };
 
   const handleSendInvite = async () => {
+    if (!inviteFullName || !inviteFullName.trim()) {
+      setInviteError('Please enter full name');
+      return;
+    }
     if (!inviteEmail) {
       setInviteError('Please enter an email address');
       return;
@@ -140,11 +146,12 @@ export function TeamManagementPage() {
     setInviteError('');
 
     try {
-      const result = await inviteOrganizationMember(currentUser.organization_id, inviteEmail, 'regular_member', []);
+      const result = await inviteOrganizationMember(currentUser.organization_id, inviteEmail, inviteFullName.trim(), 'regular_member', []);
       
       if (result.success) {
         setShowInviteModal(false);
         setInviteEmail('');
+        setInviteFullName('');
         setInviteError('');
         setInviteSuccessMessage('User successfully invited');
         // Refetch list so new user appears with status from API
@@ -639,6 +646,19 @@ export function TeamManagementPage() {
               </div>
               <div className="space-y-6">
                 <div>
+                  <label className="block font-semibold text-slate-900 mb-3">Full name</label>
+                  <input
+                    type="text"
+                    placeholder="John Doe"
+                    value={inviteFullName}
+                    onChange={(e) => {
+                      setInviteFullName(e.target.value);
+                      setInviteError('');
+                    }}
+                    className="w-full px-5 py-4 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#46CDCF] focus:border-transparent text-slate-900 placeholder:text-slate-400"
+                  />
+                </div>
+                <div>
                   <label className="block font-semibold text-slate-900 mb-3">Email Address</label>
                   <input
                     type="email"
@@ -646,7 +666,7 @@ export function TeamManagementPage() {
                     value={inviteEmail}
                     onChange={(e) => {
                       setInviteEmail(e.target.value);
-                      setInviteError(''); // Clear error when user types
+                      setInviteError('');
                     }}
                     className="w-full px-5 py-4 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#46CDCF] focus:border-transparent text-slate-900 placeholder:text-slate-400"
                   />
@@ -664,6 +684,7 @@ export function TeamManagementPage() {
                   onClick={() => {
                     setShowInviteModal(false);
                     setInviteEmail('');
+                    setInviteFullName('');
                     setInviteError('');
                   }}
                   disabled={isSendingInvite}

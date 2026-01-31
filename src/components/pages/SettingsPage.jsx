@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Settings as SettingsIcon,
@@ -13,11 +14,21 @@ import {
   DollarSign,
   CheckCircle2,
   Loader2,
+  AlertCircle,
+  X,
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { PageHeader } from '../shared/PageHeader';
-import { getPlans } from '../../services/billingService';
+import {
+  getPlans,
+  getConfig,
+  createCheckoutSession,
+  getSubscription,
+  getPaymentMethods,
+  getInvoices,
+  createBillingPortalSession,
+} from '../../services/billingService';
 
 /** Convert snake_case to Title Case for display */
 function snakeToTitleCase(str) {
@@ -61,6 +72,34 @@ export function SettingsPage() {
   const [plansLoading, setPlansLoading] = useState(false);
   const [plansError, setPlansError] = useState(null);
   const [isAnnualPricing, setIsAnnualPricing] = useState(false);
+  const [planSelectionLoading, setPlanSelectionLoading] = useState(null);
+  const [planSelectionError, setPlanSelectionError] = useState(null);
+
+  // Post-checkout feedback: ?billing=success or ?billing=cancel
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [billingBanner, setBillingBanner] = useState(null); // 'success' | 'cancel' | null
+
+  // Billing tab: subscription, payment methods, invoices
+  const [subscription, setSubscription] = useState(null);
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [invoices, setInvoices] = useState([]);
+  const [billingLoading, setBillingLoading] = useState(false);
+  const [billingError, setBillingError] = useState(null);
+  const [portalLoading, setPortalLoading] = useState(false);
+
+  // On mount: read ?billing= and show banner, switch tab, clear URL
+  useEffect(() => {
+    const billing = searchParams.get('billing');
+    if (billing === 'success') {
+      setBillingBanner('success');
+      setActiveTab('billing');
+      setSearchParams({}, { replace: true });
+    } else if (billing === 'cancel') {
+      setBillingBanner('cancel');
+      setActiveTab('pricing');
+      setSearchParams({}, { replace: true });
+    }
+  }, []);
 
   useEffect(() => {
     if (activeTab === 'pricing') {
@@ -83,10 +122,95 @@ export function SettingsPage() {
     }
   }, [activeTab]);
 
+  // Fetch subscription, payment methods, invoices when Billing tab is active
+  useEffect(() => {
+    if (activeTab !== 'billing') return;
+    setBillingLoading(true);
+    setBillingError(null);
+    Promise.all([
+      getSubscription(),
+      getPaymentMethods(),
+      getInvoices(10),
+    ])
+      .then(([subRes, pmRes, invRes]) => {
+        if (subRes.success && subRes.data != null) setSubscription(subRes.data);
+        else setSubscription(null);
+        if (pmRes.success && Array.isArray(pmRes.data)) setPaymentMethods(pmRes.data);
+        else setPaymentMethods([]);
+        if (invRes.success && Array.isArray(invRes.data)) setInvoices(invRes.data);
+        else setInvoices([]);
+        if (!subRes.success && subRes.error) setBillingError(subRes.error);
+        else if (!pmRes.success && pmRes.error) setBillingError(pmRes.error);
+        else setBillingError(null);
+      })
+      .catch((err) => {
+        setBillingError(err?.message || 'Failed to load billing data');
+        setSubscription(null);
+        setPaymentMethods([]);
+        setInvoices([]);
+      })
+      .finally(() => setBillingLoading(false));
+  }, [activeTab]);
+
   const handleSave = () => {
     // In a real app, this would call an API
     console.log('Settings saved:', { orgName, orgEmail, timezone, language, notifications });
     alert('Settings saved successfully!');
+  };
+
+  /** When user selects a plan: 1) GET /billing/config, 2) POST /billing/checkout, then redirect to Stripe Checkout */
+  const handleSelectPlan = async (plan) => {
+    setPlanSelectionError(null);
+    setPlanSelectionLoading(plan.id);
+    try {
+      const configResult = await getConfig();
+      if (!configResult.success) {
+        setPlanSelectionError(configResult.error || 'Failed to load billing configuration.');
+        return;
+      }
+      const config = configResult.data || {};
+      if (!config.billing_enabled) {
+        setPlanSelectionError('Billing is not currently available.');
+        return;
+      }
+
+      const successUrl = `${window.location.origin}/settings?billing=success`;
+      const cancelUrl = `${window.location.origin}/settings?billing=cancel`;
+      const checkoutResult = await createCheckoutSession(plan.id, successUrl, cancelUrl);
+
+      if (!checkoutResult.success) {
+        setPlanSelectionError(checkoutResult.error || 'Failed to start checkout.');
+        return;
+      }
+      const checkoutUrl = checkoutResult.data?.checkout_url;
+      if (!checkoutUrl) {
+        setPlanSelectionError('Checkout URL not received. Please try again.');
+        return;
+      }
+      window.location.href = checkoutUrl;
+    } catch (err) {
+      setPlanSelectionError(err?.message || 'Something went wrong. Please try again.');
+    } finally {
+      setPlanSelectionLoading(null);
+    }
+  };
+
+  /** Open Stripe Billing Portal to manage payment method / subscription */
+  const handleOpenBillingPortal = async () => {
+    setPortalLoading(true);
+    try {
+      const returnUrl = window.location.origin + '/settings';
+      const result = await createBillingPortalSession(returnUrl);
+      if (result.success && result.data?.portal_url) {
+        window.location.href = result.data.portal_url;
+      } else {
+        setBillingError(result.error || 'Could not open billing portal.');
+      }
+    } catch (err) {
+      setBillingError(err?.message || 'Could not open billing portal.');
+    } finally {
+      setPortalLoading(false);
+    }
   };
 
   const tabs = [
@@ -162,6 +286,43 @@ export function SettingsPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* Billing post-checkout banner */}
+      {billingBanner && (
+        <div className="px-8 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`mb-4 p-4 rounded-xl border flex items-center justify-between ${
+              billingBanner === 'success'
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                : 'bg-amber-50 border-amber-200 text-amber-800'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              {billingBanner === 'success' ? (
+                <>
+                  <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-600" />
+                  <span className="font-medium">Subscription updated successfully. Your billing is now active.</span>
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="w-5 h-5 flex-shrink-0 text-amber-600" />
+                  <span className="font-medium">Checkout was cancelled. You can choose a plan anytime from the Pricing tab.</span>
+                </>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setBillingBanner(null)}
+              className="p-1 rounded-lg hover:bg-black/5 transition-colors"
+              aria-label="Dismiss"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </motion.div>
+        </div>
+      )}
 
       {/* Content */}
       <div className="px-8 pb-12 relative z-10">
@@ -334,47 +495,139 @@ export function SettingsPage() {
                   {activeTab === 'billing' && (
                     <div>
                       <h3 className="text-2xl font-bold text-slate-900 mb-6">Billing & Subscription</h3>
-                      <div className="space-y-6">
-                        <div className="p-6 bg-gradient-to-br from-[#46CDCF]/10 to-purple-500/10 border border-[#46CDCF]/20 rounded-2xl">
-                          <div className="flex items-start justify-between mb-4">
-                            <div>
-                              <h4 className="text-2xl font-bold text-slate-900 mb-1">Enterprise Plan</h4>
-                              <p className="text-slate-600">Unlimited users & features</p>
-                            </div>
-                            <div className="text-right">
-                              <div className="text-3xl font-bold text-[#46CDCF]">$299</div>
-                              <div className="text-sm text-slate-600">per month</div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-slate-600">
-                            <span>Next billing date: January 15, 2026</span>
-                          </div>
+                      {billingLoading ? (
+                        <div className="flex items-center justify-center py-16">
+                          <Loader2 className="w-10 h-10 animate-spin text-[#46CDCF]" />
                         </div>
-
-                        <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl">
-                          <h4 className="font-bold text-slate-900 mb-4">Payment Method</h4>
-                          <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200">
-                            <div className="flex items-center gap-4">
-                              <div className="w-12 h-8 bg-slate-900 rounded flex items-center justify-center text-white text-xs font-bold">
-                                VISA
-                              </div>
+                      ) : billingError ? (
+                        <div className="p-6 bg-red-50 border border-red-200 rounded-2xl text-red-700">
+                          {billingError}
+                        </div>
+                      ) : (
+                        <div className="space-y-6">
+                          {/* Current subscription */}
+                          <div className="p-6 bg-gradient-to-br from-[#46CDCF]/10 to-purple-500/10 border border-[#46CDCF]/20 rounded-2xl">
+                            <div className="flex items-start justify-between mb-4">
                               <div>
-                                <p className="font-medium text-slate-900">•••• •••• •••• 4242</p>
-                                <p className="text-sm text-slate-500">Expires 12/26</p>
+                                <h4 className="text-2xl font-bold text-slate-900 mb-1">
+                                  {subscription?.plan?.name ?? subscription?.plan_name ?? 'No active plan'}
+                                </h4>
+                                <p className="text-slate-600">
+                                  {subscription?.plan?.description ?? (subscription ? 'Active subscription' : 'Subscribe from the Pricing tab')}
+                                </p>
                               </div>
+                              {subscription && (
+                                <div className="text-right">
+                                  <div className="text-3xl font-bold text-[#46CDCF]">
+                                    {subscription.plan?.amount != null
+                                      ? new Intl.NumberFormat('en-US', {
+                                          style: 'currency',
+                                          currency: (subscription.plan?.currency || subscription.currency || 'usd').toUpperCase(),
+                                          minimumFractionDigits: 0,
+                                          maximumFractionDigits: 0,
+                                        }).format(subscription.plan.amount / 100)
+                                      : subscription.amount
+                                        ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(subscription.amount / 100)
+                                        : '—'}
+                                  </div>
+                                  <div className="text-sm text-slate-600">
+                                    per {subscription.plan?.interval ?? subscription.interval ?? 'month'}
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                            <Button variant="outline" className="rounded-xl border-2">
-                              Update
-                            </Button>
+                            {subscription?.current_period_end && (
+                              <div className="flex items-center gap-2 text-sm text-slate-600">
+                                <span>
+                                  Next billing date:{' '}
+                                  {new Date(subscription.current_period_end * 1000).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                  })}
+                                </span>
+                              </div>
+                            )}
+                            {!subscription && (
+                              <p className="text-sm text-slate-600">
+                                Go to the <button type="button" onClick={() => setActiveTab('pricing')} className="text-[#46CDCF] font-medium hover:underline">Pricing</button> tab to subscribe.
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Payment methods */}
+                          <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl">
+                            <h4 className="font-bold text-slate-900 mb-4">Payment Method</h4>
+                            {paymentMethods.length === 0 ? (
+                              <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200">
+                                <p className="text-slate-600">No payment method on file.</p>
+                                <Button
+                                  variant="outline"
+                                  className="rounded-xl border-2"
+                                  onClick={handleOpenBillingPortal}
+                                  disabled={portalLoading}
+                                >
+                                  {portalLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add payment method'}
+                                </Button>
+                              </div>
+                            ) : (
+                              paymentMethods.map((pm) => {
+                                const brand = (pm.card?.brand ?? pm.brand ?? 'CARD').toUpperCase();
+                                const last4 = pm.card?.last4 ?? pm.last4 ?? '••••';
+                                const exp = pm.card
+                                  ? `${String(pm.card.exp_month).padStart(2, '0')}/${String(pm.card.exp_year).slice(-2)}`
+                                  : pm.exp_month && pm.exp_year
+                                    ? `${String(pm.exp_month).padStart(2, '0')}/${String(pm.exp_year).slice(-2)}`
+                                    : null;
+                                return (
+                                  <div
+                                    key={pm.id}
+                                    className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 mb-3 last:mb-0"
+                                  >
+                                    <div className="flex items-center gap-4">
+                                      <div className="w-12 h-8 bg-slate-900 rounded flex items-center justify-center text-white text-xs font-bold">
+                                        {brand}
+                                      </div>
+                                      <div>
+                                        <p className="font-medium text-slate-900">•••• •••• •••• {last4}</p>
+                                        {exp && <p className="text-sm text-slate-500">Expires {exp}</p>}
+                                      </div>
+                                    </div>
+                                    <Button
+                                      variant="outline"
+                                      className="rounded-xl border-2"
+                                      onClick={handleOpenBillingPortal}
+                                      disabled={portalLoading}
+                                    >
+                                      {portalLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Update'}
+                                    </Button>
+                                  </div>
+                                );
+                              })
+                            )}
                           </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   )}
 
                   {activeTab === 'pricing' && (
                     <div>
                       <h3 className="text-2xl font-bold text-slate-900 mb-6">Pricing Plans</h3>
+
+                      {planSelectionError && (
+                        <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                          <span>{planSelectionError}</span>
+                          <button
+                            type="button"
+                            onClick={() => setPlanSelectionError(null)}
+                            className="ml-auto text-red-500 hover:text-red-700 font-medium"
+                          >
+                            Dismiss
+                          </button>
+                        </div>
+                      )}
 
                       {/* Monthly / Annually Toggle - same as Home page */}
                       {!plansLoading && !plansError && plans.length > 0 && (
@@ -498,16 +751,26 @@ export function SettingsPage() {
                                       })}
                                     </ul>
                                     <Button
+                                      type="button"
                                       className="w-full mt-6 text-white"
                                       style={{ backgroundColor: '#185D54' }}
+                                      disabled={planSelectionLoading !== null}
+                                      onClick={() => handleSelectPlan(plan)}
                                       onMouseEnter={(e) => {
-                                        e.currentTarget.style.backgroundColor = '#134a43';
+                                        if (planSelectionLoading === null) e.currentTarget.style.backgroundColor = '#134a43';
                                       }}
                                       onMouseLeave={(e) => {
                                         e.currentTarget.style.backgroundColor = '#185D54';
                                       }}
                                     >
-                                      Get Started
+                                      {planSelectionLoading === plan.id ? (
+                                        <span className="flex items-center justify-center gap-2">
+                                          <Loader2 className="w-4 h-4 animate-spin" />
+                                          Loading...
+                                        </span>
+                                      ) : (
+                                        'Get Started'
+                                      )}
                                     </Button>
                                   </CardContent>
                                 </Card>

@@ -1,18 +1,23 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { createPassword } from '../../services/authService';
 
 /**
  * Standalone Create Password screen.
- * URL: /create-password?email=user@example.com
- * Email comes from URL params, prefilled and read-only. User enters new password and confirm.
+ * URL: https://app.maturely.ai/create-password?token=JWT&email=user@example.com&full_name=John%20Doe
+ * Params: token (required), email (required), full_name (optional, for display).
+ * Calls POST /api/v1/auth/create-password with password & confirm_password.
  */
 export function CreatePasswordPage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const tokenFromParams = searchParams.get('token') || '';
   const emailFromParams = searchParams.get('email') || '';
+  const fullNameFromParams = searchParams.get('full_name') || '';
 
   const [email, setEmail] = useState('');
   useEffect(() => {
@@ -31,6 +36,10 @@ export function CreatePasswordPage() {
     setError('');
     setSuccess(false);
 
+    if (!tokenFromParams || !tokenFromParams.trim()) {
+      setError('Invalid link: token is missing. Please use the link from your invitation email.');
+      return;
+    }
     if (!email || !email.trim()) {
       setError('Invalid link: email is missing. Please use the link from your invitation email.');
       return;
@@ -46,11 +55,16 @@ export function CreatePasswordPage() {
 
     setIsLoading(true);
     try {
-      // TODO: Replace with actual create/reset password API call
-      await new Promise((r) => setTimeout(r, 800));
-      setSuccess(true);
-      setNewPassword('');
-      setConfirmPassword('');
+      const result = await createPassword(newPassword, confirmPassword, tokenFromParams);
+
+      if (result.success && result.data) {
+        setSuccess(true);
+        setNewPassword('');
+        setConfirmPassword('');
+        setTimeout(() => navigate('/signin', { replace: true }), 1500);
+      } else {
+        setError(result.error || 'Failed to create password. Please try again.');
+      }
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.');
     } finally {
@@ -71,11 +85,13 @@ export function CreatePasswordPage() {
           animate={{ opacity: 1, scale: 1 }}
           className="text-center max-w-md"
         >
-          <div className="w-16 h-16 rounded-full bg-[#15ae99]/20 flex items-center justify-center mx-auto mb-4">
-            <Lock className="w-8 h-8 text-[#15ae99]" />
+          <div className="w-16 h-16 rounded-xl bg-[#66C8C3]/20 flex items-center justify-center mx-auto mb-4 shadow-sm">
+            <Lock className="w-8 h-8 text-[#66C8C3]" />
           </div>
           <h1 className="text-xl font-bold text-slate-900 mb-2">Password updated</h1>
-          <p className="text-slate-600">Your password has been set successfully.</p>
+          <p className="text-slate-600">
+            {fullNameFromParams ? `${fullNameFromParams}, your password has been set successfully.` : 'Your password has been set successfully.'}
+          </p>
           </motion.div>
         </div>
       </div>
@@ -97,11 +113,19 @@ export function CreatePasswordPage() {
       >
         <div className="bg-white rounded-2xl shadow-xl border border-slate-200/60 p-8">
           <div className="text-center mb-8">
-            <div className="w-12 h-12 rounded-xl bg-[#15ae99]/10 flex items-center justify-center mx-auto mb-4">
-              <Lock className="w-6 h-6 text-[#15ae99]" />
+            <div className="w-14 h-14 rounded-xl bg-[#66C8C3]/20 flex items-center justify-center mx-auto mb-4 shadow-sm">
+              <Lock className="w-7 h-7 text-[#66C8C3]" />
             </div>
             <h1 className="text-2xl font-bold text-slate-900 mb-2">Create password</h1>
-            <p className="text-slate-600">Choose a new password for your account.</p>
+            <p className="text-slate-600">
+              {fullNameFromParams ? (
+                <>
+                  <span className="font-bold text-slate-800">{fullNameFromParams}</span>, choose a new password for your account.
+                </>
+              ) : (
+                'Choose a new password for your account.'
+              )}
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -117,32 +141,32 @@ export function CreatePasswordPage() {
             )}
 
             {/* Email – from URL params, read-only */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-700">Email</label>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-slate-700">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 z-10" />
                 <Input
                   type="email"
-                  placeholder="Email (from link)"
+                  placeholder=""
                   value={email}
                   readOnly
-                  className="pl-10 h-11 bg-slate-100 border border-slate-200 text-slate-600 rounded-lg cursor-not-allowed focus:outline-none focus:ring-0"
+                  className="pl-10 h-12 bg-white border border-slate-200 text-slate-800 rounded-xl cursor-not-allowed focus:outline-none focus:ring-0"
                   required
                 />
               </div>
             </div>
 
             {/* New password */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-700">New password</label>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-slate-700">New password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 z-10" />
                 <Input
                   type={showNewPassword ? 'text' : 'password'}
-                  placeholder="New password"
+                  placeholder="Enter new password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="pl-10 pr-10 h-11 bg-gray-50 border border-gray-300 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#15ae99]/30 focus:border-[#15ae99]"
+                  className="pl-10 pr-10 h-12 bg-white border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#66C8C3]/30 focus:border-[#66C8C3]"
                   required
                   minLength={8}
                 />
@@ -157,16 +181,16 @@ export function CreatePasswordPage() {
             </div>
 
             {/* Confirm new password */}
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-700">Confirm new password</label>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-slate-700">Confirm new password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 z-10" />
                 <Input
                   type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="Confirm new password"
+                  placeholder="Re-enter new password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-10 pr-10 h-11 bg-gray-50 border border-gray-300 text-slate-900 placeholder-slate-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#15ae99]/30 focus:border-[#15ae99]"
+                  className="pl-10 pr-10 h-12 bg-white border border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#66C8C3]/30 focus:border-[#66C8C3]"
                   required
                   minLength={8}
                 />
@@ -183,7 +207,7 @@ export function CreatePasswordPage() {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full h-11 rounded-lg text-white font-semibold bg-[#15ae99] hover:bg-[#129a85] transition-colors"
+              className="w-full h-12 rounded-xl text-white font-semibold bg-[#66C8C3] hover:bg-[#5ab8b3] transition-colors mt-6"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -191,7 +215,7 @@ export function CreatePasswordPage() {
                   Submitting...
                 </span>
               ) : (
-                'Submit'
+                'Create password'
               )}
             </Button>
           </form>

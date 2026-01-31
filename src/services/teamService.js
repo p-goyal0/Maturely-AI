@@ -174,13 +174,15 @@ export const searchTeamMembers = async (query) => {
  * Invite organization member
  * @param {string} organizationId - Organization ID (not used in URL, kept for backward compatibility)
  * @param {string} email - Email address to invite
+ * @param {string} fullName - Full name of the invited user
  * @param {string} role - Role for invited user (e.g. "regular_member")
  * @param {string[]} pillarIds - Pillar IDs to assign (optional)
  */
-export const inviteOrganizationMember = async (organizationId, email, role = 'regular_member', pillarIds = []) => {
+export const inviteOrganizationMember = async (organizationId, email, fullName, role = 'regular_member', pillarIds = []) => {
   try {
     const response = await api.post(`/organization/users/invite`, {
       email,
+      full_name: fullName,
       role,
       pillar_ids: pillarIds,
     });

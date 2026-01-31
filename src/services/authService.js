@@ -200,6 +200,43 @@ export const resetPassword = async (token, newPassword) => {
 };
 
 /**
+ * Create password (first-time set from invite link)
+ * POST /api/v1/auth/create-password
+ * @param {string} password - New password
+ * @param {string} confirm_password - Confirm new password
+ * @param {string} token - Bearer token from invite/setup link (URL param)
+ * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
+ */
+export const createPassword = async (password, confirm_password, token) => {
+  try {
+    const response = await api.post(
+      '/auth/create-password',
+      { password, confirm_password },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const fullResponse = response.fullResponse || {};
+    if (fullResponse.success && fullResponse.data) {
+      return {
+        success: true,
+        data: fullResponse.data,
+        message: fullResponse.message,
+      };
+    }
+    return {
+      success: false,
+      error: fullResponse.data?.message || fullResponse.message || 'Failed to create password',
+    };
+  } catch (error) {
+    const errData = error.response?.data;
+    const userMessage = errData?.data?.message || errData?.message || getErrorMessage(error);
+    return {
+      success: false,
+      error: userMessage,
+    };
+  }
+};
+
+/**
  * Get Terms of Service
  */
 export const getTermsOfService = async () => {
