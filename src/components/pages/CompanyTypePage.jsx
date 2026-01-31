@@ -31,8 +31,6 @@ export function CompanyTypePage() {
   const [publicDivision, setPublicDivision] = useState('');
   const [publicEmployeeSize, setPublicEmployeeSize] = useState('');
   const [publicRoleOptions, setPublicRoleOptions] = useState([]);
-  const [publicReviewDetails, setPublicReviewDetails] = useState('');
-  const [publicLinkedInUrl, setPublicLinkedInUrl] = useState('');
 
   // Private question state
   const [privateScope, setPrivateScope] = useState('');
@@ -82,7 +80,7 @@ export function CompanyTypePage() {
       });
     }
     
-    // Load public company questions (role, review details, LinkedIn) when public company is selected
+    // Load public company questions (role) when public company is selected
     if (companyType === 'public') {
       questionnaire.forEach((q) => {
         if (q.ownership === 'public') {
@@ -90,12 +88,6 @@ export function CompanyTypePage() {
             case 3:
               // Handle checkbox answers (comma-separated)
               setPublicRoleOptions(q.answer ? q.answer.split(',').map(s => s.trim()) : []);
-              break;
-            case 4:
-              setPublicReviewDetails(q.answer || '');
-              break;
-            case 5:
-              setPublicLinkedInUrl(q.answer || '');
               break;
           }
         }
@@ -149,31 +141,6 @@ export function CompanyTypePage() {
     }
   }, [publicRoleOptions, companyType]);
 
-  useEffect(() => {
-    if (companyType === 'public') {
-      if (publicReviewDetails) {
-        updateQuestionnaireAnswer(
-          "Please provide any details that may be helpful in the review of your request to participate in the CDAO Circle Program",
-          publicReviewDetails,
-          4,
-          'public'
-        );
-      }
-    }
-  }, [publicReviewDetails, companyType]);
-
-  useEffect(() => {
-    if (companyType === 'public') {
-      if (publicLinkedInUrl) {
-        updateQuestionnaireAnswer(
-          "Please provide the URL to your LinkedIn profile",
-          publicLinkedInUrl,
-          5,
-          'public'
-        );
-      }
-    }
-  }, [publicLinkedInUrl, companyType]);
 
   // Update questionnaire when private answer changes
   useEffect(() => {
@@ -210,8 +177,6 @@ export function CompanyTypePage() {
     } else if (companyType === 'private') {
       // Only clear public company questions (3, 4, 5), not public sector questions (1, 2)
       setPublicRoleOptions([]);
-      setPublicReviewDetails('');
-      setPublicLinkedInUrl('');
     }
   }, [companyType, sectorType]);
 
@@ -619,33 +584,6 @@ export function CompanyTypePage() {
                     </div>
                   </div>
 
-                  {/* Question 4: Review Details */}
-                  <div>
-                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
-                      Please provide any details that may be helpful in the review of your request to participate in the CDAO Circle Program
-                    </label>
-                    <textarea
-                      value={publicReviewDetails}
-                      onChange={(e) => setPublicReviewDetails(e.target.value)}
-                      placeholder="Enter details"
-                      rows={4}
-                      className="w-full px-4 py-3 bg-white rounded-lg shadow-sm border-2 border-gray-200 focus:border-[#46cdc6] focus:ring-2 focus:ring-[#46cdc6] outline-none transition-all duration-200 resize-none text-[#1a1a1a] placeholder-gray-400"
-                    />
-                  </div>
-
-                  {/* Question 5: LinkedIn URL */}
-                  <div className="mb-8 sm:mb-12">
-                    <label className="block text-sm font-medium text-[#1a1a1a] mb-2">
-                      Please provide the URL to your LinkedIn profile
-                    </label>
-                    <input
-                      type="url"
-                      value={publicLinkedInUrl}
-                      onChange={(e) => setPublicLinkedInUrl(e.target.value)}
-                      placeholder="https://linkedin.com/in/yourprofile"
-                      className="w-full px-4 py-3 bg-white rounded-lg shadow-sm border-2 border-gray-200 focus:border-[#46cdc6] focus:ring-2 focus:ring-[#46cdc6] outline-none transition-all duration-200 text-[#1a1a1a] placeholder-gray-400"
-                    />
-                  </div>
                 </div>
               </motion.div>
             )}

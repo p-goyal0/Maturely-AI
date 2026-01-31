@@ -2,6 +2,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
 import { useEffect } from "react";
 import { PageHeader } from "./shared/PageHeader";
+import CubeLoader from "./ui/CubeLoader";
 
 export function PublicRoute({ children }) {
   const { isAuthenticated, isLoading } = useAuthStore();
@@ -17,8 +18,8 @@ export function PublicRoute({ children }) {
         />
         
         {/* Loading Content */}
-        <div className="flex items-center justify-center min-h-screen pt-20">
-          <div className="text-gray-900 text-lg font-medium">Loading...</div>
+        <div className="flex flex-col items-center justify-center min-h-screen pt-20 gap-4">
+          <CubeLoader size={48} />
         </div>
       </div>
     );

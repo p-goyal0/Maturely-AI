@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../ui/button';
 import { CheckCircle2, Target, ArrowRight, ArrowLeft, AlertCircle } from 'lucide-react';
 import Lottie from 'lottie-react';
@@ -18,6 +18,7 @@ const MATURITY_LEVELS = ['Initial', 'Adopting', 'Established', 'Advanced', 'Tran
 
 export function AssessmentsDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { assessmentId, pillarData, pillarQuestionsMap, isLoading, error, setPillarQuestions, setAssessmentResults } = useAssessmentStore();
   const [currentPillarIndex, setCurrentPillarIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -86,6 +87,7 @@ export function AssessmentsDashboard() {
                 title: qData.pillar_name || p.pillar_name,
                 description: qData.pillar_description || p.pillar_description,
                 order: qData.pillar_order ?? p.pillar_order,
+                isEditable: p.is_editable === true,
                 questions: qList.map((q) => q.question_text || ''),
                 questionOptions,
                 totalCount: qData.total_count ?? qList.length,
@@ -106,6 +108,7 @@ export function AssessmentsDashboard() {
               title: p.pillar_name,
               description: p.pillar_description,
               order: p.pillar_order,
+              isEditable: p.is_editable === true,
               questions: [],
               questionOptions: {},
               // Include progress data from API
@@ -156,56 +159,35 @@ export function AssessmentsDashboard() {
     });
   }, [pillarQuestionsMap]);
 
-  // On mount, jump to first non-completed pillar OR redirect to results if all completed
+  // On mount, jump to first non-completed pillar; if all completed, open the last pillar so user can see its questions and use View Results
   useEffect(() => {
     if (!pillarData?.length || assessmentPillars.length === 0 || !assessmentId) return;
     
     const sorted = [...pillarData].sort((a, b) => (a.pillar_order || 0) - (b.pillar_order || 0));
     const firstIncompleteIndex = sorted.findIndex((p) => !p.is_pillar_completed);
     
-    // If all pillars are completed, fetch results and redirect to results page
-    if (firstIncompleteIndex === -1) {
-      // All pillars are completed - fetch results and navigate
-      setIsLoadingResults(true);
-      setResultsError(null);
-      
-      getAssessmentResults(assessmentId)
-        .then((result) => {
-          if (result.success && result.data) {
-            // Store results first
-            setAssessmentResults(result.data);
-            // Navigate to results page
-            navigate('/results');
-          } else {
-            setResultsError(result.error || 'Failed to fetch assessment results');
-            console.error('Failed to fetch assessment results:', result.error);
-          }
-        })
-        .catch((error) => {
-          setResultsError(error.message || 'An error occurred while fetching results');
-          console.error('Error fetching assessment results:', error);
-        })
-        .finally(() => {
-          setIsLoadingResults(false);
-        });
-    } else if (firstIncompleteIndex !== currentPillarIndex) {
-      // Jump to first incomplete pillar
-      setCurrentPillarIndex(firstIncompleteIndex);
+    if (firstIncompleteIndex !== -1) {
+      if (firstIncompleteIndex !== currentPillarIndex) {
+        setCurrentPillarIndex(firstIncompleteIndex);
+      }
+    } else {
+      // All pillars completed: open the last pillar so user sees its questions and can click View Results
+      const lastPillarIndex = assessmentPillars.length - 1;
+      if (currentPillarIndex !== lastPillarIndex) {
+        setCurrentPillarIndex(lastPillarIndex);
+      }
     }
-  }, [pillarData, assessmentPillars.length, assessmentId, navigate, setAssessmentResults]); // Only run when pillarData is loaded and assessmentPillars are built
+  }, [pillarData, assessmentPillars.length, assessmentId]); // Only run when pillarData is loaded and assessmentPillars are built
 
   // Fetch questions for the current pillar when we land on it (on mount, or when pillar changes via other means like timeline)
-  // Skip fetching if pillar is already completed (unless user explicitly navigates to it)
+  // Fetch when questions are not already loaded (including for completed pillars, e.g. when all pillars done we open last pillar and show its questions)
   useEffect(() => {
     if (!pillarData?.length || currentPillarIndex < 0 || currentPillarIndex >= pillarData.length) return;
     const sorted = [...pillarData].sort((a, b) => (a.pillar_order || 0) - (b.pillar_order || 0));
     const currentPillarFromData = sorted[currentPillarIndex];
     const pillarId = currentPillarFromData?.pillar_id;
     
-    // Only fetch questions if:
-    // 1. Pillar is not completed, OR
-    // 2. Questions are not already loaded (user might navigate to completed pillar)
-    if (pillarId && !pillarQuestionsMap?.[pillarId] && !currentPillarFromData?.is_pillar_completed) {
+    if (pillarId && !pillarQuestionsMap?.[pillarId]) {
       fetchAndSetPillarQuestions(pillarId);
     }
   }, [pillarData, currentPillarIndex, pillarQuestionsMap, fetchAndSetPillarQuestions]);
@@ -216,11 +198,14 @@ export function AssessmentsDashboard() {
     setSkippedQuestions(new Set());
   }, [currentPillarIndex]);
 
-  // Auto-advance to next pillar when all questions in current pillar are answered
+  // Auto-advance to next pillar when all questions in current pillar are answered (only for pillars not yet completed)
+  // Do NOT auto-advance when user has navigated to a completed pillar – they can stay and view any pillar
   // Note: For the last pillar (7th), we don't auto-advance - user must click "View Results" button
-  // Skips completed pillars automatically
   useEffect(() => {
     if (!currentPillar || !currentPillar.questions?.length || assessmentPillars.length === 0 || !pillarData?.length) return;
+
+    // If this pillar is already completed (user clicked back to view it), never auto-advance – let them stay
+    if (currentPillar.isPillarCompleted) return;
 
     const allQuestionsAnswered = currentPillar.questions.every((_, qIndex) => {
       const questionKey = `${currentPillar.id}-${qIndex}`;
@@ -269,12 +254,24 @@ export function AssessmentsDashboard() {
 
   const handleAnswerSelect = async (questionKey, level) => {
     console.log('Answer selected:', questionKey, level); // Debug log
+
+    // Block selection if pillar is not editable
+    try {
+      const lastHyphenIndex = questionKey.lastIndexOf('-');
+      const pillarIdForEditCheck = questionKey.substring(0, lastHyphenIndex);
+      const pillarMeta = pillarData?.find((p) => p.pillar_id === pillarIdForEditCheck);
+      if (pillarMeta?.is_editable === false) return;
+    } catch {
+      // If parsing fails, proceed (fallback)
+    }
     
     // Update local state immediately for responsive UI
     setAnswers(prev => ({
       ...prev,
       [questionKey]: level
     }));
+
+    setIsProcessing(true);
     
     // Submit answer to API
     try {
@@ -320,6 +317,8 @@ export function AssessmentsDashboard() {
     } catch (error) {
       console.error('Error submitting answer:', error);
       // Optionally show error toast/notification to user
+    } finally {
+      setIsProcessing(false);
     }
     
     // Auto-advance to next question after a short delay
@@ -503,6 +502,7 @@ export function AssessmentsDashboard() {
           </div>
         </div>
       )}
+
       
       {/* Background elements similar to homepage */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -524,8 +524,12 @@ export function AssessmentsDashboard() {
       {/* Header */}
       <PageHeader 
         centerItems={[
-          { label: "Home", path: "/offerings" }
+          { label: "Home", path: "/offerings" },
+          { label: "Assessments", path: "/my-assessments" },
+          { label: "Results", path: "/completed-assessments" },
+          { label: "Use Cases", path: "/usecases" },
         ]}
+        activePath={location.pathname}
         zIndex="z-50"
       />
 
@@ -589,12 +593,10 @@ export function AssessmentsDashboard() {
                         <div 
                           className="flex items-start w-full cursor-pointer"
                           onClick={async () => {
-                            // Allow navigation to any pillar, but only fetch questions if not completed
-                            const pillarFromData = pillarData?.find(p => p.pillar_id === pillar.id);
+                            // Allow navigation to any pillar; fetch questions if not already loaded (including completed pillars)
                             if (index !== currentPillarIndex) {
                               setCurrentPillarIndex(index);
-                              // Only fetch questions if pillar is not completed
-                              if (pillar.id && !pillarFromData?.is_pillar_completed && !pillarQuestionsMap?.[pillar.id]) {
+                              if (pillar.id && !pillarQuestionsMap?.[pillar.id]) {
                                 await fetchAndSetPillarQuestions(pillar.id);
                               }
                             }
@@ -723,7 +725,13 @@ export function AssessmentsDashboard() {
               </div>
 
               {/* Question Carousel - One Question at a Time; questions only from API */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 overflow-visible">
+              <div className="relative bg-white rounded-2xl shadow-sm border border-gray-200 p-6 overflow-visible">
+                {/* Loader overlay only on this card when submitting answer */}
+                {isProcessing && (
+                  <div className="absolute inset-0 rounded-2xl bg-white/55 z-10 flex items-center justify-center">
+                    <LoadingSpinner />
+                  </div>
+                )}
                 {!pillarQuestionsMap?.[currentPillar?.id] ? (
                   <div className="min-h-[400px]" aria-busy="true">
                     {/* Progress Indicators Skeleton */}
@@ -849,6 +857,7 @@ export function AssessmentsDashboard() {
                           <div className="space-y-3 overflow-visible">
                             {['Initial', 'Adopting', 'Established', 'Advanced', 'Transformational'].map((option, index) => {
                             const isSelected = selectedAnswer === option;
+                            const isDisabled = currentPillar?.isEditable === false;
                               
                               // Option text from API (answer_options array)
                               const questionOptions = currentPillar.questionOptions;
@@ -863,20 +872,23 @@ export function AssessmentsDashboard() {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
+                                  if (isDisabled) return;
                                   console.log('Button clicked:', questionKey, option);
                                   handleAnswerSelect(questionKey, option);
                                 }}
-                                  className={`flex items-start gap-3 p-4 rounded-lg text-sm font-normal border-2 cursor-pointer relative w-full text-left transition-all ${
+                                className={`flex items-start gap-3 p-4 rounded-lg text-sm font-normal border-2 relative w-full text-left transition-all ${
                                   isSelected 
                                     ? 'bg-[#46cdc6]/10 text-[#15ae99] border-[#46cdc6] shadow-md' 
-                                      : 'bg-white text-gray-700 hover:bg-gray-50 hover:border-[#46cdc6]/50 border-gray-200 shadow-sm'
-                                }`}
+                                    : 'bg-white text-gray-700 hover:bg-gray-50 hover:border-[#46cdc6]/50 border-gray-200 shadow-sm'
+                                } ${isDisabled ? 'opacity-60 cursor-not-allowed hover:bg-white hover:border-gray-200' : 'cursor-pointer'}`}
                                 type="button"
+                                disabled={isDisabled}
+                                aria-disabled={isDisabled}
                                 whileHover={{ 
-                                    scale: 1.01
+                                    scale: isDisabled ? 1 : 1.01
                                 }}
                                 whileTap={{ 
-                                    scale: 0.99 
+                                    scale: isDisabled ? 1 : 0.99 
                                   }}
                                   transition={{ 
                                     duration: 0.15,
@@ -968,8 +980,8 @@ export function AssessmentsDashboard() {
         </div>
       </section>
 
-      {/* Sticky Action Bar - Only show when assessment has started */}
-      {Object.keys(answers).length > 0 && (
+      {/* Sticky Action Bar - Show once assessment is loaded (don't gate on answers) */}
+      {!!assessmentId && assessmentPillars.length > 0 && (
         <motion.div
           className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-lg"
           initial={{ y: 100 }}
@@ -994,16 +1006,15 @@ export function AssessmentsDashboard() {
                 </div>
               
               <div className="flex items-center gap-3">
-                {currentPillarIndex > 0 && (
-                  <motion.button
-                    onClick={handlePreviousStep}
-                    className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    Previous Pillar
-                  </motion.button>
-                )}
+                <motion.button
+                  onClick={handlePreviousStep}
+                  disabled={currentPillarIndex === 0}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  whileHover={currentPillarIndex === 0 ? {} : { scale: 1.02 }}
+                  whileTap={currentPillarIndex === 0 ? {} : { scale: 0.98 }}
+                >
+                  Previous Pillar
+                </motion.button>
                 
                 <motion.button
                   onClick={handleNextStep}
@@ -1049,7 +1060,7 @@ export function AssessmentsDashboard() {
       )}
 
       {/* Bottom padding to prevent content overlap - only when sticky bar is visible */}
-      {Object.keys(answers).length > 0 && <div className="h-20"></div>}
+      {!!assessmentId && assessmentPillars.length > 0 && <div className="h-20"></div>}
     </div>
   );
 }

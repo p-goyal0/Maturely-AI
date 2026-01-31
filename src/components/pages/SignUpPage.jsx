@@ -127,12 +127,7 @@ export function SignUpPage() {
       subtitle: "Find client from all around the world"
     },
     {
-      src: "/auth/authimg2.png", 
-      title: "Join Our Community",
-      subtitle: "Connect with thousands of professionals"
-    },
-    {
-      src: "/auth/authimg3.png",
+      src: "/auth/authimg2.png",
       title: "Start Your Journey",
       subtitle: "Begin your AI transformation today"
     }

@@ -310,7 +310,7 @@ export default function HomePage() {
       `}</style>
 
       {/* Hero Section - Light with gradient and grid pattern */}
-      <section id="hero" className="relative pt-20 pb-12 lg:pt-24 lg:pb-16 overflow-visible bg-gradient-to-r from-cyan-50/50 via-white to-white" style={{ minHeight: 'calc(100vh - 80px)' }}>
+      <section id="hero" className="relative pt-20 pb-8 lg:pt-24 lg:pb-12 overflow-visible bg-gradient-to-r from-cyan-50/50 via-white to-white">
         {/* Grid Pattern Background with rounded rectangles - Embossed Tiles */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
           {/* Base tiles pattern */}
@@ -374,8 +374,8 @@ export default function HomePage() {
           />
         </div>
 
-        <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 relative h-full flex items-center" style={{ zIndex: 10 }}>
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center w-full py-8">
+        <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 relative flex items-center" style={{ zIndex: 10 }}>
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center w-full py-12 lg:py-16 xl:py-20">
             {/* Left Column - Text Content */}
             <div className="space-y-5 lg:space-y-6 relative" style={{ zIndex: 20 }}>
               {/* Headline - Rotating */}
@@ -422,7 +422,7 @@ export default function HomePage() {
                   className="text-base px-8 py-6 text-white rounded-xl font-semibold transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl hover:opacity-90"
                   style={{ fontFamily: 'Segoe UI, sans-serif', backgroundColor: '#1e9e8c', fontWeight: 600 }}
                 >
-                  <span>How Its Work</span>
+                  <span>Lets demo how this works</span>
                   <Rocket className="ml-2 w-5 h-5" />
                         </Button>
               </motion.div>
@@ -450,7 +450,7 @@ export default function HomePage() {
                   </section>
 
                   {/* Capabilities Section - WHITE */}
-                  <section id="features" className="py-20 relative bg-white">
+                  <section id="features" className="py-12 lg:py-16 xl:py-20 relative bg-white">
                     <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12 relative z-10">
                       <motion.div
                         initial={{ opacity: 0 }}
@@ -817,8 +817,8 @@ export default function HomePage() {
                           transition={{ delay: 0.1 }}
                           whileHover={{ y: -8 }}
                         >
-                          <Card className="bg-white border-2 border-gray-200 hover:border-[#185D54] hover:shadow-xl h-full transition-all duration-300 relative overflow-hidden">
-                            <CardHeader>
+                          <Card className="bg-white border-2 border-gray-200 hover:border-[#185D54] hover:shadow-xl h-full transition-all duration-300 relative overflow-hidden flex flex-col">
+                            <CardHeader className="flex-shrink-0 min-h-[180px]">
                               <CardTitle className="text-2xl text-gray-900">Starter</CardTitle>
                               <div className="mt-4">
                                 <span className="text-4xl font-bold" style={{ color: '#185D54' }}>Free</span>
@@ -827,8 +827,17 @@ export default function HomePage() {
                                 For individuals and small launches validating their first releases.
                               </CardDescription>
                             </CardHeader>
-                            <CardContent>
-                              <ul className="space-y-3">
+                            <CardContent className="flex flex-col flex-1">
+                              <ul className="space-y-3 flex-1">
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Static Use-Case Bank</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Access to 50+ common AI use cases.
+                                    </span>
+                                  </div>
+                                </li>
                                 <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
                                   <div>
@@ -844,15 +853,6 @@ export default function HomePage() {
                                     <span className="block">Basic Report</span>
                                     <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
                                       Summary of key strengths and weaknesses.
-                                    </span>
-                                  </div>
-                                </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
-                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Static Use-Case Bank</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Access to 50+ common AI use cases.
                                     </span>
                                   </div>
                                 </li>
@@ -887,12 +887,12 @@ export default function HomePage() {
                           transition={{ delay: 0.2 }}
                           whileHover={{ y: -8 }}
                         >
-                          <Card className="bg-white border-2 border-[#185D54] hover:shadow-xl h-full relative overflow-hidden transition-all duration-300">
+                          <Card className="bg-white border-2 border-[#185D54] hover:shadow-xl h-full relative overflow-hidden transition-all duration-300 flex flex-col">
                             <div className="absolute top-0 right-0 bg-[#185D54] text-white px-4 py-1.5 text-sm font-bold shadow-lg z-10 rounded-bl-lg flex items-center gap-1">
                               <span>★</span>
                               <span>Recommended</span>
                             </div>
-                            <CardHeader>
+                            <CardHeader className="flex-shrink-0 min-h-[180px]">
                               <CardTitle className="text-2xl text-gray-900">Plus</CardTitle>
                               <div className="mt-4">
                                 {isAnnual ? (
@@ -912,8 +912,8 @@ export default function HomePage() {
                                 For growing teams that need actionable insights and continuous improvement.
                               </CardDescription>
                             </CardHeader>
-                            <CardContent>
-                              <ul className="space-y-3">
+                            <CardContent className="flex flex-col flex-1">
+                              <ul className="space-y-3 flex-1">
                                 <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
                                   <div>
@@ -938,6 +938,15 @@ export default function HomePage() {
                                     <span className="block">Detailed Strategic Report</span>
                                     <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
                                       Deep dive into AI, Data, Security and Governance readiness.
+                                    </span>
+                                  </div>
+                                </li>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Email Support</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Standard email support for your questions.
                                     </span>
                                   </div>
                                 </li>
@@ -1008,8 +1017,8 @@ export default function HomePage() {
                           transition={{ delay: 0.3 }}
                           whileHover={{ y: -8 }}
                         >
-                          <Card className="bg-white border-2 border-gray-200 hover:border-[#185D54] hover:shadow-xl h-full transition-all duration-300 relative overflow-hidden">
-                            <CardHeader>
+                          <Card className="bg-white border-2 border-gray-200 hover:border-[#185D54] hover:shadow-xl h-full transition-all duration-300 relative overflow-hidden flex flex-col">
+                            <CardHeader className="flex-shrink-0 min-h-[180px]">
                               <CardTitle className="text-2xl text-gray-900">Pro</CardTitle>
                               <div className="mt-4">
                                 {isAnnual ? (
@@ -1029,8 +1038,8 @@ export default function HomePage() {
                                 For large organizations and agencies requiring customization and control.
                               </CardDescription>
                             </CardHeader>
-                            <CardContent>
-                              <ul className="space-y-3">
+                            <CardContent className="flex flex-col flex-1">
+                              <ul className="space-y-3 flex-1">
                                 <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
                                   <div>
@@ -1055,6 +1064,15 @@ export default function HomePage() {
                                     <span className="block">Detailed Strategic Report</span>
                                     <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
                                       Deep dive into AI, Data, Security and Governance readiness.
+                                    </span>
+                                  </div>
+                                </li>
+                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                  <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
+                                  <div>
+                                    <span className="block">Email Support</span>
+                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
+                                      Standard email support for your questions.
                                     </span>
                                   </div>
                                 </li>
@@ -1154,9 +1172,9 @@ export default function HomePage() {
                         viewport={{ once: true }}
                         className="text-center"
                       >
-                        <p className="text-slate-600 mb-8 text-sm uppercase tracking-wider font-medium">
+                        <h2 className="text-2xl lg:text-3xl xl:text-4xl font-bold text-slate-900 mb-8 leading-tight" style={{ fontFamily: 'Segoe UI, sans-serif' }}>
                           Trusted by Industry Leaders
-                        </p>
+                        </h2>
                         <div className="flex flex-wrap justify-center items-center gap-8 lg:gap-16">
                           {logos.map((logo, index) => (
                             <motion.div
@@ -1194,7 +1212,8 @@ export default function HomePage() {
                   <img 
                     src="/logo/maturely_logo.png" 
                     alt="MATURITY.AI" 
-                    className="h-[20px] w-auto"
+                    className="h-[20px] w-auto brightness-0 invert"
+                    style={{ filter: 'brightness(0) invert(1)' }}
                   />
                 </div>
                             <p className="text-sm text-white/80">
@@ -1213,18 +1232,30 @@ export default function HomePage() {
                           <h4 className="mb-4 text-sm font-semibold text-white">Platform</h4>
                           <ul className="space-y-2 text-sm text-white/70">
                             <li>
-                  <button onClick={() => navigate("/assessments")} className="hover:text-[#46cdc6] transition-colors">
+                              <button 
+                                onClick={() => navigate("/assessments")} 
+                                className="group relative hover:text-[#46cdc6] transition-colors inline-block"
+                              >
                                 Assessments
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#46cdc6] transition-all duration-300 ease-out group-hover:w-full"></span>
                               </button>
                             </li>
                             <li>
-                  <button onClick={() => navigate("/roadmap")} className="hover:text-[#46cdc6] transition-colors">
+                              <button 
+                                onClick={() => navigate("/roadmap")} 
+                                className="group relative hover:text-[#46cdc6] transition-colors inline-block"
+                              >
                                 Roadmaps
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#46cdc6] transition-all duration-300 ease-out group-hover:w-full"></span>
                               </button>
                             </li>
                             <li>
-                  <button onClick={() => navigate("/usecases")} className="hover:text-[#46cdc6] transition-colors">
+                              <button 
+                                onClick={() => navigate("/usecases")} 
+                                className="group relative hover:text-[#46cdc6] transition-colors inline-block"
+                              >
                                 Use Cases
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#46cdc6] transition-all duration-300 ease-out group-hover:w-full"></span>
                               </button>
                             </li>
                           </ul>
@@ -1237,14 +1268,38 @@ export default function HomePage() {
                         >
                           <h4 className="mb-4 text-sm font-semibold text-white">Company</h4>
                           <ul className="space-y-2 text-sm text-white/70">
-                            <li><a href="#" className="hover:text-[#46cdc6] transition-colors">About</a></li>
-                            <li><a href="#" className="hover:text-[#46cdc6] transition-colors">Contact</a></li>
-                            <li><a href="#" className="hover:text-[#46cdc6] transition-colors">Privacy</a></li>
+                            <li>
+                              <a 
+                                href="#" 
+                                className="group relative hover:text-[#46cdc6] transition-colors inline-block"
+                              >
+                                About
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#46cdc6] transition-all duration-300 ease-out group-hover:w-full"></span>
+                              </a>
+                            </li>
+                            <li>
+                              <a 
+                                href="#" 
+                                className="group relative hover:text-[#46cdc6] transition-colors inline-block"
+                              >
+                                Contact
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#46cdc6] transition-all duration-300 ease-out group-hover:w-full"></span>
+                              </a>
+                            </li>
+                            <li>
+                              <a 
+                                href="#" 
+                                className="group relative hover:text-[#46cdc6] transition-colors inline-block"
+                              >
+                                Privacy
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#46cdc6] transition-all duration-300 ease-out group-hover:w-full"></span>
+                              </a>
+                            </li>
                           </ul>
                         </motion.div>
                       </div>
                       <div className="pt-8 border-t border-[#46cdc6]/30 text-center text-sm text-white/70">
-                        <p>© 2025 AI Maturity Platform. All rights reserved.</p>
+                        <p>© {new Date().getFullYear()} AI Maturity Platform. All rights reserved.</p>
                       </div>
                     </div>
                   </footer>

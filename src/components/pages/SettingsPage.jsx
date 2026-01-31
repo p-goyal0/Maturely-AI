@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Settings as SettingsIcon,
@@ -9,10 +9,42 @@ import {
   Sparkles,
   Save,
   Mail,
-  Building
+  Building,
+  DollarSign,
+  CheckCircle2,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '../ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { PageHeader } from '../shared/PageHeader';
+import { getPlans } from '../../services/billingService';
+
+/** Convert snake_case to Title Case for display */
+function snakeToTitleCase(str) {
+  if (!str || typeof str !== 'string') return str;
+  return str
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
+/** Feature keys that are booleans (exclude nested objects like feature_tooltips) */
+const FEATURE_BOOLEAN_KEYS = [
+  'sso',
+  'basic_report',
+  'email_support',
+  'export_to_pdf',
+  'custom_roadmap',
+  'trend_analysis',
+  'priority_support',
+  'single_assessment',
+  'white_label_reports',
+  'static_use_case_bank',
+  'industry_benchmarking',
+  'continuous_assessments',
+  'custom_use_case_creation',
+  'detailed_strategic_report',
+];
 
 export function SettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
@@ -25,6 +57,31 @@ export function SettingsPage() {
     push: true,
     weekly: false,
   });
+  const [plans, setPlans] = useState([]);
+  const [plansLoading, setPlansLoading] = useState(false);
+  const [plansError, setPlansError] = useState(null);
+  const [isAnnualPricing, setIsAnnualPricing] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'pricing') {
+      setPlansLoading(true);
+      setPlansError(null);
+      getPlans()
+        .then((res) => {
+          if (res.success && Array.isArray(res.data)) {
+            setPlans(res.data);
+          } else {
+            setPlansError(res.error || 'Failed to load plans');
+            setPlans([]);
+          }
+        })
+        .catch((err) => {
+          setPlansError(err?.message || 'Failed to load plans');
+          setPlans([]);
+        })
+        .finally(() => setPlansLoading(false));
+    }
+  }, [activeTab]);
 
   const handleSave = () => {
     // In a real app, this would call an API
@@ -36,6 +93,7 @@ export function SettingsPage() {
     { id: 'general', label: 'General', icon: Building },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'billing', label: 'Billing', icon: CreditCard },
+    { id: 'pricing', label: 'Pricing', icon: DollarSign },
   ];
 
   return (
@@ -71,7 +129,7 @@ export function SettingsPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-7xl mx-auto relative"
+          className="w-full relative"
         >
           <div className="flex items-start justify-between mb-12">
             <div>
@@ -93,7 +151,7 @@ export function SettingsPage() {
                 Account Settings
               </motion.h1>
               <motion.p 
-                className="text-xl text-slate-600 max-w-3xl"
+                className="text-xl text-slate-600"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
@@ -107,7 +165,7 @@ export function SettingsPage() {
 
       {/* Content */}
       <div className="px-8 pb-12 relative z-10">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full">
           <div className="grid grid-cols-12 gap-6">
               {/* Sidebar Tabs */}
               <motion.div 
@@ -311,6 +369,153 @@ export function SettingsPage() {
                           </div>
                         </div>
                       </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'pricing' && (
+                    <div>
+                      <h3 className="text-2xl font-bold text-slate-900 mb-6">Pricing Plans</h3>
+
+                      {/* Monthly / Annually Toggle - same as Home page */}
+                      {!plansLoading && !plansError && plans.length > 0 && (
+                        <div className="flex items-center gap-4 mb-8">
+                          <span className="text-slate-700 font-medium">Monthly</span>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              className="sr-only peer"
+                              checked={isAnnualPricing}
+                              onChange={(e) => setIsAnnualPricing(e.target.checked)}
+                            />
+                            <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-[#185D54]"></div>
+                          </label>
+                          <span className="text-slate-700 font-medium">Annually</span>
+                          {isAnnualPricing && (
+                            <span className="text-[#185D54] text-sm bg-[#185D54]/10 px-2 py-1 rounded">Save 15%</span>
+                          )}
+                        </div>
+                      )}
+
+                      {plansLoading ? (
+                        <div className="flex items-center justify-center py-16">
+                          <Loader2 className="w-10 h-10 animate-spin text-[#46CDCF]" />
+                        </div>
+                      ) : plansError ? (
+                        <div className="p-6 bg-red-50 border border-red-200 rounded-2xl text-red-700">
+                          {plansError}
+                        </div>
+                      ) : plans.length === 0 ? (
+                        <p className="text-slate-600">No plans available.</p>
+                      ) : (
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {plans
+                            .filter((plan) => {
+                              const interval = (plan.billing_interval || 'monthly').toLowerCase();
+                              const isFree = plan.price === 0 || plan.price == null;
+                              if (isAnnualPricing) {
+                                return interval === 'yearly' || isFree;
+                              }
+                              return interval === 'monthly';
+                            })
+                            .map((plan) => {
+                            const features = plan.features || {};
+                            const tooltips = features.feature_tooltips || {};
+                            const billingInterval = (plan.billing_interval || 'monthly').toLowerCase();
+                            const intervalLabel = billingInterval === 'yearly' ? 'year' : 'month';
+                            const priceDisplay =
+                              plan.price === 0 || plan.price === null || plan.price === undefined
+                                ? 'Free'
+                                : new Intl.NumberFormat('en-US', {
+                                    style: 'currency',
+                                    currency: (plan.currency || 'usd').toUpperCase(),
+                                    minimumFractionDigits: 0,
+                                    maximumFractionDigits: 0,
+                                  }).format(plan.price);
+                            const annualSavings = features.annual_savings;
+
+                            return (
+                              <motion.div
+                                key={plan.id}
+                                initial={{ opacity: 0, y: 16 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="h-full"
+                              >
+                                <Card
+                                  className={`h-full flex flex-col overflow-hidden relative ${
+                                    plan.is_popular
+                                      ? 'border-2 border-[#185D54]'
+                                      : 'border-2 border-gray-200 hover:border-[#185D54]'
+                                  } transition-all duration-300`}
+                                >
+                                  {plan.is_popular && (
+                                    <div className="absolute top-0 right-0 bg-[#185D54] text-white px-3 py-1.5 text-xs font-bold shadow-lg z-10 rounded-bl-lg flex items-center gap-1">
+                                      <span>★</span>
+                                      <span>Recommended</span>
+                                    </div>
+                                  )}
+                                  <CardHeader className="flex-shrink-0 min-h-[160px]">
+                                    <CardTitle className="text-xl text-gray-900">{plan.name}</CardTitle>
+                                    <div className="mt-3">
+                                      <span className="text-3xl font-bold" style={{ color: '#185D54' }}>
+                                        {priceDisplay}
+                                      </span>
+                                      {priceDisplay !== 'Free' && (
+                                        <span className="text-gray-500 text-sm"> / {intervalLabel}</span>
+                                      )}
+                                    </div>
+                                    {annualSavings != null && annualSavings > 0 && (
+                                      <p className="text-sm text-[#185D54] mt-1">
+                                        Save ${annualSavings} with annual billing
+                                      </p>
+                                    )}
+                                    <CardDescription className="text-gray-600 mt-2 text-sm">
+                                      {plan.description}
+                                    </CardDescription>
+                                  </CardHeader>
+                                  <CardContent className="flex flex-col flex-1">
+                                    <ul className="space-y-2 flex-1">
+                                      {FEATURE_BOOLEAN_KEYS.filter((key) => features[key] === true).map((key) => {
+                                        const tooltip = tooltips[key];
+                                        return (
+                                          <li
+                                            key={key}
+                                            className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item group"
+                                          >
+                                            <CheckCircle2
+                                              className="w-5 h-5 mt-0.5 flex-shrink-0"
+                                              style={{ color: '#185D54' }}
+                                            />
+                                            <div>
+                                              <span className="block text-sm">{snakeToTitleCase(key)}</span>
+                                              {tooltip && (
+                                                <span className="popup-tooltip absolute left-0 top-full mt-1 w-56 p-2 bg-gray-800 text-gray-200 text-xs rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 border border-gray-700">
+                                                  {tooltip}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </li>
+                                        );
+                                      })}
+                                    </ul>
+                                    <Button
+                                      className="w-full mt-6 text-white"
+                                      style={{ backgroundColor: '#185D54' }}
+                                      onMouseEnter={(e) => {
+                                        e.currentTarget.style.backgroundColor = '#134a43';
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.currentTarget.style.backgroundColor = '#185D54';
+                                      }}
+                                    >
+                                      Get Started
+                                    </Button>
+                                  </CardContent>
+                                </Card>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
 

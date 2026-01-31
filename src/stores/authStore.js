@@ -122,6 +122,9 @@ export const useAuthStore = create(
           // Clear localStorage
           localStorage.removeItem("isAuthenticated");
           localStorage.removeItem("currentUser");
+          // Clear sessionStorage as well
+          sessionStorage.removeItem("isAuthenticated");
+          sessionStorage.removeItem("currentUser");
           // Update state
           set({
             currentUser: null,

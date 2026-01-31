@@ -9,11 +9,12 @@ import { getErrorMessage } from './errorHandler';
 const FALLBACK_MODEL_ID = '075894e5-9614-4337-86f9-1c7e65fb4330';
 
 /**
- * Start assessment (or continue ongoing assessment)
+ * Start assessment (or continue ongoing assessment, or open for edit)
  * @param {string} [modelId] - Model ID from user's maturity_model_id (from sign-in). Falls back to default if not provided.
  * @param {string} [assessmentId] - Assessment ID from ongoing_assessment_id (from sign-in). If provided, continues existing assessment.
+ * @param {{ editMode?: boolean }} [options] - editMode true for editing completed assessment, false for continuing ongoing assessment.
  */
-export const startAssessment = async (modelId, assessmentId) => {
+export const startAssessment = async (modelId, assessmentId, options = {}) => {
   try {
     const modelIdToUse = modelId || FALLBACK_MODEL_ID;
     const requestBody = {
@@ -23,6 +24,12 @@ export const startAssessment = async (modelId, assessmentId) => {
     // If assessmentId is provided, include it to continue existing assessment
     if (assessmentId) {
       requestBody.assessment_id = assessmentId;
+    }
+
+    if (options.editMode === true) {
+      requestBody.edit_mode = true;
+    } else if (options.editMode === false) {
+      requestBody.edit_mode = false;
     }
     
     const response = await api.post('/assessment/start', requestBody);
@@ -131,4 +138,40 @@ export const getAssessmentResults = async (assessmentId, retries = 2) => {
     success: false,
     error: getErrorMessage(lastError),
   };
+};
+
+/**
+ * Get assessments for the organization (all, or filter by status).
+ * @param {string} [status] - Optional: 'completed' to fetch only completed assessments.
+ */
+export const getOrganizationAssessments = async (status) => {
+  try {
+    const params = status ? { status } : {};
+    const response = await api.get('/organization/assessments', { params });
+    return {
+      success: true,
+      data: response.data,
+      message: response.message,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: getErrorMessage(error),
+      data: [],
+    };
+  }
+};
+
+/**
+ * Get ongoing and completed assessments for the organization (no filter).
+ */
+export const getOrganizationAssessmentsOngoing = async () => {
+  return getOrganizationAssessments();
+};
+
+/**
+ * Get only completed assessments for the organization.
+ */
+export const getOrganizationAssessmentsCompleted = async () => {
+  return getOrganizationAssessments('completed');
 };

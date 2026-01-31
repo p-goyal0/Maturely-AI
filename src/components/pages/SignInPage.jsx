@@ -26,14 +26,9 @@ export function SignInPage() {
       subtitle: "Continue your AI transformation journey"
     },
     {
-      src: "/auth/authimg2.png", 
+      src: "/auth/authimg2.png",
       title: "AI-Powered Insights",
       subtitle: "Unlock the potential of artificial intelligence"
-    },
-    {
-      src: "/auth/authimg3.png",
-      title: "Transform Your Business",
-      subtitle: "Join thousands of companies going digital"
     }
   ];
 

@@ -1,0 +1,148 @@
+{
+  "plans": [
+    {
+      "id": "starter",
+      "name": "Starter",
+      "description": "For individuals and small launches validating their first releases.",
+      "priceMonthly": null,
+      "priceAnnual": null,
+      "priceDisplay": "Free",
+      "isFree": true,
+      "recommended": false,
+      "ctaLabel": "Get Started",
+      "ctaVariant": "primary",
+      "features": [
+        {
+          "name": "Static Use-Case Bank",
+          "tooltip": "Access to 50+ common AI use cases."
+        },
+        {
+          "name": "Single Assessment",
+          "tooltip": "One-time assessment of your AI maturity."
+        },
+        {
+          "name": "Basic Report",
+          "tooltip": "Summary of key strengths and weaknesses."
+        },
+        {
+          "name": "Email Support",
+          "tooltip": "Standard email support for your questions."
+        }
+      ]
+    },
+    {
+      "id": "plus",
+      "name": "Plus",
+      "description": "For growing teams that need actionable insights and continuous improvement.",
+      "priceMonthly": 199,
+      "priceAnnual": 2030,
+      "priceAnnualStrikethrough": 2388,
+      "priceDisplay": null,
+      "isFree": false,
+      "recommended": true,
+      "ctaLabel": "Get Started",
+      "ctaVariant": "primary",
+      "features": [
+        {
+          "name": "Static Use-Case Bank",
+          "tooltip": "Access to 50+ common AI use cases."
+        },
+        {
+          "name": "Continuous Assessments",
+          "tooltip": "Retake the assessments monthly to track progress."
+        },
+        {
+          "name": "Detailed Strategic Report",
+          "tooltip": "Deep dive into AI, Data, Security and Governance readiness."
+        },
+        {
+          "name": "Email Support",
+          "tooltip": "Standard email support for your questions."
+        },
+        {
+          "name": "Custom Roadmap",
+          "tooltip": "Step-by-step execution plan based on your score."
+        },
+        {
+          "name": "Industry Benchmarking",
+          "tooltip": "Compare your score with similar sized peers within the same industry."
+        },
+        {
+          "name": "Trend Analysis",
+          "tooltip": "Visualize your improvement over time."
+        },
+        {
+          "name": "Export to PDF",
+          "tooltip": "Presentation-ready reports."
+        },
+        {
+          "name": "Priority Support",
+          "tooltip": "72 hrs turn around on emails."
+        }
+      ]
+    },
+    {
+      "id": "pro",
+      "name": "Pro",
+      "description": "For large organizations and agencies requiring customization and control.",
+      "priceMonthly": 299,
+      "priceAnnual": 3050,
+      "priceAnnualStrikethrough": 3588,
+      "priceDisplay": null,
+      "isFree": false,
+      "recommended": false,
+      "ctaLabel": "Contact Sales",
+      "ctaVariant": "outline",
+      "features": [
+        {
+          "name": "Static Use-Case Bank",
+          "tooltip": "Access to 50+ common AI use cases."
+        },
+        {
+          "name": "Continuous Assessments",
+          "tooltip": "Retake the assessments monthly to track progress."
+        },
+        {
+          "name": "Detailed Strategic Report",
+          "tooltip": "Deep dive into AI, Data, Security and Governance readiness."
+        },
+        {
+          "name": "Email Support",
+          "tooltip": "Standard email support for your questions."
+        },
+        {
+          "name": "Custom Roadmap",
+          "tooltip": "Step-by-step execution plan based on your score."
+        },
+        {
+          "name": "Industry Benchmarking",
+          "tooltip": "Compare your score with similar sized peers within the same industry."
+        },
+        {
+          "name": "Trend Analysis",
+          "tooltip": "Visualize your improvement over time."
+        },
+        {
+          "name": "Export to PDF",
+          "tooltip": "Presentation-ready reports."
+        },
+        {
+          "name": "White-Label Reports",
+          "tooltip": "Use your branding and colors."
+        },
+        {
+          "name": "Custom Use-Case Creation",
+          "tooltip": "Build your own internal AI Use case library."
+        },
+        {
+          "name": "Single Sign-On (SSO)",
+          "tooltip": "Enterprise-grade security."
+        },
+        {
+          "name": "Priority Support",
+          "tooltip": "24 hrs turn around on emails."
+        }
+      ]
+    }
+  ]
+}

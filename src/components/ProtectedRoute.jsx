@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../stores/authStore";
+import CubeLoader from "./ui/CubeLoader";
 
 export function ProtectedRoute({ children }) {
   const { isAuthenticated, isLoading, currentUser } = useAuthStore();
@@ -9,7 +10,7 @@ export function ProtectedRoute({ children }) {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
+        <CubeLoader size={48} />
       </div>
     );
   }

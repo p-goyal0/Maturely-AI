@@ -1,12 +1,19 @@
 /**
  * Sign In Loader Component
- * Shows header and centered "Signing In" text with loader after successful sign-in
+ * Shows header and centered text with jumping-square loader (website teal).
+ * Reusable for sign-in and for assessment/results page loading (via text + centerItems).
  */
 
 import { motion } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 import { PageHeader } from './PageHeader';
+import CubeLoader from '../ui/CubeLoader';
 
-export function SignInLoader() {
+const defaultHeaderLinks = [{ label: 'Home', path: '/' }];
+
+export function SignInLoader({ text = 'Signing In', centerItems = defaultHeaderLinks }) {
+  const location = useLocation();
+
   return (
     <div className="min-h-screen bg-white relative overflow-hidden">
       {/* Background elements similar to other pages */}
@@ -28,9 +35,8 @@ export function SignInLoader() {
 
       {/* Header */}
       <PageHeader 
-        centerItems={[
-          { label: "Home", path: "/" }
-        ]}
+        centerItems={centerItems}
+        activePath={location.pathname}
         zIndex="z-50"
       />
 
@@ -42,22 +48,14 @@ export function SignInLoader() {
           transition={{ duration: 0.3 }}
           className="flex flex-col items-center justify-center gap-4"
         >
-          <motion.div
-            className="w-12 h-12 border-4 border-[#46cdc6] border-t-transparent rounded-full"
-            animate={{ rotate: 360 }}
-            transition={{
-              duration: 1,
-              repeat: Infinity,
-              ease: 'linear',
-            }}
-          />
+          <CubeLoader size={48} />
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3, delay: 0.2 }}
             className="text-gray-900 text-lg font-medium"
           >
-            Signing In
+            {text}
           </motion.p>
         </motion.div>
       </div>

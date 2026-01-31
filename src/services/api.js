@@ -160,9 +160,19 @@ const request = async (endpoint, options = {}) => {
   } catch (error) {
     // Handle authentication errors
     if (isAuthError(error)) {
-      // Clear auth data and redirect to login
+      // Clear auth data from both storages
       localStorage.removeItem('currentUser');
       localStorage.removeItem('isAuthenticated');
+      sessionStorage.removeItem('currentUser');
+      sessionStorage.removeItem('isAuthenticated');
+      
+      // Update auth store to reflect logged out state
+      // Import dynamically to avoid circular dependency
+      import('../stores/authStore').then(({ useAuthStore }) => {
+        useAuthStore.getState().signOut();
+      }).catch(() => {
+        // If store not available, continue with redirect
+      });
       
       // Only redirect if not already on login page
       if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/signin')) {

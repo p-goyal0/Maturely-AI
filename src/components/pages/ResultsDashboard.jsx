@@ -3,8 +3,8 @@ import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { TrendingUp, Target, Users, Cpu, Database, Shield, Lock, ArrowRight, CheckCircle2, AlertCircle, Sparkles, Download, Loader2 } from 'lucide-react';
 import { motion, useInView } from "motion/react";
-import { useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect, useRef, useMemo, useId } from "react";
 import { PageHeader } from '../shared/PageHeader';
 import { useAssessmentStore } from '../../stores/assessmentStore';
 import { useAuthStore } from '../../stores/authStore';
@@ -43,6 +43,18 @@ const PILLAR_SHORT_NAMES = {
   "Operations & Implementation": "Operations & Implementation",
 };
 
+// Maturity-level colors for pie chart, status indicators, and breakdown bars
+const MATURITY_COLORS = {
+  Initial: '#ef4444',
+  Adopting: '#f97316',
+  Established: '#f59e0b',
+  Advanced: '#10b981',
+  Transformational: '#059669',
+};
+const DEFAULT_MATURITY_COLOR = MATURITY_COLORS.Established;
+const MATURITY_GRADIENT = `linear-gradient(to right, ${MATURITY_COLORS.Initial}, ${MATURITY_COLORS.Adopting}, ${MATURITY_COLORS.Established}, ${MATURITY_COLORS.Advanced}, ${MATURITY_COLORS.Transformational})`;
+
+// Fallback pillar colors (e.g. for radar) when not using maturity
 const PILLAR_COLORS = [
   '#46cdc6',
   '#15ae99',
@@ -53,24 +65,110 @@ const PILLAR_COLORS = [
   '#f59e0b',
 ];
 
-// Helper function to get status from maturity level
+// Custom tick component for radar chart to show full pillar names without truncation
+const CustomPolarAngleAxisTick = ({ payload, x, y, cx, cy, ...props }) => {
+  const RADIAN = Math.PI / 180;
+  const sin = Math.sin(-payload.coordinate * RADIAN);
+  const cos = Math.cos(-payload.coordinate * RADIAN);
+  const radius = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
+  const outerRadius = radius + 50;
+  const textX = cx + outerRadius * cos;
+  const textY = cy + outerRadius * sin;
+  const textAnchor = cos >= 0 ? 'start' : 'end';
+
+  return (
+    <g>
+      <text
+        x={textX}
+        y={textY}
+        textAnchor={textAnchor}
+        fill="#374151"
+        fontSize={12}
+        fontWeight={500}
+        style={{ 
+          textOverflow: 'clip',
+          overflow: 'visible',
+          whiteSpace: 'nowrap'
+        }}
+      >
+        {payload.value}
+      </text>
+    </g>
+  );
+};
+
+// Custom radar polygon with gradient fill between adjacent pillar (maturity) colors.
+// Recharts passes each point with { x, y, cx, cy } — cx/cy are the polar chart center, so we use those.
+function RadarPolygonWithGradients({ points = [], colors = [], gradientIdBase, ...rest }) {
+  if (!points.length || colors.length !== points.length) return null;
+  // Recharts provides cx, cy on every point (the polar grid center) — use it instead of manual math
+  const cx = points[0]?.cx ?? points.reduce((s, p) => s + p.x, 0) / points.length;
+  const cy = points[0]?.cy ?? points.reduce((s, p) => s + p.y, 0) / points.length;
+  const base = gradientIdBase || 'radar-g';
+  return (
+    <g {...rest}>
+      <defs>
+        {points.map((_, i) => {
+          const next = (i + 1) % points.length;
+          return (
+            <linearGradient
+              key={i}
+              id={`${base}-${i}`}
+              x1={points[i].x}
+              y1={points[i].y}
+              x2={points[next].x}
+              y2={points[next].y}
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0%" stopColor={colors[i]} />
+              <stop offset="100%" stopColor={colors[next]} />
+            </linearGradient>
+          );
+        })}
+      </defs>
+      {points.map((_, i) => {
+        const next = (i + 1) % points.length;
+        const d = `M ${cx} ${cy} L ${points[i].x} ${points[i].y} L ${points[next].x} ${points[next].y} Z`;
+        return (
+          <path
+            key={i}
+            d={d}
+            fill={`url(#${base}-${i})`}
+            fillOpacity={0.88}
+          />
+        );
+      })}
+      <path
+        d={points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z'}
+        fill="none"
+        stroke="rgba(55,65,81,0.35)"
+        strokeWidth={2}
+      />
+    </g>
+  );
+}
+
+// Helper function to get status from maturity level - 5 distinct levels
 const getStatusFromMaturity = (maturityLevel) => {
   switch (maturityLevel) {
     case "Initial":
+      return "initial";
     case "Adopting":
-      return "needs-improvement";
+      return "adopting";
     case "Established":
-      return "moderate";
+      return "established";
     case "Advanced":
+      return "advanced";
     case "Transformational":
-      return "strong";
+      return "transformational";
     default:
-      return "moderate";
+      return "established";
   }
 };
 
 export function ResultsDashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { assessmentResults } = useAssessmentStore();
   const { currentUser } = useAuthStore();
   const [selectedSegment, setSelectedSegment] = useState(null);
@@ -83,6 +181,7 @@ export function ResultsDashboard() {
   const gapsRef = useRef(null);
   const recommendationsRef = useRef(null);
   const chartContainerRef = useRef(null);
+  const radarGradientId = useId();
   
   // useInView hooks - defined at component level
   const pillarScoresInView = useInView(pillarScoresRef, { once: true, margin: "-100px", amount: 0.1 });
@@ -145,16 +244,18 @@ export function ResultsDashboard() {
     // Calculate total weighted score for normalization
     const totalWeightedScore = sortedPillars.reduce((sum, p) => sum + p.weighted_score, 0);
     
-    return sortedPillars.map((pillar, index) => {
+    return sortedPillars.map((pillar) => {
       // Use weighted_score normalized to 100 for pie chart (shows relative contribution)
       const normalizedValue = totalWeightedScore > 0 
         ? Math.round((pillar.weighted_score / totalWeightedScore) * 100) 
         : 0;
-      
+      const maturityLevel = pillar.maturity_level || 'Established';
+      const color = MATURITY_COLORS[maturityLevel] ?? DEFAULT_MATURITY_COLOR;
+
       return {
         name: PILLAR_SHORT_NAMES[pillar.pillar_name] || pillar.pillar_name,
         value: normalizedValue,
-        color: PILLAR_COLORS[index % PILLAR_COLORS.length],
+        color,
         originalName: pillar.pillar_name,
         averageScore: pillar.average_score,
         weightedScore: pillar.weighted_score,
@@ -181,16 +282,24 @@ export function ResultsDashboard() {
     }
   }, [pieChartData]);
 
-  // Radar chart data - using average_score from API
+  // Radar chart data - using average_score and maturity color per pillar
   const radarData = useMemo(() => {
     if (!assessmentResults?.pillar_results) return [];
     
     return assessmentResults.pillar_results
       .sort((a, b) => a.pillar_order - b.pillar_order)
-      .map((pillar) => ({
-        pillar: PILLAR_SHORT_NAMES[pillar.pillar_name] || pillar.pillar_name,
-        score: pillar.average_score,
-      }));
+      .map((pillar) => {
+        const maturityLevel = pillar.maturity_level || 'Established';
+        const color = MATURITY_COLORS[maturityLevel] ?? DEFAULT_MATURITY_COLOR;
+        const score = typeof pillar.average_score === 'number' ? pillar.average_score : parseFloat(pillar.average_score) || 0;
+        return {
+          pillar: PILLAR_SHORT_NAMES[pillar.pillar_name] || pillar.pillar_name,
+          score,
+          fullMark: 5,
+          color,
+        };
+      })
+      .filter(item => item.score !== null && item.score !== undefined && !isNaN(item.score));
   }, [assessmentResults]);
 
   // Pillar scores for the cards section
@@ -221,8 +330,12 @@ export function ResultsDashboard() {
       <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50">
         <PageHeader 
           centerItems={[
-            { label: "Home", path: "/offerings" }
+            { label: "Home", path: "/offerings" },
+            { label: "Assessments", path: "/my-assessments" },
+            { label: "Results", path: "/completed-assessments" },
+            { label: "Use Cases", path: "/usecases" },
           ]}
+          activePath={location.pathname}
           zIndex="z-50"
         />
         <div className="pt-32 flex items-center justify-center">
@@ -254,19 +367,45 @@ export function ResultsDashboard() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "strong": return "text-green-600";
-      case "moderate": return "text-yellow-600";
-      case "needs-improvement": return "text-orange-600";
+      case "initial": return "text-[#ef4444]";
+      case "adopting": return "text-[#f97316]";
+      case "established": return "text-[#f59e0b]";
+      case "advanced": return "text-[#10b981]";
+      case "transformational": return "text-[#059669]";
       default: return "text-gray-600";
     }
   };
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case "strong": return "bg-green-50 text-green-700 border-green-200";
-      case "moderate": return "bg-yellow-50 text-yellow-700 border-yellow-200";
-      case "needs-improvement": return "bg-orange-50 text-orange-700 border-orange-200";
+      case "initial": return "bg-[#ef4444]/10 text-[#ef4444] border-[#ef4444]/30";
+      case "adopting": return "bg-[#f97316]/10 text-[#f97316] border-[#f97316]/30";
+      case "established": return "bg-[#f59e0b]/15 text-[#b45309] border-[#f59e0b]/40";
+      case "advanced": return "bg-[#10b981]/10 text-[#10b981] border-[#10b981]/30";
+      case "transformational": return "bg-[#059669]/10 text-[#059669] border-[#059669]/30";
       default: return "bg-gray-50 text-gray-700 border-gray-200";
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case "initial": return "Initial";
+      case "adopting": return "Adopting";
+      case "established": return "Established";
+      case "advanced": return "Advanced";
+      case "transformational": return "Transformational";
+      default: return "Established";
+    }
+  };
+
+  const getProgressBarGradient = (status) => {
+    switch (status) {
+      case "initial": return "bg-[#ef4444]";
+      case "adopting": return "bg-[#f97316]";
+      case "established": return "bg-[#f59e0b]";
+      case "advanced": return "bg-[#10b981]";
+      case "transformational": return "bg-[#059669]";
+      default: return "bg-gradient-to-r from-gray-400 to-gray-600";
     }
   };
 
@@ -316,8 +455,12 @@ export function ResultsDashboard() {
       {/* Header */}
       <PageHeader 
         centerItems={[
-          { label: "Home", path: "/offerings" }
+          { label: "Home", path: "/offerings" },
+          { label: "Assessments", path: "/my-assessments" },
+          { label: "Results", path: "/completed-assessments" },
+          { label: "Use Cases", path: "/usecases" },
         ]}
+        activePath={location.pathname}
         zIndex="z-50"
       />
 
@@ -497,7 +640,7 @@ export function ResultsDashboard() {
                           {/* Score breakdown on right */}
                           <div className="flex-1 min-w-0">
                             <div className="text-sm font-semibold text-gray-900 mb-1 truncate">{segment.name}</div>
-                            <div className="text-xs text-gray-600">{score} / 5.0 • {percentage}%</div>
+                            <div className="text-xs text-gray-600">{score} / 5.0</div>
                           </div>
                         </motion.button>
                       );
@@ -562,10 +705,7 @@ export function ResultsDashboard() {
                             <div className="text-6xl font-bold bg-gradient-to-br from-gray-900 to-gray-700 bg-clip-text text-transparent mb-1">
                               {score}
                             </div>
-                            <div className="text-lg text-gray-600 mb-2">/ 5.0</div>
-                            <div className="text-4xl font-bold bg-gradient-to-r from-[#46cdc6] to-[#15ae99] bg-clip-text text-transparent">
-                              {percentage}%
-                            </div>
+                            <div className="text-lg text-gray-600">/ 5.0</div>
                           </>
                         );
                       })()
@@ -588,54 +728,182 @@ export function ResultsDashboard() {
 
       {/* Radar Chart Section */}
       <section className="py-20 relative" data-radar-section>
+        <style>{`
+          [data-radar-chart] .recharts-polar-angle-axis-tick text,
+          [data-radar-chart] .recharts-text {
+            text-overflow: clip !important;
+            overflow: visible !important;
+            white-space: nowrap !important;
+            max-width: none !important;
+          }
+          [data-radar-chart] svg {
+            overflow: visible !important;
+          }
+        `}</style>
         <div className="mx-auto px-4 sm:px-6 lg:px-8 ">
-          <Card className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-2xl overflow-hidden">
+          <Card className="bg-white/80 backdrop-blur-sm border-gray-200 shadow-2xl overflow-visible">
             <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
               <CardTitle className="text-3xl text-gray-900 font-bold">Maturity Profile</CardTitle>
               <CardDescription className="text-gray-600 text-base">Your scores across all assessment pillars</CardDescription>
               </CardHeader>
-            <CardContent className="pt-8" data-radar-chart>
-              <ResponsiveContainer width="100%" height={450}>
-                  <RadarChart data={radarData}>
-                  <PolarGrid stroke="rgba(107, 114, 128, 0.2)" strokeWidth={1.5} />
-                  <PolarAngleAxis dataKey="pillar" tick={{ fill: "#374151", fontSize: 13, fontWeight: 500 }} />
-                  <PolarRadiusAxis angle={90} domain={[0, 5]} tick={{ fill: "#6b7280" }} />
-                  <Tooltip
-                    content={({ active, payload, label }) => {
-                      if (active && payload && payload.length) {
-                        return (
-                          <div className="bg-white border border-gray-200 rounded-lg shadow-xl p-4 min-w-[200px]">
-                            <p className="font-semibold text-gray-900 mb-3 text-base">{label}</p>
-                            <div className="space-y-2">
-                              {payload.map((entry, index) => (
-                                <div key={index} className="flex items-center justify-between gap-4">
-                                  <div className="flex items-center gap-2">
-                                    <div
-                                      className="w-3 h-3 rounded-full"
-                                      style={{ backgroundColor: entry.color }}
-                                    />
-                                    <span className="text-sm text-gray-600 font-medium">
-                                      {entry.name}
+            <CardContent className="pt-8 pb-16 px-4" data-radar-chart style={{ overflow: 'visible' }}>
+              <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 items-stretch">
+                {/* Left: Radar chart — half width */}
+                <div className="flex-1 min-w-0 lg:w-[65%] lg:max-w-[65%]" style={{ height: '550px', padding: '20px', overflow: 'visible' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart data={radarData} outerRadius="75%">
+                    <PolarGrid stroke="rgba(107, 114, 128, 0.2)" strokeWidth={1.5} />
+                    <PolarAngleAxis 
+                      dataKey="pillar" 
+                      tick={CustomPolarAngleAxisTick}
+                    />
+                    <PolarRadiusAxis 
+                      angle={90} 
+                      domain={[0, 5]} 
+                      ticks={[1, 2, 3, 4, 5]}
+                      tick={{ fill: "#6b7280", fontSize: 12 }} 
+                    />
+                    <Tooltip
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="bg-white border border-gray-200 rounded-lg shadow-xl p-4 min-w-[200px]">
+                              <p className="font-semibold text-gray-900 mb-3 text-base">{label}</p>
+                              <div className="space-y-2">
+                                {payload.map((entry, index) => (
+                                  <div key={index} className="flex items-center justify-between gap-4">
+                                    <div className="flex items-center gap-2">
+                                      <div
+                                        className="w-3 h-3 rounded-full"
+                                        style={{ backgroundColor: entry.color }}
+                                      />
+                                      <span className="text-sm text-gray-600 font-medium">
+                                        {entry.name}
+                                      </span>
+                                    </div>
+                                    <span className="text-sm font-bold text-gray-900">
+                                      {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value} / 5.0
                                     </span>
                                   </div>
-                                  <span className="text-sm font-bold text-gray-900">
-                                    {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value} / 5.0
-                                  </span>
-                                </div>
-                              ))}
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        );
+                          );
+                        }
+                        return null;
+                      }}
+                      cursor={{ stroke: '#14b8a6', strokeWidth: 1, strokeDasharray: '3 3' }}
+                    />
+                    <Radar 
+                      name="Your Score" 
+                      dataKey="score" 
+                      stroke="transparent"
+                      fill="transparent"
+                      strokeWidth={0}
+                      shape={
+                        <RadarPolygonWithGradients
+                          colors={radarData.map((d) => d.color)}
+                          gradientIdBase={radarGradientId.replace(/:/g, '')}
+                        />
                       }
-                      return null;
-                    }}
-                    cursor={{ stroke: '#46cdc6', strokeWidth: 1, strokeDasharray: '3 3' }}
-                  />
-                  <Radar name="Your Score" dataKey="score" stroke="#46cdc6" fill="#46cdc6" fillOpacity={0.6} strokeWidth={2} dot={{ r: 4, fill: '#46cdc6' }} />
+                      dot={({ cx, cy, payload, index }) => {
+                        const color = radarData[index]?.color ?? payload?.color ?? DEFAULT_MATURITY_COLOR;
+                        return (
+                          <circle
+                            cx={cx}
+                            cy={cy}
+                            r={6}
+                            fill={color}
+                            stroke="#ffffff"
+                            strokeWidth={2}
+                          />
+                        );
+                      }}
+                      connectNulls={true}
+                      isAnimationActive={false}
+                      activeDot={({ cx, cy, payload, index }) => {
+                        const color = radarData[index]?.color ?? payload?.color ?? DEFAULT_MATURITY_COLOR;
+                        return (
+                          <circle
+                            cx={cx}
+                            cy={cy}
+                            r={8}
+                            fill={color}
+                            stroke="#ffffff"
+                            strokeWidth={2}
+                          />
+                        );
+                      }}
+                    />
                   </RadarChart>
                 </ResponsiveContainer>
-              </CardContent>
-            </Card>
+              </div>
+
+                {/* Right: Score by pillar — half width, segmented bars (no gradient) */}
+                <Card className="flex-1 min-w-0 lg:w-[35%] lg:max-w-[35%] border border-gray-200 shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg font-bold text-gray-900">Score by pillar</CardTitle>
+                    <CardDescription className="text-sm text-gray-600">Maturity level per dimension</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-5">
+                    {radarData.map((item, index) => {
+                      const score = typeof item.score === 'number' ? item.score : parseFloat(item.score) || 0;
+                      const percent = Math.min(100, Math.max(0, (score / 5) * 100));
+                      const color = item.color ?? DEFAULT_MATURITY_COLOR;
+                      const segmentColors = [
+                        MATURITY_COLORS.Initial,
+                        MATURITY_COLORS.Adopting,
+                        MATURITY_COLORS.Established,
+                        MATURITY_COLORS.Advanced,
+                        MATURITY_COLORS.Transformational,
+                      ];
+                      return (
+                        <div key={index} className="space-y-2">
+                          <span className="block text-sm font-semibold text-gray-900 truncate">{item.pillar}</span>
+                          {/* Bar row: centered, tooltip positioned on bar at score */}
+                          <div className="flex justify-center">
+                            <div className="relative flex items-center w-[65%] max-w-[320px] min-h-[2rem]">
+                              {/* Bar: 5 distinct segments */}
+                              <div className="flex w-full h-4 rounded-full overflow-hidden flex-shrink-0">
+                                {segmentColors.map((segColor, i) => (
+                                  <div
+                                    key={i}
+                                    className="flex-1 min-w-0 shrink-0"
+                                    style={{ backgroundColor: segColor }}
+                                  />
+                                ))}
+                              </div>
+                              {/* Score tooltip: above the bar, triangle tip at top of bar (not overlapping bar) */}
+                              <div
+                                className="absolute flex flex-col items-center pointer-events-none z-10"
+                                style={{
+                                  left: `${percent}%`,
+                                  top: 'calc(50% - 0.5rem)',
+                                  transform: 'translate(-50%, -100%)',
+                                }}
+                              >
+                                <span
+                                  className="rounded-t px-2.5 py-1 text-xs font-bold text-white shadow-sm whitespace-nowrap"
+                                  style={{ backgroundColor: color }}
+                                >
+                                  {score.toFixed(1)}
+                                </span>
+                                <span
+                                  className="w-0 h-0 border-[5px] border-transparent"
+                                  style={{ borderTopColor: color }}
+                                  aria-hidden
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
@@ -693,17 +961,12 @@ export function ResultsDashboard() {
                                 initial={{ width: 0 }} 
                                 animate={animatedSections.has('pillars') ? { width: `${percentage}%` } : { width: 0 }} 
                                 transition={{ duration: 1.2, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }} 
-                                className={`h-full rounded-full ${
-                                  pillar.status === "strong" ? "bg-gradient-to-r from-green-400 to-green-600" : 
-                                  pillar.status === "moderate" ? "bg-gradient-to-r from-yellow-400 to-yellow-600" : 
-                                  "bg-gradient-to-r from-orange-400 to-orange-600"
-                                }`} 
+                                className={`h-full rounded-full ${getProgressBarGradient(pillar.status)}`} 
                               />
                         </div>
                         <div className="flex justify-between items-center">
                               <Badge className={`${getStatusBadge(pillar.status)} font-medium`}>
-                                {pillar.status === "strong" ? "Strong" : 
-                                 pillar.status === "moderate" ? "Moderate" : "Needs Improvement"}
+                                {getStatusLabel(pillar.status)}
                               </Badge>
                               <motion.span 
                                 className={`text-sm font-bold ${

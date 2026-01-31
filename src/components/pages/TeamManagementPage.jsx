@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, 
@@ -20,77 +20,67 @@ import { PageHeader } from '../shared/PageHeader';
 import { Button } from '../ui/button';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '../ui/dropdown-menu';
 import { inviteOrganizationMember } from '../../services/teamService';
+import { getOrganizationMembers } from '../../services/roleService';
 import { useAuthStore } from '../../stores/authStore';
+import { SignInLoader } from '../shared/SignInLoader';
+import { ErrorDisplay } from '../shared/ErrorDisplay';
+import { Alert } from 'antd';
 
-// Mock data for team members
-const MOCK_TEAM_MEMBERS = [
-  {
-    id: 'user1',
-    name: 'Sarah Johnson',
-    email: 'sarah.j@company.com',
-    role: 'Super Admin',
-    status: 'active'
-  },
-  {
-    id: 'user2',
-    name: 'Michael Chen',
-    email: 'michael.c@company.com',
-    role: 'Super Admin',
-    status: 'active'
-  },
-  {
-    id: 'user3',
-    name: 'Emily Rodriguez',
-    email: 'emily.r@company.com',
-    role: 'Module Assignment',
-    status: 'active'
-  },
-  {
-    id: 'user4',
-    name: 'David Kim',
-    email: 'david.k@company.com',
-    role: 'Module Assignment',
-    status: 'active'
-  },
-  {
-    id: 'user5',
-    name: 'Jessica Williams',
-    email: 'jessica.w@company.com',
-    role: 'Module Assignment',
-    status: 'pending'
-  },
-  {
-    id: 'user6',
-    name: 'Robert Taylor',
-    email: 'robert.t@company.com',
-    role: 'Billing Contact',
-    status: 'active'
-  },
-  {
-    id: 'user7',
-    name: 'Alexandra Martinez',
-    email: 'alexandra.m@company.com',
-    role: 'Module Assignment',
-    status: 'pending'
-  },
-  {
-    id: 'user8',
-    name: 'James Wilson',
-    email: 'james.w@company.com',
-    role: 'Billing Contact',
-    status: 'active'
-  }
+const adminHeaderLinks = [
+  { label: 'Home', path: '/offerings' },
+  { label: 'Settings', path: '/settings' },
 ];
 
 export function TeamManagementPage() {
   const currentUser = useAuthStore((state) => state.currentUser);
-  const [teamMembers, setTeamMembers] = useState(MOCK_TEAM_MEMBERS);
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(true);
+  const [membersError, setMembersError] = useState(null);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState(null);
   const [inviteEmail, setInviteEmail] = useState('');
   const [isSendingInvite, setIsSendingInvite] = useState(false);
   const [inviteError, setInviteError] = useState('');
+  const [inviteSuccessMessage, setInviteSuccessMessage] = useState(null); // Show antd Alert when set
+
+  // Fetch organization users (same API as Role Management page)
+  useEffect(() => {
+    const fetchMembers = async () => {
+      if (!currentUser?.organization_id) {
+        setMembersError('Organization ID not found');
+        setIsLoadingMembers(false);
+        return;
+      }
+
+      setIsLoadingMembers(true);
+      setMembersError(null);
+
+      try {
+        const result = await getOrganizationMembers(currentUser.organization_id);
+
+        if (result.success) {
+          const transformed = (result.data || []).map((member) => ({
+            id: member.user_id,
+            name: member.full_name || member.email || '',
+            email: member.email,
+            role: member.IsSuperAdmin === true ? 'Super Admin' : '',
+            status: member.status || 'active',
+          }));
+          setTeamMembers(transformed);
+        } else {
+          setMembersError(result.error || 'Failed to load team members');
+        }
+      } catch (error) {
+        console.error('Error fetching team members:', error);
+        setMembersError('An unexpected error occurred while loading team members');
+      } finally {
+        setIsLoadingMembers(false);
+      }
+    };
+
+    fetchMembers();
+  }, [currentUser?.organization_id]);
 
   const handleResendInvite = (userId) => {
     // In a real app, this would call an API
@@ -150,22 +140,25 @@ export function TeamManagementPage() {
     setInviteError('');
 
     try {
-      const result = await inviteOrganizationMember(currentUser.organization_id, inviteEmail);
+      const result = await inviteOrganizationMember(currentUser.organization_id, inviteEmail, 'regular_member', []);
       
       if (result.success) {
-        // Add new member to the list with pending status
-        const newMember = {
-          id: `user${Date.now()}`,
-          name: inviteEmail.split('@')[0],
-          email: inviteEmail,
-          role: '', // No role assigned at invitation time
-          status: 'pending'
-        };
-        setTeamMembers([...teamMembers, newMember]);
         setShowInviteModal(false);
         setInviteEmail('');
         setInviteError('');
-        alert('Invitation sent successfully!');
+        setInviteSuccessMessage('User successfully invited');
+        // Refetch list so new user appears with status from API
+        const refetch = await getOrganizationMembers(currentUser.organization_id);
+        if (refetch.success && refetch.data) {
+          const transformed = (refetch.data || []).map((member) => ({
+            id: member.user_id,
+            name: member.full_name || member.email || '',
+            email: member.email,
+            role: member.IsSuperAdmin === true ? 'Super Admin' : '',
+            status: member.status || 'active',
+          }));
+          setTeamMembers(transformed);
+        }
       } else {
         setInviteError(result.error || 'Failed to send invitation. Please try again.');
       }
@@ -178,14 +171,19 @@ export function TeamManagementPage() {
   };
 
   const filteredMembers = teamMembers.filter(member => {
-    const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         member.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = !filterStatus || member.status === filterStatus;
+    const name = (member.name || '').toLowerCase();
+    const email = (member.email || '').toLowerCase();
+    const q = searchQuery.toLowerCase();
+    const matchesSearch = name.includes(q) || email.includes(q);
+    const statusNorm = (member.status || '').toLowerCase();
+    const filterNorm = filterStatus ? filterStatus.toLowerCase() : null;
+    const matchesFilter = !filterNorm || statusNorm === filterNorm || (filterNorm === 'pending' && statusNorm === 'invited');
     return matchesSearch && matchesFilter;
   });
 
   const getStatusBadge = (status) => {
-    switch (status) {
+    const s = (status || '').toLowerCase();
+    switch (s) {
       case 'active':
         return (
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-xs font-semibold border border-green-200">
@@ -194,10 +192,11 @@ export function TeamManagementPage() {
           </div>
         );
       case 'pending':
+      case 'invited':
         return (
           <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 rounded-full text-xs font-semibold border border-amber-200">
             <Clock className="w-3.5 h-3.5" />
-            Pending
+            {s === 'invited' ? 'Invited' : 'Pending'}
           </div>
         );
       case 'inactive':
@@ -208,7 +207,11 @@ export function TeamManagementPage() {
           </div>
         );
       default:
-        return null;
+        return (
+          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 text-slate-700 rounded-full text-xs font-semibold border border-slate-200">
+            {status || '—'}
+          </div>
+        );
     }
   };
 
@@ -221,11 +224,16 @@ export function TeamManagementPage() {
     return '👤';
   };
 
-  const activeCount = teamMembers.filter(m => m.status === 'active').length;
-  const pendingCount = teamMembers.filter(m => m.status === 'pending').length;
+  const activeCount = teamMembers.filter(m => (m.status || '').toLowerCase() === 'active').length;
+  const pendingCount = teamMembers.filter(m => ['pending', 'invited'].includes((m.status || '').toLowerCase())).length;
+
+  // Show loading state (new loader with CubeLoader)
+  if (isLoadingMembers) {
+    return <SignInLoader text="Loading user administration…" centerItems={adminHeaderLinks} />;
+  }
 
   return (
-    <div className="min-h-screen bg-white relative overflow-hidden">
+    <div className="min-h-screen bg-white relative overflow-hidden flex flex-col">
       {/* Background elements similar to homepage */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#46cdc6]/10 rounded-full blur-[120px]" />
@@ -246,6 +254,12 @@ export function TeamManagementPage() {
       {/* Header */}
       <PageHeader />
 
+      {membersError ? (
+        <div className="flex-1 flex items-center justify-center px-4 relative z-10">
+          <ErrorDisplay message={membersError} />
+        </div>
+      ) : (
+      <>
       {/* SECTION 1: Hero Section */}
       <section className="pt-36 pb-32 relative z-10">
         {/* Non-uniform Gradient Overlay System - More Varied */}
@@ -380,6 +394,23 @@ export function TeamManagementPage() {
         />
         <div className="px-8 pt-20 pb-12 relative z-10">
           <div className="max-w-7xl mx-auto">
+            {/* Success message after inviting user (antd Alert) */}
+            {inviteSuccessMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6"
+              >
+                <Alert
+                  type="success"
+                  message={inviteSuccessMessage}
+                  closable
+                  onClose={() => setInviteSuccessMessage(null)}
+                  showIcon
+                />
+              </motion.div>
+            )}
+
             {/* Search & Filter Bar */}
             <motion.div 
               className="flex flex-col sm:flex-row gap-4 mb-6 items-center"
@@ -480,16 +511,16 @@ export function TeamManagementPage() {
                         {/* Member Info */}
                         <div className="col-span-5 flex items-center gap-4">
                           <div className={`
-                            w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold shadow-md
+                            w-12 h-12 min-w-12 min-h-12 flex-shrink-0 rounded-xl inline-flex items-center justify-center text-white font-bold text-sm shadow-md
                             ${isSuperAdmin
                               ? 'bg-gradient-to-br from-amber-400 to-amber-600'
                               : 'bg-gradient-to-br from-[#46CDCF] to-[#15ae99]'
                             }
                           `}>
-                            {member.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                            {(member.name || member.email || '?').trim().split(/\s+/).map(n => n[0]).join('').toUpperCase().slice(0, 3) || '?'}
                           </div>
                           <div>
-                            <h3 className="font-semibold text-slate-900">{member.name}</h3>
+                            <h3 className="font-semibold text-slate-900">{member.name || member.email || '—'}</h3>
                             <p className="text-sm text-slate-600">{member.email}</p>
                           </div>
                         </div>
@@ -512,78 +543,52 @@ export function TeamManagementPage() {
                           {getStatusBadge(member.status)}
                         </div>
 
-                        {/* Actions */}
+                        {/* Actions: active → Remove, Block only; invited → Resend only */}
                         <div className="col-span-5 flex items-center gap-2">
-                          {member.status === 'pending' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleResendInvite(member.id)}
-                              className="rounded-xl border-slate-200 text-slate-700 bg-white hover:border-[#46CDCF] hover:bg-[#46CDCF]/5 hover:text-[#46CDCF]"
-                            >
-                              <Mail className="w-4 h-4 mr-2" />
-                              Resend
-                            </Button>
-                          )}
-                          {!isSuperAdmin && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleRemoveMember(member.id)}
-                              className="rounded-xl border-slate-200 text-slate-700 bg-white hover:border-red-500 hover:bg-red-50 hover:text-red-600"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          )}
-                          <div 
-                            className="relative"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <button className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
-                                  <MoreVertical className="w-5 h-5 text-slate-600" />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-48">
-                                <DropdownMenuItem
-                                  onClick={() => handleInviteUser(member.id)}
-                                  className="cursor-pointer px-4 py-2.5 text-gray-700 hover:bg-gray-50"
+                          {(() => {
+                            const statusNorm = (member.status || '').toLowerCase();
+                            const isInvited = statusNorm === 'invited' || statusNorm === 'pending';
+                            const isActive = statusNorm === 'active';
+
+                            if (isInvited) {
+                              return (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleResendInvite(member.id)}
+                                  className="rounded-xl border-slate-200 text-slate-700 bg-white hover:border-[#46CDCF] hover:bg-[#46CDCF]/5 hover:text-[#46CDCF]"
                                 >
-                                  <UserPlus className="w-4 h-4 mr-2 text-gray-600" />
-                                  Invite
-                                </DropdownMenuItem>
-                                {member.status === 'pending' && (
-                                  <DropdownMenuItem
-                                    onClick={() => handleResendInvite(member.id)}
-                                    className="cursor-pointer px-4 py-2.5 text-gray-700 hover:bg-gray-50"
+                                  <Mail className="w-4 h-4 mr-2" />
+                                  Resend
+                                </Button>
+                              );
+                            }
+                            if (isActive && !isSuperAdmin) {
+                              return (
+                                <>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleDeactivateUser(member.id)}
+                                    className="rounded-xl border-slate-200 text-slate-700 bg-white hover:border-amber-500 hover:bg-amber-50 hover:text-amber-600"
                                   >
-                                    <Mail className="w-4 h-4 mr-2 text-gray-600" />
-                                    Resend Invite
-                                  </DropdownMenuItem>
-                                )}
-                                {!isSuperAdmin && (
-                                  <>
-                                    <DropdownMenuItem
-                                      onClick={() => handleDeactivateUser(member.id)}
-                                      className="cursor-pointer px-4 py-2.5 text-gray-700 hover:bg-gray-50"
-                                    >
-                                      <Power className="w-4 h-4 mr-2 text-gray-600" />
-                                      Deactivate
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator className="my-1" />
-                                    <DropdownMenuItem
-                                      onClick={() => handleRemoveMember(member.id)}
-                                      className="cursor-pointer px-4 py-2.5 text-red-600 hover:bg-red-50"
-                                    >
-                                      <Trash2 className="w-4 h-4 mr-2 text-red-600" />
-                                      Delete
-                                    </DropdownMenuItem>
-                                  </>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
+                                    <Power className="w-4 h-4 mr-2" />
+                                    Block
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleRemoveMember(member.id)}
+                                    className="rounded-xl border-slate-200 text-slate-700 bg-white hover:border-red-500 hover:bg-red-50 hover:text-red-600"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                    Remove
+                                  </Button>
+                                </>
+                              );
+                            }
+                            return null;
+                          })()}
                         </div>
                       </motion.div>
                     );
@@ -600,6 +605,8 @@ export function TeamManagementPage() {
           </div>
         </div>
       </main>
+      </>
+      )}
 
       {/* Invite Modal */}
       <AnimatePresence>

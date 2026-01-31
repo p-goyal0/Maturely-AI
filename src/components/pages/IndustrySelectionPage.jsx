@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate, useLocation } from "react-router-dom";
 import { LogOut } from 'lucide-react';
@@ -69,6 +69,10 @@ export function IndustrySelectionPage() {
   const [isSubIndustryOpen, setIsSubIndustryOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [industrySearch, setIndustrySearch] = useState('');
+  const [subIndustrySearch, setSubIndustrySearch] = useState('');
+  const industrySearchRef = useRef(null);
+  const subIndustrySearchRef = useRef(null);
 
   // Redirect to offerings if onboarding is already complete
   useEffect(() => {
@@ -80,11 +84,13 @@ export function IndustrySelectionPage() {
   const handleIndustrySelect = (industry) => {
     setSelectedIndustry(industry);
     setIsOpen(false);
+    setIndustrySearch('');
   };
 
   const handleSubIndustrySelect = (subIndustry) => {
     setSelectedSubIndustry(subIndustry);
     setIsSubIndustryOpen(false);
+    setSubIndustrySearch('');
   };
 
   const handleContinue = () => {
@@ -161,6 +167,20 @@ export function IndustrySelectionPage() {
     }
   }, [isOpen, isSubIndustryOpen]);
 
+  // Focus search input when dropdown opens
+  useEffect(() => {
+    if (isOpen) {
+      // Small delay so the input exists in DOM
+      setTimeout(() => industrySearchRef.current?.focus?.(), 0);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isSubIndustryOpen) {
+      setTimeout(() => subIndustrySearchRef.current?.focus?.(), 0);
+    }
+  }, [isSubIndustryOpen]);
+
   // Get available sub-industries for selected industry
   const getAvailableSubIndustries = useIndustryStore((state) => state.getAvailableSubIndustries);
   const availableSubIndustries = getAvailableSubIndustries();
@@ -226,18 +246,34 @@ export function IndustrySelectionPage() {
             </button>
             {isOpen && (
               <div className="absolute w-full mt-1 bg-gradient-to-b from-white via-white to-transparent rounded shadow-sm border border-gray-100 overflow-hidden z-[60]">
-                <div className="max-h-48 overflow-y-auto scrollbar-hide">
+                {/* Search box */}
+                <div className="p-2 border-b border-gray-100 bg-white">
+                  <input
+                    ref={industrySearchRef}
+                    value={industrySearch}
+                    onChange={(e) => setIndustrySearch(e.target.value)}
+                    placeholder="Type to search…"
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent"
+                  />
+                </div>
+
+                <div className="max-h-48 overflow-y-auto scrollbar-hide bg-white">
                   {[...industries]
                     .filter(industry => {
                       const id = generateIndustryId(industry.name);
                       return id !== 'other';
                     })
+                    .filter(industry => industry.name.toLowerCase().includes(industrySearch.trim().toLowerCase()))
                     .sort((a, b) => a.name.localeCompare(b.name))
-                    .concat(industries.find(industry => {
-                      const id = generateIndustryId(industry.name);
-                      return id === 'other';
-                    }))
-                    .filter(Boolean) // Remove undefined if "Other" not found
+                    .concat(
+                      industries
+                        .filter(industry => {
+                          const id = generateIndustryId(industry.name);
+                          return id === 'other';
+                        })
+                        .filter(industry => industry.name.toLowerCase().includes(industrySearch.trim().toLowerCase()))
+                    )
+                    .filter(Boolean)
                     .map((industry) => (
                     <button
                       key={industry.id}
@@ -253,6 +289,12 @@ export function IndustrySelectionPage() {
                       {industry.name}
                     </button>
                   ))}
+                  {industries.length > 0 &&
+                    [...industries]
+                      .filter(i => i.name.toLowerCase().includes(industrySearch.trim().toLowerCase()))
+                      .length === 0 && (
+                      <div className="px-4 py-3 text-sm text-gray-500">No matches found</div>
+                    )}
                 </div>
               </div>
             )}
@@ -298,8 +340,21 @@ export function IndustrySelectionPage() {
               </button>
               {isSubIndustryOpen && (
                 <div className="absolute w-full mt-1 bg-gradient-to-b from-white via-white to-transparent rounded shadow-sm border border-gray-100 overflow-hidden z-[60]">
-                  <div className="max-h-48 overflow-y-auto scrollbar-hide">
-                    {availableSubIndustries.map((subIndustry) => (
+                  {/* Search box */}
+                  <div className="p-2 border-b border-gray-100 bg-white">
+                    <input
+                      ref={subIndustrySearchRef}
+                      value={subIndustrySearch}
+                      onChange={(e) => setSubIndustrySearch(e.target.value)}
+                      placeholder="Type to search…"
+                      className="w-full px-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-[#46cdc6] focus:border-transparent"
+                    />
+                  </div>
+
+                  <div className="max-h-48 overflow-y-auto scrollbar-hide bg-white">
+                    {availableSubIndustries
+                      .filter((s) => s.toLowerCase().includes(subIndustrySearch.trim().toLowerCase()))
+                      .map((subIndustry) => (
                       <button
                         key={subIndustry}
                         className={`
@@ -314,6 +369,12 @@ export function IndustrySelectionPage() {
                         {subIndustry}
                       </button>
                     ))}
+                    {availableSubIndustries.length > 0 &&
+                      availableSubIndustries.filter((s) =>
+                        s.toLowerCase().includes(subIndustrySearch.trim().toLowerCase())
+                      ).length === 0 && (
+                      <div className="px-4 py-3 text-sm text-gray-500">No matches found</div>
+                    )}
                   </div>
                 </div>
               )}

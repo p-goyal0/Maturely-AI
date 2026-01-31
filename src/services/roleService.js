@@ -199,9 +199,11 @@ export const getOrganizationMembers = async (organizationId) => {
 /**
  * Get organization pillars
  */
-export const getOrganizationPillars = async () => {
+export const getOrganizationPillars = async (assessmentId) => {
   try {
-    const response = await api.get('/organization/pillars');
+    const response = await api.get('/organization/pillars', {
+      params: assessmentId ? { assessment_id: assessmentId } : undefined,
+    });
     return {
       success: true,
       data: response.data,
@@ -218,14 +220,40 @@ export const getOrganizationPillars = async () => {
 
 /**
  * Update member pillars
- * @param {string} organizationId - Organization ID
- * @param {string} userId - User ID
+ * PATCH /api/v1/organization/users/pillars
+ * @param {string} assignedUserId - User ID to assign pillars to
  * @param {string[]} pillarIds - Array of pillar IDs
  */
-export const updateMemberPillars = async (organizationId, userId, pillarIds) => {
+export const updateMemberPillars = async (assignedUserId, pillarIds) => {
   try {
-    const response = await api.patch(`/organization/${organizationId}/users/${userId}/pillars`, {
+    const response = await api.patch(`/organization/users/pillars`, {
       pillar_ids: pillarIds,
+      assigned_user_id: assignedUserId,
+    });
+    return {
+      success: true,
+      data: response.data,
+      message: response.message,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: getErrorMessage(error),
+    };
+  }
+};
+
+/**
+ * Update user roles
+ * PATCH /api/v1/organization/users/role
+ * @param {string} userId - User UUID
+ * @param {string[]} roles - API roles e.g. ["regular_member"], ["regular_member", "billing_admin"]
+ */
+export const updateUserRole = async (userId, roles) => {
+  try {
+    const response = await api.patch('/organization/users/role', {
+      user_id: userId,
+      roles: Array.isArray(roles) ? roles : [roles],
     });
     return {
       success: true,

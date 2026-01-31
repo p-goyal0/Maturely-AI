@@ -109,6 +109,7 @@ export function PageHeader({
 
   // Check if current path matches dashboard
   const isDashboardActive = location.pathname === '/offerings' || location.pathname === '/dashboard';
+  const isAdminUser = currentUser?.is_super_admin === true;
 
   return (
     <motion.div
@@ -227,34 +228,38 @@ export function PageHeader({
                       <LayoutDashboard className={`w-4 h-4 mr-2 ${isDashboardActive ? 'text-cyan-600' : 'text-gray-600'}`} />
                       Dashboard
                     </DropdownMenuItem>
-                    
-                    <DropdownMenuItem
-                      onClick={() => navigate("/role-management")}
-                      className="cursor-pointer px-4 py-2.5 text-gray-700 hover:bg-gray-50"
-                    >
-                      <UserCog className="w-4 h-4 mr-2 text-gray-600" />
-                      Role Management
-                    </DropdownMenuItem>
-                    
-                    <DropdownMenuItem
-                      onClick={() => navigate("/team-management")}
-                      className="cursor-pointer px-4 py-2.5 text-gray-700 hover:bg-gray-50"
-                    >
-                      <Users className="w-4 h-4 mr-2 text-gray-600" />
-                      User Administration
-                    </DropdownMenuItem>
-                    
-                    <DropdownMenuItem
-                      onClick={() => navigate("/settings")}
-                      className={`cursor-pointer px-4 py-2.5 ${
-                        location.pathname === '/settings'
-                          ? 'bg-cyan-50 text-cyan-600 font-medium'
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Settings className={`w-4 h-4 mr-2 ${location.pathname === '/settings' ? 'text-cyan-600' : 'text-gray-600'}`} />
-                      Settings
-                    </DropdownMenuItem>
+
+                    {isAdminUser && (
+                      <>
+                        <DropdownMenuItem
+                          onClick={() => navigate("/role-management")}
+                          className="cursor-pointer px-4 py-2.5 text-gray-700 hover:bg-gray-50"
+                        >
+                          <UserCog className="w-4 h-4 mr-2 text-gray-600" />
+                          Role Management
+                        </DropdownMenuItem>
+                        
+                        <DropdownMenuItem
+                          onClick={() => navigate("/team-management")}
+                          className="cursor-pointer px-4 py-2.5 text-gray-700 hover:bg-gray-50"
+                        >
+                          <Users className="w-4 h-4 mr-2 text-gray-600" />
+                          User Administration
+                        </DropdownMenuItem>
+                        
+                        <DropdownMenuItem
+                          onClick={() => navigate("/settings")}
+                          className={`cursor-pointer px-4 py-2.5 ${
+                            location.pathname === '/settings'
+                              ? 'bg-cyan-50 text-cyan-600 font-medium'
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <Settings className={`w-4 h-4 mr-2 ${location.pathname === '/settings' ? 'text-cyan-600' : 'text-gray-600'}`} />
+                          Settings
+                        </DropdownMenuItem>
+                      </>
+                    )}
                   </div>
 
                   {/* Sign Out Separator */}

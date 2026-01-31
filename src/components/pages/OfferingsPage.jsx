@@ -1,50 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
-import { FileText, Globe, Users, BarChart3, ClipboardList, Lightbulb, ArrowUpRight, AlertCircle } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { FileText, Globe, Users, BarChart3, Lightbulb, ArrowUpRight, ClipboardList } from 'lucide-react';
 import Lottie from 'lottie-react';
 import { PageHeader } from '../shared/PageHeader';
-import { startAssessment, getAssessmentResults } from '../../services/assessmentService';
-import { useAssessmentStore } from '../../stores/assessmentStore';
-import { useAuthStore } from '../../stores/authStore';
 
-// Premium cards data for section 2
-const premiumCards = [
-  {
-    icon: ClipboardList,
-    title: 'AI readiness assessments',
-    description: 'Take our comprehensive AI readiness assessment to understand your organization\'s capabilities across 7 critical pillars.',
-    bgColor: '#ffffff',
-    borderColor: '#e2e8f0',
-    accentColor: '#46cdc6',
-  },
-  {
-    icon: Lightbulb,
-    title: 'Business Use Cases',
-    description: 'Explore industry-specific AI implementations and proven solutions for immediate value in your organization.',
-    bgColor: '#ffffff',
-    borderColor: '#e2e8f0',
-    accentColor: '#a855f7',
-  }
+const assessmentCard = {
+  icon: ClipboardList,
+  title: 'AI Readiness Assessment',
+  description: 'View your AI maturity assessments and get personalized insights.',
+  path: '/my-assessments',
+  bgColor: '#ffffff',
+  borderColor: '#e2e8f0',
+  accentColor: '#46cdc6',
+};
+
+const useCasesCard = {
+  icon: Lightbulb,
+  title: 'Business Use Cases',
+  description: 'Explore industry-specific AI implementations and proven solutions for immediate value in your organization.',
+  path: '/usecases',
+  bgColor: '#ffffff',
+  borderColor: '#e2e8f0',
+  accentColor: '#a855f7',
+};
+
+const offeringsHeaderLinks = [
+  { label: 'Home', path: '/offerings' },
+  { label: 'Assessments', path: '/my-assessments' },
+  { label: 'Results', path: '/completed-assessments' },
+  { label: 'Use Cases', path: '/usecases' },
 ];
 
 export function OfferingsPage() {
   const navigate = useNavigate();
-  const currentUser = useAuthStore((state) => state.currentUser);
-  const updateOngoingAssessmentId = useAuthStore((state) => state.updateOngoingAssessmentId);
-  const { setAssessmentData, setAssessmentResults, setLoading, setError } = useAssessmentStore();
-  const [isStartingAssessment, setIsStartingAssessment] = useState(false);
-  const [isViewingResults, setIsViewingResults] = useState(false);
-  const [assessmentError, setAssessmentError] = useState(null);
-  
-  // Get assessment IDs from arrays (handle both old single value and new array format)
-  const ongoingAssessmentIds = currentUser?.ongoing_assessment_ids || (currentUser?.ongoing_assessment_id ? [currentUser.ongoing_assessment_id] : []);
-  const completedAssessmentIds = currentUser?.completed_assessment_ids || [];
-  const firstOngoingAssessmentId = ongoingAssessmentIds.length > 0 ? ongoingAssessmentIds[0] : null;
-  const firstCompletedAssessmentId = completedAssessmentIds.length > 0 ? completedAssessmentIds[0] : null;
-  
-  // Determine if we should show "View Results" button
-  const hasCompletedAssessment = !!firstCompletedAssessmentId;
+  const location = useLocation();
   const [lottieAnimations, setLottieAnimations] = useState({
     document: null,
     globe: null,
@@ -104,7 +94,7 @@ export function OfferingsPage() {
       />
 
       {/* Header */}
-      <PageHeader zIndex="z-50" />
+      <PageHeader zIndex="z-50" centerItems={offeringsHeaderLinks} activePath={location.pathname} />
 
       {/* SECTION 1: Hero Section */}
       <section className="pt-36 pb-20 relative z-10">
@@ -300,199 +290,82 @@ export function OfferingsPage() {
         </div>
       </section>
 
-      {/* SECTION 2: Premium Cards - Assessment and Use Cases */}
+      {/* SECTION 2: Use Cases */}
       <section className="py-20 relative bg-white">
         <div className="container mx-auto px-6 sm:px-8 lg:px-20 relative z-10">
-          {/* Cards Grid */}
-          <div className="flex flex-col md:flex-row gap-6 max-w-4xl mx-auto">
-            {premiumCards.map((card, index) => {
-              const Icon = card.icon;
-              
-              return (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  className="flex-1"
-                >
-                  <div 
-                    className="relative h-[400px] p-8 rounded-lg border-2 flex flex-col transition-all duration-300 hover:shadow-xl hover:border-opacity-80 group cursor-pointer"
-                    style={{ 
-                      backgroundColor: card.bgColor,
-                      borderColor: card.borderColor,
-                    }}
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      if (index === 0) {
-                        // If completed assessment exists, show results
-                        if (hasCompletedAssessment) {
-                          setIsViewingResults(true);
-                          setAssessmentError(null);
-                          setLoading(true);
-                          
-                          try {
-                            const result = await getAssessmentResults(firstCompletedAssessmentId);
-                            
-                            if (result.success) {
-                              // Store results in Zustand store
-                              setAssessmentResults(result.data);
-                              // Navigate to results page
-                              navigate("/results");
-                            } else {
-                              setAssessmentError(result.error || 'Failed to fetch assessment results. Please try again.');
-                              setError(result.error);
-                            }
-                          } catch (error) {
-                            console.error('Error fetching assessment results:', error);
-                            const errorMsg = 'An unexpected error occurred. Please try again.';
-                            setAssessmentError(errorMsg);
-                            setError(errorMsg);
-                          } finally {
-                            setIsViewingResults(false);
-                            setLoading(false);
-                          }
-                        } else {
-                          // Start or continue assessment API call
-                          const isContinuing = !!firstOngoingAssessmentId;
-                          
-                          setIsStartingAssessment(true);
-                          setAssessmentError(null);
-                          setLoading(true);
-                          
-                          try {
-                            // Pass assessment_id if continuing existing assessment
-                            const result = await startAssessment(
-                              currentUser?.maturity_model_id,
-                              firstOngoingAssessmentId
-                            );
-                            
-                            if (result.success) {
-                              // Store assessment data in Zustand store (pillar questions fetched on-demand when navigating)
-                              setAssessmentData(result.data);
-                              
-                              // If starting a new assessment (not continuing), update ongoing_assessment_ids
-                              if (!isContinuing && result.data?.assessment_id) {
-                                updateOngoingAssessmentId(result.data.assessment_id);
-                              }
-                              
-                              navigate("/assessments");
-                            } else {
-                              setAssessmentError(result.error || `Failed to ${isContinuing ? 'continue' : 'start'} assessment. Please try again.`);
-                              setError(result.error);
-                            }
-                          } catch (error) {
-                            console.error(`Error ${isContinuing ? 'continuing' : 'starting'} assessment:`, error);
-                            const errorMsg = 'An unexpected error occurred. Please try again.';
-                            setAssessmentError(errorMsg);
-                            setError(errorMsg);
-                          } finally {
-                            setIsStartingAssessment(false);
-                            setLoading(false);
-                          }
-                        }
-                      }
-                      if (index === 1) navigate("/usecases");
-                    }}
-                  >
-                    {/* Subtle gradient overlay on hover */}
-                    <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none"
-                      style={{ background: `linear-gradient(135deg, ${card.accentColor} 0%, transparent 100%)` }}
-                    />
-                    
-                    {/* Icon with premium styling */}
-                    <div className="h-20 mb-6 flex justify-start items-start relative z-10">
-                      <div className="relative">
-                        <div 
-                          className="absolute inset-0 rounded-xl blur-lg opacity-0 group-hover:opacity-20 transition-opacity duration-300"
-                          style={{ backgroundColor: card.accentColor }}
-                        />
-                        <div 
-                          className="relative w-16 h-16 rounded-xl flex items-center justify-center border-2 transition-all duration-300 group-hover:scale-110"
-                          style={{ 
-                            backgroundColor: 'white',
-                            borderColor: card.borderColor,
-                          }}
-                        >
-                          <Icon 
-                            className="w-8 h-8 transition-colors duration-300" 
-                            strokeWidth={1.5}
-                            style={{ color: '#1e293b' }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-              
-                    {/* Text Content */}
-                    <div className="text-left flex-1 flex flex-col relative z-10">
-                      <h3 
-                        className="text-2xl mb-4 min-h-[72px] flex items-start transition-colors duration-300"
-                        style={{ color: '#1e293b' }}
-                      >
-                        {index === 0 && hasCompletedAssessment
-                          ? 'View Results'
-                          : index === 0 && firstOngoingAssessmentId
-                          ? 'Continue Assessment' 
-                          : card.title}
-                      </h3>
-                      <p 
-                        className="leading-relaxed text-base"
-                        style={{ color: '#64748b' }}
-                      >
-                        {card.description}
-                      </p>
-                    </div>
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-2xl md:text-3xl font-black text-slate-900">Explore</h2>
+                <p className="text-slate-600 mt-2">
+                  Manage your AI readiness assessment or discover industry use cases.
+                </p>
+              </div>
+            </div>
 
-                    {/* Premium Circular Button at Bottom */}
-                    <div className="flex justify-start mt-auto pt-6 relative z-10">
-                      {index === 0 && (isStartingAssessment || isViewingResults) ? (
-                        <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 border-2 border-[#46cdc6]/30 border-t-[#46cdc6] rounded-full animate-spin" />
-                          <span className="text-sm text-gray-600">
-                            {isViewingResults 
-                              ? 'Loading Results...' 
-                              : firstOngoingAssessmentId 
-                              ? 'Continuing...' 
-                              : 'Starting...'}
-                          </span>
+            {/* AI Readiness Assessment + Use Cases cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+              {[assessmentCard, useCasesCard].map((card, index) => {
+                const Icon = card.icon;
+                return (
+                  <motion.div
+                    key={card.path}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1 }}
+                    className="h-full min-h-[200px]"
+                  >
+                    <div
+                      className="relative h-full min-h-[200px] p-8 rounded-lg border-2 transition-all duration-300 hover:shadow-xl hover:border-opacity-80 group cursor-pointer flex flex-col"
+                      style={{
+                        backgroundColor: card.bgColor,
+                        borderColor: card.borderColor,
+                      }}
+                      onClick={() => navigate(card.path)}
+                    >
+                      <div
+                        className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none"
+                        style={{ background: `linear-gradient(135deg, ${card.accentColor} 0%, transparent 100%)` }}
+                      />
+
+                      <div className="flex items-start gap-6 relative z-10">
+                        <div className="relative">
+                          <div
+                            className="absolute inset-0 rounded-xl blur-lg opacity-0 group-hover:opacity-20 transition-opacity duration-300"
+                            style={{ backgroundColor: card.accentColor }}
+                          />
+                          <div
+                            className="relative w-16 h-16 rounded-xl flex items-center justify-center border-2 transition-all duration-300 group-hover:scale-110 bg-white"
+                            style={{ borderColor: card.borderColor }}
+                          >
+                            <Icon className="w-8 h-8" strokeWidth={1.5} style={{ color: '#1e293b' }} />
+                          </div>
                         </div>
-                      ) : (
-                        <button 
-                          className="relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 border-2 bg-white group-hover:scale-110"
+
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-2xl font-semibold text-slate-900 mb-2">{card.title}</h3>
+                          <p className="text-slate-600">{card.description}</p>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 border-2 bg-white group-hover:scale-110 flex-shrink-0"
                           style={{ borderColor: card.borderColor }}
+                          onClick={(e) => { e.stopPropagation(); navigate(card.path); }}
                         >
-                          <div 
+                          <div
                             className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                             style={{ backgroundColor: card.accentColor }}
                           />
-                          <ArrowUpRight 
-                            className="w-5 h-5 relative z-10 transition-colors duration-300" 
-                            style={{ color: '#1e293b' }}
-                          />
+                          <ArrowUpRight className="w-5 h-5 relative z-10" style={{ color: '#1e293b' }} />
                         </button>
-                      )}
-                    </div>
-                    
-                    {/* Error message */}
-                    {index === 0 && assessmentError && (
-                      <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                        <div className="flex items-center gap-2 text-red-600 text-sm">
-                          <AlertCircle className="w-4 h-4" />
-                          <span>{assessmentError}</span>
-                        </div>
                       </div>
-                    )}
-
-                    {/* Decorative corner accent */}
-                    <div 
-                      className="absolute top-0 right-0 w-24 h-24 rounded-bl-full opacity-0 group-hover:opacity-10 transition-opacity duration-500"
-                      style={{ backgroundColor: card.accentColor }}
-                    />
-                  </div>
-                </motion.div>
-              );
-            })}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>

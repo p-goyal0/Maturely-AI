@@ -5,6 +5,8 @@ import { IndustrySelectionPage } from "./components/pages/IndustrySelectionPage"
 import { CompanyTypePage } from "./components/pages/CompanyTypePage";
 import { CompanyInfoPage } from "./components/pages/CompanyInfoPage";
 import { AssessmentsDashboard } from "./components/pages/AssessmentsDashboard";
+import { AssessmentListPage } from "./components/pages/AssessmentListPage";
+import { CompletedAssessmentsPage } from "./components/pages/CompletedAssessmentsPage";
 import { OfferingsPage } from "./components/pages/OfferingsPage";
 import { ResultsDashboard } from "./components/pages/ResultsDashboard";
 import { RoadmapGenerator } from "./components/pages/RoadmapGenerator";
@@ -15,8 +17,10 @@ import { SettingsPage } from "./components/pages/SettingsPage";
 import { LoginPage } from "./components/pages/LoginPage";
 import { SignInPage } from "./components/pages/SignInPage";
 import { SignUpPage } from "./components/pages/SignUpPage";
+import { CreatePasswordPage } from "./components/pages/CreatePasswordPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PublicRoute } from "./components/PublicRoute";
+import { AdminRoute } from "./components/AdminRoute";
 
 export default function App() {
   return (
@@ -48,6 +52,8 @@ export default function App() {
               </PublicRoute>
             }
           />
+          {/* Standalone Create Password – no auth required */}
+          <Route path="/create-password" element={<CreatePasswordPage />} />
 
           {/* Public Landing Page */}
           <Route
@@ -93,6 +99,22 @@ export default function App() {
             }
           />
           <Route
+            path="/my-assessments"
+            element={
+              <ProtectedRoute>
+                <AssessmentListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/completed-assessments"
+            element={
+              <ProtectedRoute>
+                <CompletedAssessmentsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/assessments"
             element={
               <ProtectedRoute>
@@ -127,25 +149,25 @@ export default function App() {
           <Route
             path="/role-management"
             element={
-              <ProtectedRoute>
+              <AdminRoute>
                 <RoleManagementPage />
-              </ProtectedRoute>
+              </AdminRoute>
             }
           />
           <Route
             path="/team-management"
             element={
-              <ProtectedRoute>
+              <AdminRoute>
                 <TeamManagementPage />
-              </ProtectedRoute>
+              </AdminRoute>
             }
           />
           <Route
             path="/settings"
             element={
-              <ProtectedRoute>
+              <AdminRoute>
                 <SettingsPage />
-              </ProtectedRoute>
+              </AdminRoute>
             }
           />
 
