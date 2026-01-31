@@ -782,19 +782,21 @@ export function SettingsPage() {
                     </div>
                   )}
 
-                  {/* Save Button */}
-                  <div className="mt-8 pt-6 border-t border-slate-200 flex justify-end gap-4">
-                    <Button variant="outline" className="rounded-xl border-2 border-slate-300 px-8 text-slate-700 hover:bg-slate-50 hover:border-slate-400">
-                      Cancel
-                    </Button>
-                    <Button 
-                      onClick={handleSave}
-                      className="bg-[#46CDCF] hover:bg-[#15ae99] text-white rounded-xl px-8 shadow-lg shadow-[#46CDCF]/20"
-                    >
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Changes
-                    </Button>
-                  </div>
+                  {/* Save Button - only on General tab */}
+                  {activeTab === 'general' && (
+                    <div className="mt-8 pt-6 border-t border-slate-200 flex justify-end gap-4">
+                      <Button variant="outline" className="rounded-xl border-2 border-slate-300 px-8 text-slate-700 hover:bg-slate-50 hover:border-slate-400">
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={handleSave}
+                        className="bg-[#46CDCF] hover:bg-[#15ae99] text-white rounded-xl px-8 shadow-lg shadow-[#46CDCF]/20"
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        Save Changes
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             </div>

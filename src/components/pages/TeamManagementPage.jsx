@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, 
@@ -28,7 +29,9 @@ import { Alert } from 'antd';
 
 const adminHeaderLinks = [
   { label: 'Home', path: '/offerings' },
-  { label: 'Settings', path: '/settings' },
+  { label: 'Assessments', path: '/my-assessments' },
+  { label: 'Results', path: '/completed-assessments' },
+  { label: 'Use Cases', path: '/usecases' },
 ];
 
 export function TeamManagementPage() {
@@ -259,7 +262,7 @@ export function TeamManagementPage() {
       />
 
       {/* Header */}
-      <PageHeader />
+      <PageHeader centerItems={adminHeaderLinks} activePath={location.pathname} />
 
       {membersError ? (
         <div className="flex-1 flex items-center justify-center px-4 relative z-10">

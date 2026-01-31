@@ -1,5 +1,5 @@
-  import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { ChevronRight, Sparkles, PenTool, Plus, Save, Building2, Zap, TrendingUp, Shield, CheckCircle2, X, Lock, Globe } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
@@ -45,8 +45,16 @@ const emptyUseCase = {
   visibility: 'private', // 'private' or 'public'
 };
 
+const useCasesHeaderLinks = [
+  { label: 'Home', path: '/offerings' },
+  { label: 'Assessments', path: '/my-assessments' },
+  { label: 'Results', path: '/completed-assessments' },
+  { label: 'Use Cases', path: '/usecases' },
+];
+
 export function UseCaseLibrary() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeMode, setActiveMode] = useState(null);
   const [selectedUseCase, setSelectedUseCase] = useState(null);
   const [customUseCases, setCustomUseCases] = useState([]);
@@ -96,10 +104,8 @@ export function UseCaseLibrary() {
 
       {/* Header */}
       <PageHeader 
-        centerItems={[
-          { label: "Home", path: "/offerings" }
-        ]}
-        activePath="/usecases"
+        centerItems={useCasesHeaderLinks}
+        activePath={location.pathname}
         zIndex="z-50"
       />
 

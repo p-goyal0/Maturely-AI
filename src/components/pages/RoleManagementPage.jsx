@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Shield, Users, Lock, Sparkles, ChevronRight, ChevronDown, ChevronLeft, Crown, UserPlus, Plus, X, Check, AlertCircle, Database, Key, DollarSign, UserCog, MoreVertical } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
@@ -14,7 +15,9 @@ import { PillarBadgeWithTooltip } from '../shared/PillarBadgeWithTooltip';
 
 const adminHeaderLinks = [
   { label: 'Home', path: '/offerings' },
-  { label: 'Settings', path: '/settings' },
+  { label: 'Assessments', path: '/my-assessments' },
+  { label: 'Results', path: '/completed-assessments' },
+  { label: 'Use Cases', path: '/usecases' },
 ];
 
 // Hardcoded JSON data (will be replaced with API data later)
@@ -179,6 +182,7 @@ const AVAILABLE_PILLARS = [
   ];
 
 export function RoleManagementPage() {
+  const location = useLocation();
   const currentUser = useAuthStore((state) => state.currentUser);
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState(ROLES_DATA.roles);
@@ -533,7 +537,7 @@ export function RoleManagementPage() {
   if (membersError) {
     return (
       <div className="min-h-screen bg-white relative overflow-hidden flex flex-col">
-        <PageHeader />
+        <PageHeader centerItems={adminHeaderLinks} activePath={location.pathname} />
         <div className="flex-1 flex items-center justify-center px-4">
           <ErrorDisplay message={membersError} />
         </div>
@@ -561,7 +565,7 @@ export function RoleManagementPage() {
       />
 
       {/* Header */}
-      <PageHeader />
+      <PageHeader centerItems={adminHeaderLinks} activePath={location.pathname} />
 
       {/* SECTION 1: Hero Section */}
       <div className="px-8 pt-12 pb-8 relative z-10">
