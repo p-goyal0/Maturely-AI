@@ -222,6 +222,63 @@ export function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden">
+      {/* Pricing tooltip styles (same as HomePage - Uiverse-style zoom + bold on hover) */}
+      <style>{`
+        .pricing-tooltip-container {
+          --tooltip-bg: #185D54;
+          position: relative;
+          cursor: pointer;
+          display: inline-flex;
+          padding: 0 0.2em;
+          border: 1px solid transparent;
+          transition: transform 0.2s ease;
+        }
+        .pricing-tooltip-container:hover {
+          transform: scale(1.05);
+        }
+        .pricing-tooltip-container:hover .pricing-tooltip-text {
+          color: #134a43;
+          font-weight: 700;
+        }
+        .pricing-tooltip-popup {
+          position: absolute;
+          bottom: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          margin-bottom: 0.35rem;
+          padding: 0.35em 0.65em;
+          opacity: 0;
+          pointer-events: none;
+          transition: all 0.3s ease;
+          color: #fff;
+          background: var(--tooltip-bg);
+          border-radius: 0.25em;
+          font-size: 0.875rem;
+          line-height: 1.4;
+          max-width: 16rem;
+          text-align: center;
+          box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+          z-index: 50;
+        }
+        .pricing-tooltip-popup::before {
+          position: absolute;
+          content: "";
+          height: 0.5em;
+          width: 0.5em;
+          top: 100%;
+          left: 50%;
+          transform: translate(-50%, -50%) rotate(45deg);
+          background: var(--tooltip-bg);
+        }
+        .pricing-tooltip-container:hover .pricing-tooltip-popup {
+          opacity: 1;
+          visibility: visible;
+          pointer-events: auto;
+        }
+        .pricing-tooltip-text {
+          transition: color 0.2s ease, font-weight 0.2s ease;
+        }
+      `}</style>
       {/* Background elements similar to homepage */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-[#46cdc6]/10 rounded-full blur-[120px]" />
@@ -732,19 +789,17 @@ export function SettingsPage() {
                                         return (
                                           <li
                                             key={key}
-                                            className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item group"
+                                            className="flex items-start gap-2 text-gray-900"
                                           >
                                             <CheckCircle2
                                               className="w-5 h-5 mt-0.5 flex-shrink-0"
                                               style={{ color: '#185D54' }}
                                             />
-                                            <div>
-                                              <span className="block text-sm">{snakeToTitleCase(key)}</span>
+                                            <div className="pricing-tooltip-container">
                                               {tooltip && (
-                                                <span className="popup-tooltip absolute left-0 top-full mt-1 w-56 p-2 bg-gray-800 text-gray-200 text-xs rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 border border-gray-700">
-                                                  {tooltip}
-                                                </span>
+                                                <span className="pricing-tooltip-popup">{tooltip}</span>
                                               )}
+                                              <span className="pricing-tooltip-text text-sm">{snakeToTitleCase(key)}</span>
                                             </div>
                                           </li>
                                         );

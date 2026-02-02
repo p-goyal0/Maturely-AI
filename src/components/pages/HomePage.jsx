@@ -294,6 +294,57 @@ export default function HomePage() {
           opacity: 1 !important;
           visibility: visible !important;
         }
+
+        /* Pricing section: Uiverse-style tooltips (by mihocsaszilard) */
+        .pricing-tooltip-container {
+          --tooltip-bg: #185D54;
+          position: relative;
+          cursor: pointer;
+          display: inline-flex;
+          padding: 0 0.2em;
+          border: 1px solid transparent;
+        }
+        .pricing-tooltip-container:hover .pricing-tooltip-text {
+          color: #134a43;
+        }
+        .pricing-tooltip-popup {
+          position: absolute;
+          bottom: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          margin-bottom: 0.35rem;
+          padding: 0.35em 0.65em;
+          opacity: 0;
+          pointer-events: none;
+          transition: all 0.3s ease;
+          color: #fff;
+          background: var(--tooltip-bg);
+          border-radius: 0.25em;
+          font-size: 0.875rem;
+          line-height: 1.4;
+          max-width: 16rem;
+          text-align: center;
+          box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+          z-index: 50;
+        }
+        .pricing-tooltip-popup::before {
+          position: absolute;
+          content: "";
+          height: 0.5em;
+          width: 0.5em;
+          top: 100%;
+          left: 50%;
+          transform: translate(-50%, -50%) rotate(45deg);
+          background: var(--tooltip-bg);
+        }
+        .pricing-tooltip-container:hover .pricing-tooltip-popup {
+          opacity: 1;
+          visibility: visible;
+          pointer-events: auto;
+        }
+        .pricing-tooltip-text {
+          transition: color 0.2s ease, font-weight 0.2s ease;
+        }
         
         @keyframes text-slide-up-1 { 0% { opacity: 0; transform: translateY(30px); } 100% { opacity: 1; transform: translateY(0); } }
         @keyframes text-slide-up-2 { 0% { opacity: 0; transform: translateY(30px); } 100% { opacity: 1; transform: translateY(0); } }
@@ -789,7 +840,7 @@ export default function HomePage() {
                           Choose the plan that best fits your requirements and<br />to optimize your AI journey today
                         </p>
 
-                        {/* Monthly/Annually Toggle */}
+                        {/* Monthly/Annually Toggle - badge space reserved to prevent layout shift */}
                         <div className="flex items-center justify-center gap-4 mb-12">
                           <span className="text-gray-700 font-medium">Monthly</span>
                           <label className="relative inline-flex items-center cursor-pointer">
@@ -802,9 +853,13 @@ export default function HomePage() {
                             <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-[#185D54]"></div>
                           </label>
                           <span className="text-gray-700 font-medium">Annually</span>
-                          {isAnnual && (
-                            <span className="text-[#185D54] text-sm bg-[#185D54]/10 px-2 py-1 rounded">Save 15%</span>
-                          )}
+                          <span className="inline-block min-w-[5.5rem] text-center">
+                            {isAnnual ? (
+                              <span className="text-[#185D54] text-sm bg-[#185D54]/10 px-2 py-1 rounded">Save 15%</span>
+                            ) : (
+                              <span className="invisible text-sm px-2 py-1 rounded">Save 15%</span>
+                            )}
+                          </span>
                         </div>
                       </motion.div>
 
@@ -829,40 +884,32 @@ export default function HomePage() {
                             </CardHeader>
                             <CardContent className="flex flex-col flex-1">
                               <ul className="space-y-3 flex-1">
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Static Use-Case Bank</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Access to 50+ common AI use cases.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Access to 50+ common AI use cases.</span>
+                                    <span className="pricing-tooltip-text">Static Use-Case Bank</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Single Assessment</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      One-time assessment of your AI maturity.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">One-time assessment of your AI maturity.</span>
+                                    <span className="pricing-tooltip-text">Single Assessment</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Basic Report</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Summary of key strengths and weaknesses.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Summary of key strengths and weaknesses.</span>
+                                    <span className="pricing-tooltip-text">Basic Report</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Email Support</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Standard email support for your questions.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Standard email support for your questions.</span>
+                                    <span className="pricing-tooltip-text">Email Support</span>
                                   </div>
                                 </li>
                               </ul>
@@ -914,85 +961,67 @@ export default function HomePage() {
                             </CardHeader>
                             <CardContent className="flex flex-col flex-1">
                               <ul className="space-y-3 flex-1">
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Static Use-Case Bank</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Access to 50+ common AI use cases.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Access to 50+ common AI use cases.</span>
+                                    <span className="pricing-tooltip-text">Static Use-Case Bank</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Continuous Assessments</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Retake the assessments monthly to track progress.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Retake the assessments monthly to track progress.</span>
+                                    <span className="pricing-tooltip-text">Continuous Assessments</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Detailed Strategic Report</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Deep dive into AI, Data, Security and Governance readiness.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Deep dive into AI, Data, Security and Governance readiness.</span>
+                                    <span className="pricing-tooltip-text">Detailed Strategic Report</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Email Support</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Standard email support for your questions.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Standard email support for your questions.</span>
+                                    <span className="pricing-tooltip-text">Email Support</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Custom Roadmap</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Step-by-step execution plan based on your score.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Step-by-step execution plan based on your score.</span>
+                                    <span className="pricing-tooltip-text">Custom Roadmap</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Industry Benchmarking</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Compare your score with similar sized peers within the same industry.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Compare your score with similar sized peers within the same industry.</span>
+                                    <span className="pricing-tooltip-text">Industry Benchmarking</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Trend Analysis</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Visualize your improvement over time.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Visualize your improvement over time.</span>
+                                    <span className="pricing-tooltip-text">Trend Analysis</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Export to PDF</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Presentation-ready reports.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Presentation-ready reports.</span>
+                                    <span className="pricing-tooltip-text">Export to PDF</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Priority Support</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      72 hrs turn around on emails.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">72 hrs turn around on emails.</span>
+                                    <span className="pricing-tooltip-text">Priority Support</span>
                                   </div>
                                 </li>
                               </ul>
@@ -1040,112 +1069,88 @@ export default function HomePage() {
                             </CardHeader>
                             <CardContent className="flex flex-col flex-1">
                               <ul className="space-y-3 flex-1">
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Static Use-Case Bank</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Access to 50+ common AI use cases.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Access to 50+ common AI use cases.</span>
+                                    <span className="pricing-tooltip-text">Static Use-Case Bank</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Continuous Assessments</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Retake the assessments monthly to track progress.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Retake the assessments monthly to track progress.</span>
+                                    <span className="pricing-tooltip-text">Continuous Assessments</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Detailed Strategic Report</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Deep dive into AI, Data, Security and Governance readiness.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Deep dive into AI, Data, Security and Governance readiness.</span>
+                                    <span className="pricing-tooltip-text">Detailed Strategic Report</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Email Support</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Standard email support for your questions.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Standard email support for your questions.</span>
+                                    <span className="pricing-tooltip-text">Email Support</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Custom Roadmap</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Step-by-step execution plan based on your score.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Step-by-step execution plan based on your score.</span>
+                                    <span className="pricing-tooltip-text">Custom Roadmap</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Industry Benchmarking</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Compare your score with similar sized peers within the same industry.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Compare your score with similar sized peers within the same industry.</span>
+                                    <span className="pricing-tooltip-text">Industry Benchmarking</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Trend Analysis</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Visualize your improvement over time.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Visualize your improvement over time.</span>
+                                    <span className="pricing-tooltip-text">Trend Analysis</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Export to PDF</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Presentation-ready reports.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Presentation-ready reports.</span>
+                                    <span className="pricing-tooltip-text">Export to PDF</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">White-Label Reports</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Use your branding and colors.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Use your branding and colors.</span>
+                                    <span className="pricing-tooltip-text">White-Label Reports</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Custom Use-Case Creation</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Build your own internal AI Use case library.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Build your own internal AI Use case library.</span>
+                                    <span className="pricing-tooltip-text">Custom Use-Case Creation</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Single Sign-On (SSO)</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      Enterprise-grade security.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">Enterprise-grade security.</span>
+                                    <span className="pricing-tooltip-text">Single Sign-On (SSO)</span>
                                   </div>
                                 </li>
-                                <li className="relative flex items-start gap-2 text-gray-900 cursor-pointer hover-item">
+                                <li className="flex items-start gap-2 text-gray-900">
                                   <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#185D54' }} />
-                                  <div>
-                                    <span className="block">Priority Support</span>
-                                    <span className="popup-tooltip absolute left-0 top-full mt-2 w-64 p-3 bg-gray-800 text-gray-200 text-sm rounded-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 border border-gray-700">
-                                      24 hrs turn around on emails.
-                                    </span>
+                                  <div className="pricing-tooltip-container">
+                                    <span className="pricing-tooltip-popup">24 hrs turn around on emails.</span>
+                                    <span className="pricing-tooltip-text">Priority Support</span>
                                   </div>
                                 </li>
                               </ul>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { CheckCircle2, Sparkles, AlertCircle, Loader2, FileText, Calendar, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Sparkles, AlertCircle, Loader2, FileText, Calendar, ChevronRight, GitCompare } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
 import { getOrganizationAssessmentsCompleted, getAssessmentResults } from '../../services/assessmentService';
 import { useAssessmentStore } from '../../stores/assessmentStore';
@@ -116,14 +116,27 @@ export function CompletedAssessmentsPage() {
             <Sparkles className="w-4 h-4 text-[#46CDCF]" />
             <span className="text-sm font-semibold text-[#46CDCF]">RESULTS</span>
           </motion.div>
-          <motion.h1
-            className="text-5xl sm:text-6xl font-bold text-slate-900 mb-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            View Results
-          </motion.h1>
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+            <motion.h1
+              className="text-5xl sm:text-6xl font-bold text-slate-900"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              View Results
+            </motion.h1>
+            <motion.button
+              type="button"
+              onClick={() => navigate('/comparison-assessment-results')}
+              className="flex items-center gap-2 px-5 py-3 rounded-xl border-2 border-[#46cdc6] bg-white text-[#46cdc6] font-semibold hover:bg-[#46cdc6] hover:text-white transition-colors shrink-0"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+            >
+              <GitCompare className="w-5 h-5" />
+              Compare assessment result
+            </motion.button>
+          </div>
           <motion.p
             className="text-xl text-slate-600"
             initial={{ opacity: 0, y: 20 }}

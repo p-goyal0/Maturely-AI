@@ -233,17 +233,25 @@ export function PageHeader({
                       <>
                         <DropdownMenuItem
                           onClick={() => navigate("/role-management")}
-                          className="cursor-pointer px-4 py-2.5 text-gray-700 hover:bg-gray-50"
+                          className={`cursor-pointer px-4 py-2.5 ${
+                            location.pathname === '/role-management'
+                              ? 'bg-cyan-50 text-cyan-600 font-medium'
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
                         >
-                          <UserCog className="w-4 h-4 mr-2 text-gray-600" />
+                          <UserCog className={`w-4 h-4 mr-2 ${location.pathname === '/role-management' ? 'text-cyan-600' : 'text-gray-600'}`} />
                           Role Management
                         </DropdownMenuItem>
                         
                         <DropdownMenuItem
                           onClick={() => navigate("/team-management")}
-                          className="cursor-pointer px-4 py-2.5 text-gray-700 hover:bg-gray-50"
+                          className={`cursor-pointer px-4 py-2.5 ${
+                            location.pathname === '/team-management'
+                              ? 'bg-cyan-50 text-cyan-600 font-medium'
+                              : 'text-gray-700 hover:bg-gray-50'
+                          }`}
                         >
-                          <Users className="w-4 h-4 mr-2 text-gray-600" />
+                          <Users className={`w-4 h-4 mr-2 ${location.pathname === '/team-management' ? 'text-cyan-600' : 'text-gray-600'}`} />
                           User Administration
                         </DropdownMenuItem>
                         
