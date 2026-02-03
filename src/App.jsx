@@ -7,7 +7,7 @@ import { CompanyInfoPage } from "./components/pages/CompanyInfoPage";
 import { AssessmentsDashboard } from "./components/pages/AssessmentsDashboard";
 import { AssessmentListPage } from "./components/pages/AssessmentListPage";
 import { CompletedAssessmentsPage } from "./components/pages/CompletedAssessmentsPage";
-import { ComparisonAssessmentResultsPage } from "./components/pages/ComparisonAssessmentResultsPage";
+import { ComparisonAssessmentResultsPage } from "./components/pages/ComparisonAssessmentsResultPage";
 import { OfferingsPage } from "./components/pages/OfferingsPage";
 import { ResultsDashboard } from "./components/pages/ResultsDashboard";
 import { RoadmapGenerator } from "./components/pages/RoadmapGenerator";
