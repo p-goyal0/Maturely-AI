@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { ChevronRight, Sparkles, PenTool, Plus, Save, Building2, Zap, TrendingUp, Shield, CheckCircle2, X, Lock, Globe } from 'lucide-react';
+import { ChevronRight, Sparkles, PenTool, Plus, Save, Building2, Zap, TrendingUp, Shield, CheckCircle2, X, Lock, Globe, Loader2, Search, ChevronDown } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
 import { Button } from '../ui/button';
+import { getUseCaseList } from '../../services/useCaseService';
 
 const industryUseCases = {
   healthcare: [
@@ -63,6 +64,12 @@ export function UseCaseLibrary() {
   const [showPersonalizeModal, setShowPersonalizeModal] = useState(false);
   const [personalizeQuery, setPersonalizeQuery] = useState('');
   const [showUseCases, setShowUseCases] = useState(false);
+  const [inspireUseCasesList, setInspireUseCasesList] = useState(null);
+  const [inspireUseCasesLoading, setInspireUseCasesLoading] = useState(false);
+  const [inspireUseCasesError, setInspireUseCasesError] = useState(null);
+  const [inspireSearchQuery, setInspireSearchQuery] = useState('');
+  const [inspireDisplayCount, setInspireDisplayCount] = useState(6);
+  const [expandedInspireCardKey, setExpandedInspireCardKey] = useState(null);
 
   const handleFormChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
 
@@ -93,6 +100,50 @@ export function UseCaseLibrary() {
     setIsFormOpen(true);
     setSelectedUseCase(null);
   };
+
+  const handleSkipAndShowAll = async () => {
+    setInspireUseCasesError(null);
+    setInspireUseCasesLoading(true);
+    try {
+      const result = await getUseCaseList();
+      if (result.success) {
+        const raw = result.data;
+        const list = Array.isArray(raw)
+          ? raw
+          : (raw?.use_cases ?? raw?.list ?? raw?.data ?? []);
+        setInspireUseCasesList(Array.isArray(list) ? list : []);
+        setInspireDisplayCount(6);
+        setShowPersonalizeModal(false);
+        setActiveMode('inspire');
+        setShowUseCases(true);
+        setPersonalizeQuery('');
+      } else {
+        setInspireUseCasesError(result.error || 'Failed to load use cases');
+      }
+    } catch (err) {
+      setInspireUseCasesError(err?.message || 'Failed to load use cases');
+    } finally {
+      setInspireUseCasesLoading(false);
+    }
+  };
+
+  const inspireListToShow =
+    inspireUseCasesList !== null
+      ? inspireUseCasesList
+      : Object.values(industryUseCases).flat();
+
+  const inspireFilteredList = inspireListToShow.filter((uc) => {
+    const name = (uc.name ?? uc.title ?? uc.use_case_name ?? '').toLowerCase();
+    const desc = (uc.description ?? uc.desc ?? '').toLowerCase();
+    const cat = (uc.category ?? uc.category_name ?? '').toLowerCase();
+    const q = inspireSearchQuery.trim().toLowerCase();
+    if (!q) return true;
+    return name.includes(q) || desc.includes(q) || cat.includes(q);
+  });
+
+  const inspireDisplayedList = inspireFilteredList.slice(0, inspireDisplayCount);
+  const totalCount = inspireFilteredList.length;
+  const hasMore = inspireDisplayCount < totalCount;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 relative">
@@ -192,49 +243,162 @@ export function UseCaseLibrary() {
         <section className="pb-16 relative z-10">
           <div className="mx-auto px-4">
             {activeMode === 'inspire' && showUseCases ? (
-              <div>
-                {/* Use Cases Grid - All Mixed */}
-                  <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-bold text-gray-900">
-                      All Use Cases
-                      </h3>
-                      <span className="text-sm text-gray-500">
-                      {Object.values(industryUseCases).flat().length} available
-                      </span>
+              <div className="max-w-5xl mx-auto">
+                {inspireUseCasesError && (
+                  <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+                    {inspireUseCasesError}
+                  </div>
+                )}
+
+                {/* Search bar - reference style */}
+                <section className="mb-12">
+                  <div className="relative group">
+                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-[#2DD4BF] transition-colors pointer-events-none" />
+                    <input
+                      type="text"
+                      placeholder="Filter by industry or AI architecture..."
+                      value={inspireSearchQuery}
+                      onChange={(e) => setInspireSearchQuery(e.target.value)}
+                      className="w-full pl-14 pr-24 py-5 bg-white border-2 border-slate-200 rounded-2xl focus:border-[#2DD4BF] focus:ring-0 transition-all text-lg font-medium outline-none shadow-xl shadow-slate-200/20"
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex gap-2">
+                      <kbd className="hidden sm:inline-flex px-2 py-1 bg-slate-100 rounded text-[10px] font-bold text-slate-400 border border-slate-200 tracking-tighter">
+                        CMD + K
+                      </kbd>
                     </div>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {Object.values(industryUseCases).flat().map((uc, index) => (
-                        <motion.div 
-                          key={`${uc.id}-${index}`} 
-                          onClick={() => setSelectedUseCase(uc)}
-                          className="cursor-pointer bg-gray-50 rounded-xl p-4 border border-gray-200 hover:border-[#46cdc6] hover:shadow-md transition-all"
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            uc.impact === 'High' 
-                              ? 'bg-green-100 text-green-700' 
-                              : 'bg-amber-100 text-amber-700'
-                          }`}>
-                            {uc.impact} Impact
-                          </span>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              uc.feasibility === 'High' 
-                                ? 'bg-blue-100 text-blue-700' 
-                                : uc.feasibility === 'Medium'
-                                ? 'bg-purple-100 text-purple-700'
-                                : 'bg-gray-100 text-gray-700'
-                            }`}>
-                              {uc.feasibility} Feasibility
+                  </div>
+                </section>
+
+                {/* Expandable use case list */}
+                <div className="space-y-3">
+                  {inspireDisplayedList.map((uc, index) => {
+                    const cardKey = uc.id ?? uc.use_case_id ?? index;
+                    const isExpanded = expandedInspireCardKey === cardKey;
+                    const name = uc.name ?? uc.title ?? uc.use_case_name ?? 'Untitled';
+                    const description = uc.description ?? uc.desc ?? '';
+                    const category = uc.category ?? uc.category_name ?? '';
+                    const impact = uc.impact ?? 'Medium';
+                    const feasibility = uc.feasibility ?? 'Medium';
+                    const impactPct = impact === 'High' ? 84 : impact === 'Medium' ? 55 : 31;
+                    const tagVariant = index % 3;
+                    const accentTagClass = tagVariant === 0 ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]' : tagVariant === 1 ? 'bg-[#8B5CF6]/10 text-[#8B5CF6]' : 'bg-[#FF914D]/10 text-[#FF914D]';
+                    const accentTagLabel = tagVariant === 0 ? 'NLP' : tagVariant === 1 ? 'Agentic AI' : 'Predictive';
+                    return (
+                      <motion.div
+                        key={cardKey}
+                        layout
+                        initial={false}
+                        transition={{ duration: 0.3, ease: [0.19, 1, 0.22, 1] }}
+                        className={`use-case-item group bg-white border-2 p-6 rounded-2xl transition-all cursor-pointer shadow-sm ${
+                          isExpanded ? 'border-[#2DD4BF] shadow-lg' : 'border-slate-100 hover:border-slate-200 hover:translate-y-[-4px]'
+                        }`}
+                        onClick={() => setExpandedInspireCardKey(isExpanded ? null : cardKey)}
+                      >
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-4 md:gap-6 min-w-0">
+                            <span className="text-xs font-mono text-slate-400 tracking-tighter flex-shrink-0">
+                              {String(index + 1).padStart(2, '0')}
                             </span>
+                            <h3 className="font-bold text-xl md:text-2xl text-slate-900 truncate">
+                              {name}
+                            </h3>
+                            <div className="hidden md:flex gap-2 flex-shrink-0">
+                              <span className="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-bold uppercase text-slate-500 tracking-wider">
+                                {(category || 'Use Case').toUpperCase().slice(0, 12)}
+                              </span>
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${accentTagClass}`}>
+                                {accentTagLabel}
+                              </span>
+                            </div>
                           </div>
-                          <h4 className="font-semibold text-gray-900 mt-2 mb-1">{uc.name}</h4>
-                          <p className="text-sm text-gray-600 mb-2">{uc.description}</p>
-                          <span className="px-2 py-1 bg-white rounded text-xs text-gray-500">{uc.category}</span>
-          </motion.div>
-                      ))}
+                          <span
+                            className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                              isExpanded ? 'text-[#2DD4BF] rotate-45' : 'text-slate-300 group-hover:text-[#2DD4BF]'
+                            }`}
+                          >
+                            <Plus className="w-6 h-6" strokeWidth={2.5} />
+                          </span>
+                        </div>
+
+                        {/* Bento content - expand/collapse animation */}
+                        <motion.div
+                          initial={false}
+                          animate={{
+                            height: isExpanded ? 'auto' : 0,
+                            opacity: isExpanded ? 1 : 0,
+                            marginTop: isExpanded ? 24 : 0,
+                          }}
+                          transition={{ duration: 0.4, ease: [0.19, 1, 0.22, 1] }}
+                          className="overflow-hidden"
+                        >
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                            <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
+                              <h4 className="text-xs font-bold uppercase text-slate-400 mb-3 tracking-widest">Description</h4>
+                              <p className="text-slate-600 leading-relaxed text-sm">
+                                {description || 'No description available for this use case.'}
+                              </p>
+                            </div>
+                            <div
+                              className="p-6 rounded-xl border flex flex-col justify-between"
+                              style={{ backgroundColor: 'rgba(45, 212, 191, 0.05)', borderColor: 'rgba(45, 212, 191, 0.2)' }}
+                            >
+                              <h4 className="text-xs font-bold uppercase mb-3 tracking-widest" style={{ color: '#2DD4BF' }}>
+                                Impact / Efficiency
+                              </h4>
+                              <div className="text-4xl font-bold" style={{ color: '#2DD4BF' }}>
+                                +{impactPct}%
+                              </div>
+                              <div className="h-1.5 w-full rounded-full mt-4 overflow-hidden bg-[#2DD4BF]/20">
+                                <motion.div
+                                  className="h-full rounded-full bg-[#2DD4BF]"
+                                  initial={{ width: 0 }}
+                                  animate={{ width: isExpanded ? `${impactPct}%` : 0 }}
+                                  transition={{ duration: 0.6, delay: 0.2, ease: [0.19, 1, 0.22, 1] }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+
+                {/* Footer: Reached end + Fetch More + Trust line */}
+                <div className="mt-20 border-t-2 border-slate-100 pt-12 flex flex-col items-center gap-8">
+                  <div className="flex flex-col items-center text-center">
+                    <p className="text-sm font-bold text-slate-400 uppercase tracking-[0.2em] mb-4">
+                      Reached the end of current view
+                    </p>
+                    {hasMore ? (
+                      <motion.button
+                        type="button"
+                        onClick={() => setInspireDisplayCount((c) => Math.min(c + 6, totalCount))}
+                        className="group relative px-10 py-5 bg-slate-900 text-white rounded-2xl font-bold text-xl overflow-hidden hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <span className="relative z-10 flex items-center gap-2">
+                          Fetch more data
+                          <ChevronDown className="w-5 h-5" />
+                        </span>
+                        <div className="absolute inset-0 bg-[#2DD4BF] opacity-0 group-hover:opacity-10 transition-opacity" />
+                      </motion.button>
+                    ) : (
+                      <p className="text-sm text-slate-500">
+                        Showing {inspireDisplayedList.length} of {totalCount} total use cases
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-4 items-center">
+                    <div className="flex -space-x-3">
+                      <div className="w-10 h-10 rounded-full border-2 border-white bg-[#8B5CF6]/20 flex items-center justify-center text-[10px] font-bold text-[#8B5CF6]">JS</div>
+                      <div className="w-10 h-10 rounded-full border-2 border-white bg-[#2DD4BF]/20 flex items-center justify-center text-[10px] font-bold text-[#2DD4BF]">PY</div>
+                      <div className="w-10 h-10 rounded-full border-2 border-white bg-[#FF914D]/20 flex items-center justify-center text-[10px] font-bold text-[#FF914D]">RS</div>
+                    </div>
+                    <p className="text-xs font-medium text-slate-400 max-w-[180px] leading-tight">
+                      Trusted by 2,400+ developers worldwide.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -773,15 +937,18 @@ export function UseCaseLibrary() {
               <div className="flex items-center justify-end gap-4 mt-8">
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    setShowPersonalizeModal(false);
-                    setActiveMode('inspire');
-                    setShowUseCases(true);
-                    setPersonalizeQuery('');
-                  }}
+                  onClick={handleSkipAndShowAll}
+                  disabled={inspireUseCasesLoading}
                   className="px-6 py-2.5 rounded-xl border-2 text-slate-700 hover:bg-slate-50"
                 >
-                  Skip & Show All
+                  {inspireUseCasesLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      Loading…
+                    </>
+                  ) : (
+                    'Skip & Show All'
+                  )}
                 </Button>
                 <Button
                   onClick={() => {

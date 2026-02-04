@@ -25,6 +25,44 @@ export const getUseCases = async (params = {}) => {
 };
 
 /**
+ * Get use case list (Inspire Me – all use cases from pool).
+ * GET /api/v1/use-case/list with Bearer token.
+ */
+export const getUseCaseList = async () => {
+  try {
+    const response = await api.get('/use-case/list');
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: getErrorMessage(error),
+    };
+  }
+};
+
+/**
+ * Get use case detail by UUID.
+ * GET /api/v1/use-case/{useCaseUuid} with Bearer token.
+ */
+export const getUseCaseDetail = async (useCaseUuid) => {
+  try {
+    const response = await api.get(`/use-case/${useCaseUuid}`);
+    return {
+      success: true,
+      data: response.data,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: getErrorMessage(error),
+    };
+  }
+};
+
+/**
  * Get use case by ID
  */
 export const getUseCaseById = async (id) => {

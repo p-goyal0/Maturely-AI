@@ -907,86 +907,65 @@ export function ResultsDashboard() {
         </div>
       </section>
 
-      {/* Pillar Scores Section */}
+      {/* Pillar-wise Performance — matrix table (cards shown in report PDF) */}
       <section className="py-20 bg-gradient-to-b from-transparent via-gray-50 to-transparent">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8 ">
+        <div className="mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl mb-12 font-black text-gray-900 text-center">
             Pillar-wise <span className="bg-gradient-to-r from-[#46cdc6] to-[#15ae99] bg-clip-text text-transparent">Performance</span>
           </h2>
-          
-          <motion.div 
+
+          <motion.div
             ref={pillarScoresRef}
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-            variants={staggerContainer}
-            initial="hidden"
-            animate={animatedSections.has('pillars') ? "visible" : "hidden"}
+            initial={{ opacity: 0, y: 16 }}
+            animate={animatedSections.has('pillars') ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+            transition={{ duration: 0.4 }}
+            className="bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden"
           >
-              {pillarScores.map((pillar, index) => {
-                const Icon = pillar.icon;
-                const percentage = (pillar.score / pillar.maxScore) * 100;
-                return (
-                    <motion.div key={index} variants={scaleIn}>
-                      <Card className="bg-white border-gray-200 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group h-full">
-                        <CardHeader className="relative pb-4">
-                          <motion.div
-                            className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#46cdc6]/10 to-transparent rounded-full blur-2xl"
-                            animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
-                            transition={{ duration: 3, repeat: Infinity, delay: index * 0.2 }}
-                          />
-                          <div className="flex items-start justify-between mb-3 relative z-10">
-                            <motion.div
-                              whileHover={{ rotate: 360, scale: 1.1 }}
-                              transition={{ duration: 0.6 }}
-                            >
-                              <Icon className={`w-7 h-7 ${getStatusColor(pillar.status)}`} />
-                            </motion.div>
-                            <div className="flex items-center gap-2">
-                              <motion.span 
-                                className="text-3xl text-gray-900 font-bold"
-                                initial={{ scale: 0 }}
-                                animate={animatedSections.has('pillars') ? { scale: 1 } : { scale: 0 }}
-                                transition={{ type: "spring", stiffness: 200, delay: index * 0.1 }}
-                              >
-                                {pillar.score}
-                              </motion.span>
-                              <span className="text-sm text-gray-500">/ {pillar.maxScore}</span>
-                            </div>
-                      </div>
-                          <CardTitle className="text-lg text-gray-900 font-bold">{pillar.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                            <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                              <motion.div 
-                                initial={{ width: 0 }} 
-                                animate={animatedSections.has('pillars') ? { width: `${percentage}%` } : { width: 0 }} 
-                                transition={{ duration: 1.2, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }} 
-                                className={`h-full rounded-full ${getProgressBarGradient(pillar.status)}`} 
-                              />
-                        </div>
-                        <div className="flex justify-between items-center">
-                              <Badge className={`${getStatusBadge(pillar.status)} font-medium`}>
-                                {getStatusLabel(pillar.status)}
-                              </Badge>
-                              <motion.span 
-                                className={`text-sm font-bold ${
-                                  pillar.change.startsWith("+") ? "text-green-600" : "text-orange-600"
-                                }`}
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={animatedSections.has('pillars') ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
-                                transition={{ delay: 0.5 + index * 0.1 }}
-                              >
-                                {pillar.change}
-                              </motion.span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                    </motion.div>
-                );
-              })}
-          </motion.div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50/80">
+                    <th className="py-4 px-5 text-sm font-bold text-gray-900">Pillar</th>
+                    <th className="py-4 px-4 text-sm font-bold text-gray-700 text-center">Initial</th>
+                    <th className="py-4 px-4 text-sm font-bold text-gray-700 text-center">Adopting</th>
+                    <th className="py-4 px-4 text-sm font-bold text-gray-700 text-center">Established</th>
+                    <th className="py-4 px-4 text-sm font-bold text-gray-700 text-center">Advanced</th>
+                    <th className="py-4 px-4 text-sm font-bold text-gray-700 text-center">Transformational</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pillarScores.map((pillar, rowIndex) => {
+                    const currentLevel = pillar.status ? getStatusLabel(pillar.status) : null;
+                    const stages = ['Initial', 'Adopting', 'Established', 'Advanced', 'Transformational'];
+                    return (
+                      <tr key={rowIndex} className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50/50">
+                        <td className="py-4 px-5 font-medium text-gray-900">{pillar.title}</td>
+                        {stages.map((stage) => {
+                          const isCurrent = currentLevel === stage;
+                          const stageColor = MATURITY_COLORS[stage] ?? '#94a3b8';
+                          return (
+                            <td key={stage} className="py-4 px-4 text-center">
+                              {isCurrent ? (
+                                <span
+                                  className="inline-block rounded px-3 py-1.5 text-xs font-bold text-white"
+                                  style={{ backgroundColor: stageColor }}
+                                >
+                                  Current
+                                </span>
+                              ) : (
+                                <span className="text-gray-300">—</span>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
+          </motion.div>
+        </div>
       </section>
 
       {/* Strengths and Gaps Section */}

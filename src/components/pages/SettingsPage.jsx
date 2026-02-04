@@ -16,6 +16,10 @@ import {
   Loader2,
   AlertCircle,
   X,
+  Receipt,
+  ExternalLink,
+  Download,
+  Check,
 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -56,6 +60,32 @@ const FEATURE_BOOLEAN_KEYS = [
   'custom_use_case_creation',
   'detailed_strategic_report',
 ];
+
+const BILLING_TEAL = '#46CDCF';
+
+/** Format plan price: API may return price in dollars (199) or amount in cents (19900) */
+function formatPlanPrice(plan, subscription) {
+  const price = plan?.price;
+  const amount = plan?.amount ?? subscription?.amount;
+  const currency = (plan?.currency ?? (subscription?.currency || 'usd')).toUpperCase();
+  if (price != null && price !== '') {
+    const num = Number(price);
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num < 1000 ? num : num / 100);
+  }
+  if (amount != null && amount !== '') return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(Number(amount) / 100);
+  return null;
+}
+
+/** Parse period date: number (seconds) or ISO string */
+function formatPeriodDate(value) {
+  if (value == null || value === '') return null;
+  try {
+    const date = typeof value === 'number' ? new Date(value * 1000) : new Date(value);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  } catch {
+    return null;
+  }
+}
 
 export function SettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
@@ -133,12 +163,10 @@ export function SettingsPage() {
       getInvoices(10),
     ])
       .then(([subRes, pmRes, invRes]) => {
-        if (subRes.success && subRes.data != null) setSubscription(subRes.data);
-        else setSubscription(null);
-        if (pmRes.success && Array.isArray(pmRes.data)) setPaymentMethods(pmRes.data);
-        else setPaymentMethods([]);
-        if (invRes.success && Array.isArray(invRes.data)) setInvoices(invRes.data);
-        else setInvoices([]);
+        const subPayload = subRes.success && subRes.data != null ? (subRes.data?.data ?? subRes.data) : null;
+        setSubscription(subPayload);
+        setPaymentMethods(pmRes.success && Array.isArray(pmRes.data) ? pmRes.data : []);
+        setInvoices(invRes.success && Array.isArray(invRes.data) ? invRes.data : []);
         if (!subRes.success && subRes.error) setBillingError(subRes.error);
         else if (!pmRes.success && pmRes.error) setBillingError(pmRes.error);
         else setBillingError(null);
@@ -557,110 +585,234 @@ export function SettingsPage() {
                           <Loader2 className="w-10 h-10 animate-spin text-[#46CDCF]" />
                         </div>
                       ) : billingError ? (
-                        <div className="p-6 bg-red-50 border border-red-200 rounded-2xl text-red-700">
+                        <div className="p-6 bg-red-50 border border-red-200 rounded-2xl text-red-700 flex items-center gap-2">
+                          <AlertCircle className="w-5 h-5 flex-shrink-0" />
                           {billingError}
                         </div>
                       ) : (
-                        <div className="space-y-6">
-                          {/* Current subscription */}
-                          <div className="p-6 bg-gradient-to-br from-[#46CDCF]/10 to-purple-500/10 border border-[#46CDCF]/20 rounded-2xl">
-                            <div className="flex items-start justify-between mb-4">
-                              <div>
-                                <h4 className="text-2xl font-bold text-slate-900 mb-1">
-                                  {subscription?.plan?.name ?? subscription?.plan_name ?? 'No active plan'}
-                                </h4>
-                                <p className="text-slate-600">
-                                  {subscription?.plan?.description ?? (subscription ? 'Active subscription' : 'Subscribe from the Pricing tab')}
-                                </p>
+                        <div className="space-y-8">
+                          {/* Subscription hero card */}
+                          <div
+                            className="relative overflow-hidden rounded-2xl border border-slate-200/80 shadow-lg"
+                            style={{ background: 'linear-gradient(135deg, rgba(70,205,207,0.12) 0%, rgba(139,92,246,0.08) 100%)' }}
+                          >
+                            <div className="p-6 md:p-8">
+                              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                                <div>
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <h4 className="text-2xl font-bold text-slate-900">
+                                      {subscription?.plan?.name ?? subscription?.plan_name ?? 'No active plan'}
+                                    </h4>
+                                    {subscription?.status && (
+                                      <span
+                                        className="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider"
+                                        style={{
+                                          backgroundColor: subscription.status === 'active' ? 'rgba(70,205,207,0.2)' : 'rgba(100,116,139,0.2)',
+                                          color: subscription.status === 'active' ? '#0d9488' : '#64748b',
+                                        }}
+                                      >
+                                        {subscription.status}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-slate-600 text-sm">
+                                    {subscription?.plan?.description ?? (subscription ? 'Your current plan' : 'Subscribe from the Pricing tab')}
+                                  </p>
+                                </div>
+                                {subscription?.plan && (
+                                  <div className="text-right flex-shrink-0 flex flex-col items-end gap-3">
+                                    <div>
+                                      <div className="text-3xl font-bold text-slate-900">
+                                        {formatPlanPrice(subscription.plan, subscription) ?? '—'}
+                                      </div>
+                                      <div className="text-sm text-slate-500">
+                                        per {(subscription.plan?.billing_interval ?? subscription.plan?.interval ?? subscription?.interval ?? 'month').replace(/ly$/, '')}
+                                      </div>
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      onClick={() => setActiveTab('pricing')}
+                                      className="rounded-xl font-semibold"
+                                      style={{ backgroundColor: BILLING_TEAL, color: 'white' }}
+                                    >
+                                      Upgrade plan
+                                    </Button>
+                                  </div>
+                                )}
                               </div>
-                              {subscription && (
-                                <div className="text-right">
-                                  <div className="text-3xl font-bold text-[#46CDCF]">
-                                    {subscription.plan?.amount != null
-                                      ? new Intl.NumberFormat('en-US', {
-                                          style: 'currency',
-                                          currency: (subscription.plan?.currency || subscription.currency || 'usd').toUpperCase(),
-                                          minimumFractionDigits: 0,
-                                          maximumFractionDigits: 0,
-                                        }).format(subscription.plan.amount / 100)
-                                      : subscription.amount
-                                        ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(subscription.amount / 100)
-                                        : '—'}
-                                  </div>
-                                  <div className="text-sm text-slate-600">
-                                    per {subscription.plan?.interval ?? subscription.interval ?? 'month'}
-                                  </div>
+                              {(formatPeriodDate(subscription?.current_period_end) || subscription?.cancel_at_period_end) && (
+                                <div className="mt-4 pt-4 border-t border-slate-200/60 flex flex-wrap items-center gap-4 text-sm">
+                                  {formatPeriodDate(subscription?.current_period_end) && (
+                                    <span className="text-slate-600">
+                                      Next billing: <strong className="text-slate-800">{formatPeriodDate(subscription.current_period_end)}</strong>
+                                    </span>
+                                  )}
+                                  {subscription?.cancel_at_period_end && (
+                                    <span className="text-amber-700 bg-amber-100/80 px-2 py-1 rounded font-medium">Cancels at period end</span>
+                                  )}
                                 </div>
                               )}
+                              {!subscription?.has_subscription && !subscription?.plan && (
+                                <p className="mt-4 text-sm text-slate-600">
+                                  Go to the <button type="button" onClick={() => setActiveTab('pricing')} className="font-medium hover:underline" style={{ color: BILLING_TEAL }}>Pricing</button> tab to subscribe.
+                                </p>
+                              )}
                             </div>
-                            {subscription?.current_period_end && (
-                              <div className="flex items-center gap-2 text-sm text-slate-600">
-                                <span>
-                                  Next billing date:{' '}
-                                  {new Date(subscription.current_period_end * 1000).toLocaleDateString('en-US', {
-                                    year: 'numeric',
-                                    month: 'long',
-                                    day: 'numeric',
-                                  })}
-                                </span>
-                              </div>
-                            )}
-                            {!subscription && (
-                              <p className="text-sm text-slate-600">
-                                Go to the <button type="button" onClick={() => setActiveTab('pricing')} className="text-[#46CDCF] font-medium hover:underline">Pricing</button> tab to subscribe.
-                              </p>
-                            )}
                           </div>
 
-                          {/* Payment methods */}
-                          <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl">
-                            <h4 className="font-bold text-slate-900 mb-4">Payment Method</h4>
+                          {/* Plan features */}
+                          {subscription?.plan?.features && typeof subscription.plan.features === 'object' && (
+                            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                              <h4 className="flex items-center gap-2 font-bold text-slate-900 mb-4">
+                                <Sparkles className="w-4 h-4" style={{ color: BILLING_TEAL }} />
+                                Plan features
+                              </h4>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {FEATURE_BOOLEAN_KEYS.filter((key) => key in subscription.plan.features).map((key) => {
+                                  const value = subscription.plan.features[key];
+                                  if (typeof value !== 'boolean') return null;
+                                  const tooltips = subscription.plan.features?.feature_tooltips ?? {};
+                                  const label = snakeToTitleCase(key);
+                                  const tooltip = tooltips[key];
+                                  return (
+                                    <div
+                                      key={key}
+                                      className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/80 border border-slate-100"
+                                      title={tooltip || undefined}
+                                    >
+                                      {value ? (
+                                        <span className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(70,205,207,0.2)' }}>
+                                          <Check className="w-3.5 h-3.5" style={{ color: BILLING_TEAL }} />
+                                        </span>
+                                      ) : (
+                                        <span className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
+                                          <X className="w-3 h-3 text-slate-400" />
+                                        </span>
+                                      )}
+                                      <span className={`text-sm font-medium ${value ? 'text-slate-800' : 'text-slate-400'}`}>{label}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Payment methods — card style */}
+                          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                            <h4 className="flex items-center gap-2 font-bold text-slate-900 mb-4">
+                              <CreditCard className="w-4 h-4" style={{ color: BILLING_TEAL }} />
+                              Payment methods
+                            </h4>
                             {paymentMethods.length === 0 ? (
-                              <div className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200">
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5 rounded-xl bg-slate-50 border border-slate-100">
                                 <p className="text-slate-600">No payment method on file.</p>
                                 <Button
                                   variant="outline"
-                                  className="rounded-xl border-2"
+                                  className="rounded-xl border-2 self-start sm:self-center"
                                   onClick={handleOpenBillingPortal}
                                   disabled={portalLoading}
+                                  style={{ borderColor: BILLING_TEAL, color: BILLING_TEAL }}
                                 >
                                   {portalLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add payment method'}
                                 </Button>
                               </div>
                             ) : (
-                              paymentMethods.map((pm) => {
-                                const brand = (pm.card?.brand ?? pm.brand ?? 'CARD').toUpperCase();
-                                const last4 = pm.card?.last4 ?? pm.last4 ?? '••••';
-                                const exp = pm.card
-                                  ? `${String(pm.card.exp_month).padStart(2, '0')}/${String(pm.card.exp_year).slice(-2)}`
-                                  : pm.exp_month && pm.exp_year
-                                    ? `${String(pm.exp_month).padStart(2, '0')}/${String(pm.exp_year).slice(-2)}`
+                              <div className="grid gap-4 sm:grid-cols-2">
+                                {paymentMethods.map((pm) => {
+                                  const brand = (pm.card?.brand ?? pm.brand ?? 'card').toLowerCase();
+                                  const last4 = pm.card?.last4 ?? pm.last4 ?? '••••';
+                                  const expMonth = pm.card?.exp_month ?? pm.exp_month;
+                                  const expYear = pm.card?.exp_year ?? pm.exp_year;
+                                  const exp = expMonth != null && expYear != null
+                                    ? `${String(expMonth).padStart(2, '0')}/${String(expYear).slice(-2)}`
                                     : null;
-                                return (
-                                  <div
-                                    key={pm.id}
-                                    className="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 mb-3 last:mb-0"
-                                  >
-                                    <div className="flex items-center gap-4">
-                                      <div className="w-12 h-8 bg-slate-900 rounded flex items-center justify-center text-white text-xs font-bold">
-                                        {brand}
+                                  const brandLabel = (pm.card?.brand ?? pm.brand ?? 'CARD').toUpperCase();
+                                  return (
+                                    <div
+                                      key={pm.id}
+                                      className="relative overflow-hidden rounded-xl border-2 border-slate-200 bg-gradient-to-br from-slate-800 to-slate-900 p-5 text-white min-h-[100px] flex flex-col justify-between"
+                                    >
+                                      <div className="flex items-start justify-between">
+                                        <span className="text-xs font-bold uppercase tracking-widest text-white/70">{brandLabel}</span>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-8 text-white/80 hover:text-white hover:bg-white/10 rounded-lg"
+                                          onClick={handleOpenBillingPortal}
+                                          disabled={portalLoading}
+                                        >
+                                          {portalLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Update'}
+                                        </Button>
                                       </div>
                                       <div>
-                                        <p className="font-medium text-slate-900">•••• •••• •••• {last4}</p>
-                                        {exp && <p className="text-sm text-slate-500">Expires {exp}</p>}
+                                        <p className="font-mono text-lg tracking-widest">•••• •••• •••• {last4}</p>
+                                        {exp && <p className="text-xs text-white/60 mt-1">Expires {exp}</p>}
                                       </div>
                                     </div>
-                                    <Button
-                                      variant="outline"
-                                      className="rounded-xl border-2"
-                                      onClick={handleOpenBillingPortal}
-                                      disabled={portalLoading}
-                                    >
-                                      {portalLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Update'}
-                                    </Button>
-                                  </div>
-                                );
-                              })
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Invoices */}
+                          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                            <h4 className="flex items-center gap-2 font-bold text-slate-900 mb-4">
+                              <Receipt className="w-4 h-4" style={{ color: BILLING_TEAL }} />
+                              Invoices
+                            </h4>
+                            {invoices.length === 0 ? (
+                              <p className="text-slate-500 text-sm py-4">No invoices yet.</p>
+                            ) : (
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-sm">
+                                  <thead>
+                                    <tr className="border-b border-slate-200 text-left text-slate-500 font-medium">
+                                      <th className="pb-3 pr-4">Invoice</th>
+                                      <th className="pb-3 pr-4">Date</th>
+                                      <th className="pb-3 pr-4">Amount</th>
+                                      <th className="pb-3 pr-4">Status</th>
+                                      <th className="pb-3 text-right">Actions</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {invoices.map((inv) => {
+                                      const paidAt = inv.paid_at ?? inv.created_at;
+                                      const dateStr = paidAt ? (typeof paidAt === 'number' ? new Date(paidAt * 1000) : new Date(paidAt)).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+                                      const amount = inv.total ?? inv.amount_paid ?? inv.amount_due;
+                                      const currency = (inv.currency || 'usd').toUpperCase();
+                                      const amountStr = amount != null ? new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(Number(amount)) : '—';
+                                      const status = (inv.status || '').toLowerCase();
+                                      return (
+                                        <tr key={inv.id} className="border-b border-slate-100 hover:bg-slate-50/50">
+                                          <td className="py-4 pr-4 font-mono font-medium text-slate-800">{inv.invoice_number ?? inv.id?.slice(0, 8) ?? '—'}</td>
+                                          <td className="py-4 pr-4 text-slate-600">{dateStr}</td>
+                                          <td className="py-4 pr-4 font-medium text-slate-800">{amountStr}</td>
+                                          <td className="py-4 pr-4">
+                                            <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-bold uppercase ${status === 'paid' ? 'bg-emerald-100 text-emerald-800' : status === 'open' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}`}>
+                                              {inv.status ?? '—'}
+                                            </span>
+                                          </td>
+                                          <td className="py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                              {inv.hosted_invoice_url && (
+                                                <a href={inv.hosted_invoice_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900 font-medium" style={{ color: BILLING_TEAL }}>
+                                                  <ExternalLink className="w-3.5 h-3.5" /> View
+                                                </a>
+                                              )}
+                                              {inv.invoice_pdf_url && (
+                                                <a href={inv.invoice_pdf_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900 font-medium" style={{ color: BILLING_TEAL }}>
+                                                  <Download className="w-3.5 h-3.5" /> PDF
+                                                </a>
+                                              )}
+                                            </div>
+                                          </td>
+                                        </tr>
+                                      );
+                                    })}
+                                  </tbody>
+                                </table>
+                              </div>
                             )}
                           </div>
                         </div>

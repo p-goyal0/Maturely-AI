@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ClipboardList, Sparkles, ArrowUpRight, AlertCircle, Loader2, Plus, Clock, CheckCircle2, Calendar, FileText } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
 import { SignInLoader } from '../shared/SignInLoader';
+import { DeleteButton } from '../ui/DeleteButton';
 import { getOrganizationAssessmentsOngoing, startAssessment } from '../../services/assessmentService';
 import { useAssessmentStore } from '../../stores/assessmentStore';
 import { useAuthStore } from '../../stores/authStore';
@@ -44,6 +45,7 @@ export function AssessmentListPage() {
   const [listError, setListError] = useState(null);
   const [activeAction, setActiveAction] = useState(null); // { type: 'start' } | { type: 'continue', assessmentId } | { type: 'edit', assessmentId }
   const [actionError, setActionError] = useState(null);
+  const [hoveredDeleteCardId, setHoveredDeleteCardId] = useState(null); // when hovering Delete, don't show Continue active
 
   useEffect(() => {
     let cancelled = false;
@@ -194,25 +196,13 @@ export function AssessmentListPage() {
             My Assessments
           </motion.h1>
           <motion.p
-            className="text-xl text-slate-600 mb-4"
+            className="text-xl text-slate-600"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
             View and manage your AI readiness assessments.
           </motion.p>
-          <motion.button
-            type="button"
-            className="inline-flex items-center gap-2 text-base font-semibold hover:underline"
-            style={{ color: accentColorStart }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-            onClick={handleStartNew}
-          >
-            <Plus className="w-4 h-4" />
-            Start New Assessment
-          </motion.button>
         </motion.div>
       </section>
 
@@ -254,24 +244,14 @@ export function AssessmentListPage() {
                     <Plus className="w-10 h-10" style={{ color: accentColorStart }} strokeWidth={2.5} />
                   </div>
                   <h2 className="text-xl font-bold text-slate-900 mb-2">Start New Assessment</h2>
-                  <p className="text-slate-600 mb-6 max-w-md">
+                  <p className="text-slate-600 max-w-md">
                     Begin a fresh AI readiness assessment for your organization.
                   </p>
-                  {activeAction?.type === 'start' ? (
-                    <div className="flex items-center gap-2">
+                  {activeAction?.type === 'start' && (
+                    <div className="flex items-center gap-2 mt-2">
                       <Loader2 className="w-5 h-5 animate-spin" style={{ color: accentColorStart }} />
                       <span className="text-sm text-slate-600">Starting…</span>
                     </div>
-                  ) : (
-                    <button
-                      type="button"
-                      className="px-6 py-3 rounded-xl text-white font-semibold flex items-center gap-2"
-                      style={{ backgroundColor: accentColorStart }}
-                      onClick={(e) => { e.stopPropagation(); handleStartNew(); }}
-                    >
-                      <Plus className="w-5 h-5" />
-                      Create Assessment
-                    </button>
                   )}
                 </div>
               </div>
@@ -306,7 +286,7 @@ export function AssessmentListPage() {
                           transition={{ delay: index * 0.05 }}
                         >
                           <div
-                            className="relative h-[360px] p-8 rounded-lg border-2 flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-opacity-80 group cursor-pointer"
+                            className={`relative h-[360px] p-8 rounded-lg border-2 flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-opacity-80 group cursor-pointer ${hoveredDeleteCardId === assessment.id ? 'delete-hovered' : ''}`}
                             style={{
                               backgroundColor: '#ffffff',
                               borderColor: '#e2e8f0',
@@ -376,7 +356,7 @@ export function AssessmentListPage() {
                                 </div>
                               </div>
                             </div>
-                            <div className="flex justify-start items-center mt-auto pt-4 relative z-10 flex-shrink-0 min-h-12">
+                            <div className="flex justify-between items-center gap-3 mt-auto pt-4 relative z-10 flex-shrink-0 min-h-12">
                               {isBusy ? (
                                 <div className="flex items-center gap-2">
                                   <Loader2 className="w-5 h-5 animate-spin" style={{ color: accentColorOngoing }} />
@@ -384,24 +364,36 @@ export function AssessmentListPage() {
                                 </div>
                               ) : (
                                 <>
-                                  <button
-                                    type="button"
-                                    className="relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 border-2 bg-white flex-shrink-0 overflow-visible"
-                                    style={{ borderColor: '#e2e8f0' }}
-                                    onClick={(e) => { e.stopPropagation(); handleContinue(assessment); }}
+                                  <div className="relative flex items-center flex-shrink-0">
+                                    <button
+                                      type="button"
+                                      className="relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 border-2 bg-white flex-shrink-0 overflow-visible"
+                                      style={{ borderColor: '#e2e8f0' }}
+                                      onClick={(e) => { e.stopPropagation(); handleContinue(assessment); }}
+                                    >
+                                      <div
+                                        className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 group-[.delete-hovered]:opacity-0 transition-opacity duration-300"
+                                        style={{ backgroundColor: accentColorOngoing }}
+                                      />
+                                      <ArrowUpRight className="w-5 h-5 relative z-10" style={{ color: '#1e293b' }} />
+                                    </button>
+                                    <span
+                                      className="absolute left-6 top-1/2 -translate-y-1/2 -translate-x-1/2 text-sm font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 group-hover:translate-x-[2.5rem] group-[.delete-hovered]:opacity-0 group-[.delete-hovered]:translate-x-0 transition-all duration-300 ease-out pointer-events-none"
+                                      style={{ color: accentColorOngoing }}
+                                    >
+                                      Continue assessment
+                                    </span>
+                                  </div>
+                                  <div
+                                    onMouseEnter={() => setHoveredDeleteCardId(assessment.id)}
+                                    onMouseLeave={() => setHoveredDeleteCardId(null)}
+                                    className="flex-shrink-0"
                                   >
-                                    <div
-                                      className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                                      style={{ backgroundColor: accentColorOngoing }}
+                                    <DeleteButton
+                                      label="Delete"
+                                      onClick={() => alert('button is clicked')}
                                     />
-                                    <ArrowUpRight className="w-5 h-5 relative z-10" style={{ color: '#1e293b' }} />
-                                  </button>
-                                  <span
-                                    className="absolute left-6 top-1/2 -translate-y-1/2 -translate-x-1/2 text-sm font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 group-hover:translate-x-[2.5rem] transition-all duration-300 ease-out pointer-events-none"
-                                    style={{ color: accentColorOngoing }}
-                                  >
-                                    Continue assessment
-                                  </span>
+                                  </div>
                                 </>
                               )}
                             </div>
@@ -449,7 +441,7 @@ export function AssessmentListPage() {
                           transition={{ delay: index * 0.05 }}
                         >
                           <div
-                            className="relative h-[360px] p-8 rounded-lg border-2 flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-opacity-80 group cursor-pointer"
+                            className={`relative h-[360px] p-8 rounded-lg border-2 flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:border-opacity-80 group cursor-pointer ${hoveredDeleteCardId === assessment.id ? 'delete-hovered' : ''}`}
                             style={{
                               backgroundColor: '#ffffff',
                               borderColor: '#e2e8f0',
@@ -507,7 +499,7 @@ export function AssessmentListPage() {
                                 </div>
                               </div>
                             </div>
-                            <div className="flex justify-start items-center mt-auto pt-4 relative z-10 flex-shrink-0 min-h-12">
+                            <div className="flex justify-between items-center gap-3 mt-auto pt-4 relative z-10 flex-shrink-0 min-h-12">
                               {isBusy ? (
                                 <div className="flex items-center gap-2">
                                   <Loader2 className="w-5 h-5 animate-spin" style={{ color: accentColorCompleted }} />
@@ -515,24 +507,36 @@ export function AssessmentListPage() {
                                 </div>
                               ) : (
                                 <>
-                                  <button
-                                    type="button"
-                                    className="relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 border-2 bg-white flex-shrink-0 overflow-visible"
-                                    style={{ borderColor: '#e2e8f0' }}
-                                    onClick={(e) => { e.stopPropagation(); handleEditAssessment(assessment); }}
+                                  <div className="relative flex items-center flex-shrink-0">
+                                    <button
+                                      type="button"
+                                      className="relative w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 border-2 bg-white flex-shrink-0 overflow-visible"
+                                      style={{ borderColor: '#e2e8f0' }}
+                                      onClick={(e) => { e.stopPropagation(); handleEditAssessment(assessment); }}
+                                    >
+                                      <div
+                                        className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 group-[.delete-hovered]:opacity-0 transition-opacity duration-300"
+                                        style={{ backgroundColor: accentColorCompleted }}
+                                      />
+                                      <ArrowUpRight className="w-5 h-5 relative z-10" style={{ color: '#1e293b' }} />
+                                    </button>
+                                    <span
+                                      className="absolute left-6 top-1/2 -translate-y-1/2 -translate-x-1/2 text-sm font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 group-hover:translate-x-[2.5rem] group-[.delete-hovered]:opacity-0 group-[.delete-hovered]:translate-x-0 transition-all duration-300 ease-out pointer-events-none"
+                                      style={{ color: accentColorCompleted }}
+                                    >
+                                      Edit assessment
+                                    </span>
+                                  </div>
+                                  <div
+                                    onMouseEnter={() => setHoveredDeleteCardId(assessment.id)}
+                                    onMouseLeave={() => setHoveredDeleteCardId(null)}
+                                    className="flex-shrink-0"
                                   >
-                                    <div
-                                      className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                                      style={{ backgroundColor: accentColorCompleted }}
+                                    <DeleteButton
+                                      label="Delete"
+                                      onClick={() => alert('button is clicked')}
                                     />
-                                    <ArrowUpRight className="w-5 h-5 relative z-10" style={{ color: '#1e293b' }} />
-                                  </button>
-                                  <span
-                                    className="absolute left-6 top-1/2 -translate-y-1/2 -translate-x-1/2 text-sm font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 group-hover:translate-x-[2.5rem] transition-all duration-300 ease-out pointer-events-none"
-                                    style={{ color: accentColorCompleted }}
-                                  >
-                                    Edit assessment
-                                  </span>
+                                  </div>
                                 </>
                               )}
                             </div>

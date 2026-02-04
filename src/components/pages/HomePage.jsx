@@ -1155,11 +1155,13 @@ export default function HomePage() {
                                 </li>
                               </ul>
                               <Button 
-                                variant="outline"
-                                className="w-full mt-6 border-[#185D54] text-[#185D54] hover:bg-[#185D54] hover:text-white"
+                                className="w-full mt-6 text-white"
+                                style={{ backgroundColor: '#185D54' }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#134a43'}
+                                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#185D54'; }}
                                 onClick={() => navigate("/signup")}
                               >
-                                Contact Sales
+                                Get Started
                               </Button>
                             </CardContent>
                           </Card>
