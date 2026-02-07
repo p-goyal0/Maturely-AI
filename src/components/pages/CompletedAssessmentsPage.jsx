@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle2, Sparkles, AlertCircle, Loader2, FileText, Calendar, ChevronRight, GitCompare } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
+import { IoButton } from '../ui/IoButton';
 import { getOrganizationAssessmentsCompleted, getAssessmentResults } from '../../services/assessmentService';
 import { useAssessmentStore } from '../../stores/assessmentStore';
 import { SignInLoader } from '../shared/SignInLoader';
@@ -47,11 +48,14 @@ export function CompletedAssessmentsPage() {
     getOrganizationAssessmentsCompleted()
       .then((res) => {
         if (cancelled) return;
-        if (res.success && Array.isArray(res.data)) {
-          setAssessments(res.data);
+        const raw = res.data?.data ?? res.data;
+        const list = Array.isArray(raw) ? raw : [];
+        if (res.success) {
+          setAssessments(list);
+          setListError(null);
         } else {
           setListError(res.error || 'Failed to load completed assessments');
-          setAssessments([]);
+          setAssessments(list);
         }
       })
       .catch((err) => {
@@ -125,17 +129,20 @@ export function CompletedAssessmentsPage() {
             >
               View Results
             </motion.h1>
-            <motion.button
-              type="button"
-              onClick={() => navigate('/comparison-assessment-results')}
-              className="flex items-center gap-2 px-5 py-3 rounded-xl border-2 border-[#46cdc6] bg-white text-[#46cdc6] font-semibold hover:bg-[#46cdc6] hover:text-white transition-colors shrink-0"
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.25 }}
+              className="shrink-0"
             >
-              <GitCompare className="w-5 h-5" />
-              Compare assessment result
-            </motion.button>
+              <IoButton
+                variant="teal"
+                icon={<GitCompare className="w-5 h-5" strokeWidth={2} />}
+                onClick={() => navigate('/comparison-assessment-results')}
+              >
+                Compare assessment
+              </IoButton>
+            </motion.div>
           </div>
           <motion.p
             className="text-xl text-slate-600"

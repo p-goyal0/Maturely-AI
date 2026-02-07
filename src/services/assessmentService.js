@@ -148,9 +148,17 @@ export const getOrganizationAssessments = async (status) => {
   try {
     const params = status ? { status } : {};
     const response = await api.get('/organization/assessments', { params });
+    const raw = response.data;
+    const list = Array.isArray(raw)
+      ? raw
+      : Array.isArray(raw?.data)
+        ? raw.data
+        : Array.isArray(raw?.assessments)
+          ? raw.assessments
+          : [];
     return {
       success: true,
-      data: response.data,
+      data: list,
       message: response.message,
     };
   } catch (error) {
@@ -174,4 +182,29 @@ export const getOrganizationAssessmentsOngoing = async () => {
  */
 export const getOrganizationAssessmentsCompleted = async () => {
   return getOrganizationAssessments('completed');
+};
+
+/**
+ * Compare two assessments.
+ * POST /assessment/compare with body { assessment_ids: [idA, idB] }.
+ * Call only when both assessments are selected.
+ * @param {string[]} assessmentIds - [assessmentIdA, assessmentIdB]
+ */
+export const compareAssessments = async (assessmentIds) => {
+  try {
+    const response = await api.post('/assessment/compare', {
+      assessment_ids: Array.isArray(assessmentIds) ? assessmentIds : [assessmentIds],
+    });
+    return {
+      success: true,
+      data: response.data,
+      message: response.message,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: getErrorMessage(error),
+      data: null,
+    };
+  }
 };

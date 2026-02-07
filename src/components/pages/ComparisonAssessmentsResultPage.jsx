@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -9,9 +9,12 @@ import {
   AlertCircle,
   Plus,
   Minus,
+  Loader2,
+  ChevronDown,
 } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { getOrganizationAssessmentsCompleted, compareAssessments } from '../../services/assessmentService';
 import {
   Radar,
   RadarChart,
@@ -91,6 +94,9 @@ const MATURITY_COLORS = {
   Transformational: '#059669',
 };
 
+const ASSESSMENT_A_COLOR = '#2563eb';
+const ASSESSMENT_B_COLOR = '#6b7280';
+
 const assessmentHeaderLinks = [
   { label: 'Home', path: '/offerings' },
   { label: 'Assessments', path: '/my-assessments' },
@@ -105,6 +111,28 @@ function formatDate(isoString) {
   } catch {
     return isoString;
   }
+}
+
+/** Normalize compare API response: { assessments, comparison } → { assessmentA, assessmentB, comparison } */
+function normalizeCompareResponse(data, idA, idB, completedList) {
+  const raw = data?.data ?? data;
+  if (!raw) return { assessmentA: null, assessmentB: null, comparison: null };
+  const listA = completedList.find((a) => a.id === idA);
+  const listB = completedList.find((a) => a.id === idB);
+  const toShape = (r, listItem) => ({
+    assessment_id: r?.assessment_id ?? r?.id ?? listItem?.id,
+    assessment_name: r?.assessment_name ?? r?.name ?? listItem?.name ?? 'Assessment',
+    completed_at: r?.completed_at ?? listItem?.completed_at,
+    overall_score: Number(r?.overall_score) ?? 0,
+    overall_maturity_level: r?.overall_maturity_level ?? 'Established',
+    pillar_results: Array.isArray(r?.pillar_results) ? r.pillar_results : [],
+  });
+  const assessments = Array.isArray(raw.assessments) ? raw.assessments : [];
+  const aById = assessments.find((a) => (a.assessment_id || a.id) === idA);
+  const bById = assessments.find((a) => (a.assessment_id || a.id) === idB);
+  const assessmentA = aById ? toShape(aById, listA) : (assessments[0] ? toShape(assessments[0], listA) : null);
+  const assessmentB = bById ? toShape(bById, listB) : (assessments[1] ? toShape(assessments[1], listB) : null);
+  return { assessmentA, assessmentB, comparison: raw.comparison ?? null };
 }
 
 // Custom tick for radar
@@ -129,20 +157,126 @@ const CustomPolarAngleAxisTick = ({ payload, x, y, cx, cy }) => {
 export function ComparisonAssessmentResultsPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const assessmentA = ASSESSMENT_A;
-  const assessmentB = ASSESSMENT_B;
+  const [completedList, setCompletedList] = useState([]);
+  const [loadingList, setLoadingList] = useState(true);
+  const [listError, setListError] = useState(null);
+  const [selectedIdA, setSelectedIdA] = useState('');
+  const [selectedIdB, setSelectedIdB] = useState('');
+  const [compareResult, setCompareResult] = useState(null);
+  const [loadingCompare, setLoadingCompare] = useState(false);
+  const [compareError, setCompareError] = useState(null);
+  const [dropdownAOpen, setDropdownAOpen] = useState(false);
+  const [dropdownBOpen, setDropdownBOpen] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingList(true);
+    setListError(null);
+    getOrganizationAssessmentsCompleted()
+      .then((res) => {
+        if (cancelled) return;
+        const raw = res.data;
+        const list = Array.isArray(raw)
+          ? raw
+          : Array.isArray(raw?.data)
+            ? raw.data
+            : Array.isArray(raw?.assessments)
+              ? raw.assessments
+              : [];
+        if (res.success) {
+          setCompletedList(list);
+          setListError(null);
+        } else {
+          setListError(res.error || 'Failed to load assessments');
+          setCompletedList(list);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setListError(err?.message || 'Failed to load assessments');
+          setCompletedList([]);
+        }
+      })
+      .finally(() => { if (!cancelled) setLoadingList(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedIdA || !selectedIdB || selectedIdA === selectedIdB) {
+      setCompareResult(null);
+      setCompareError(null);
+      return;
+    }
+    let cancelled = false;
+    setLoadingCompare(true);
+    setCompareError(null);
+    compareAssessments([selectedIdA, selectedIdB])
+      .then((res) => {
+        if (cancelled) return;
+        if (res.success && res.data != null) {
+          const payload = res.data?.data ?? res.data;
+          const normalized = normalizeCompareResponse(payload, selectedIdA, selectedIdB, completedList);
+          setCompareResult(normalized.assessmentA && normalized.assessmentB ? normalized : null);
+          if (!normalized.assessmentA || !normalized.assessmentB) setCompareError('Could not parse comparison result.');
+        } else {
+          setCompareResult(null);
+          setCompareError(res.error || 'Failed to load comparison.');
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setCompareResult(null);
+          setCompareError(err?.message || 'Failed to load comparison.');
+        }
+      })
+      .finally(() => { if (!cancelled) setLoadingCompare(false); });
+    return () => { cancelled = true; };
+  }, [selectedIdA, selectedIdB, completedList]);
+
+  const { assessmentA: assessmentADataRaw, assessmentB: assessmentBDataRaw, comparison: comparisonData } = compareResult ?? {};
+  const assessmentAData = assessmentADataRaw ?? ASSESSMENT_A;
+  const assessmentBData = assessmentBDataRaw ?? ASSESSMENT_B;
+  const hasCompareData = compareResult != null && assessmentADataRaw && assessmentBDataRaw;
+
+  const optionsForA = completedList.filter((a) => a.id !== selectedIdB);
+  const optionsForB = completedList.filter((a) => a.id !== selectedIdA);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownAOpen && !e.target.closest('.comparison-dropdown-a')) setDropdownAOpen(false);
+      if (dropdownBOpen && !e.target.closest('.comparison-dropdown-b')) setDropdownBOpen(false);
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [dropdownAOpen, dropdownBOpen]);
 
   const scoreChange = useMemo(() => {
-    const a = assessmentA.overall_score ?? 0;
-    const b = assessmentB.overall_score ?? 0;
+    const a = assessmentAData.overall_score ?? 0;
+    const b = assessmentBData.overall_score ?? 0;
     const diff = Math.round((a - b) * 100) / 100;
     const pct = b !== 0 ? Math.round(((a - b) / b) * 1000) / 10 : 0;
     return { diff, pct };
-  }, [assessmentA.overall_score, assessmentB.overall_score]);
+  }, [assessmentAData.overall_score, assessmentBData.overall_score]);
 
   const pillarComparison = useMemo(() => {
-    const aPillars = (assessmentA.pillar_results || []).sort((x, y) => x.pillar_order - y.pillar_order);
-    const bPillars = (assessmentB.pillar_results || []).sort((x, y) => x.pillar_order - y.pillar_order);
+    if (Array.isArray(comparisonData?.pillar_comparison) && comparisonData.pillar_comparison.length > 0) {
+      return comparisonData.pillar_comparison
+        .sort((x, y) => (x.pillar_order ?? 0) - (y.pillar_order ?? 0))
+        .map((p) => ({
+          pillar_name: p.pillar_name,
+          short_name: PILLAR_SHORT_NAMES[p.pillar_name] || p.pillar_name,
+          pillar_order: p.pillar_order ?? 0,
+          scoreA: Number(p.assessment_1_score) ?? 0,
+          scoreB: Number(p.assessment_2_score) ?? 0,
+          maturityA: p.assessment_1_maturity || 'Established',
+          maturityB: p.assessment_2_maturity || 'Established',
+          diff: Math.round(Number(p.score_difference) * 100) / 100,
+          improved: p.improved,
+          declined: p.declined,
+        }));
+    }
+    const aPillars = (assessmentAData.pillar_results || []).sort((x, y) => x.pillar_order - y.pillar_order);
+    const bPillars = (assessmentBData.pillar_results || []).sort((x, y) => x.pillar_order - y.pillar_order);
     return aPillars.map((pa, i) => {
       const pb = bPillars.find((p) => p.pillar_id === pa.pillar_id) || bPillars[i];
       const scoreA = Number(pa.average_score) || 0;
@@ -159,7 +293,7 @@ export function ComparisonAssessmentResultsPage() {
         diff,
       };
     });
-  }, [assessmentA.pillar_results, assessmentB.pillar_results]);
+  }, [comparisonData?.pillar_comparison, assessmentAData.pillar_results, assessmentBData.pillar_results]);
 
   const radarData = useMemo(
     () =>
@@ -172,24 +306,20 @@ export function ComparisonAssessmentResultsPage() {
     [pillarComparison]
   );
 
-  const topImprovements = useMemo(
-    () =>
-      pillarComparison
-        .filter((p) => p.diff > 0)
-        .sort((a, b) => b.diff - a.diff)
-        .slice(0, 5)
-        .map((p) => ({ name: p.short_name, change: p.diff })),
-    [pillarComparison]
-  );
-  const areasNeedingAttention = useMemo(
-    () =>
-      pillarComparison
-        .filter((p) => p.diff < 0)
-        .sort((a, b) => a.diff - b.diff)
-        .slice(0, 5)
-        .map((p) => ({ name: p.short_name, change: p.diff })),
-    [pillarComparison]
-  );
+  const topImprovements = useMemo(() => {
+    const list = pillarComparison.filter((p) => p.improved === true || (p.improved !== false && p.diff > 0));
+    return list
+      .sort((a, b) => b.diff - a.diff)
+      .slice(0, 5)
+      .map((p) => ({ name: p.short_name, change: p.diff }));
+  }, [pillarComparison]);
+  const areasNeedingAttention = useMemo(() => {
+    const list = pillarComparison.filter((p) => p.declined === true || (p.declined !== false && p.diff < 0));
+    return list
+      .sort((a, b) => a.diff - b.diff)
+      .slice(0, 5)
+      .map((p) => ({ name: p.short_name, change: p.diff }));
+  }, [pillarComparison]);
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden">
@@ -211,7 +341,7 @@ export function ComparisonAssessmentResultsPage() {
         </motion.div>
       </section>
 
-      {/* Assessment identification cards */}
+      {/* Assessment selection and identification */}
       <section className="px-8 pb-8 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -219,23 +349,156 @@ export function ComparisonAssessmentResultsPage() {
           transition={{ delay: 0.1 }}
           className="grid grid-cols-1 md:grid-cols-2 gap-6"
         >
-          <Card className="border-2 border-[#46cdc6]/30 bg-[#46cdc6]/5">
-            <CardHeader className="pb-2">
-              <CardDescription className="text-[#2563eb] font-semibold">Assessment A (Latest)</CardDescription>
-              <CardTitle className="text-xl">{assessmentA.assessment_name}</CardTitle>
-              <p className="text-sm text-slate-500">{formatDate(assessmentA.completed_at)}</p>
+          <Card className="border-2 border-[#46cdc6]/30 bg-[#46cdc6]/5 min-w-0 overflow-visible">
+            <CardHeader className="pb-2 min-w-0 overflow-visible">
+              <CardDescription className="font-semibold mb-2" style={{ color: ASSESSMENT_A_COLOR }}>Assessment A (Latest)</CardDescription>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Select assessment</label>
+              <div className="relative comparison-dropdown-a min-w-0">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setDropdownBOpen(false); setDropdownAOpen((v) => !v); }}
+                  disabled={loadingList || completedList.length === 0}
+                  className={`
+                    w-full min-w-0 overflow-hidden px-4 py-3 bg-white text-left rounded shadow-sm tracking-[0.05rem]
+                    border border-gray-100 flex justify-between items-center gap-2
+                    transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed
+                    ${dropdownAOpen ? 'ring-2 ring-[#46cdc6]' : 'hover:border-[#46cdc6]'}
+                  `}
+                >
+                  <span className={`min-w-0 flex-1 truncate block overflow-hidden text-ellipsis ${selectedIdA ? 'text-[#1a1a1a]' : 'text-gray-400'}`}>
+                    {selectedIdA
+                      ? (() => {
+                          const a = completedList.find((x) => x.id === selectedIdA);
+                          return a ? `${a.name || 'Assessment'} — ${formatDate(a.completed_at)}` : 'Select assessment';
+                        })()
+                      : 'Select assessment'}
+                  </span>
+                  <div className="bg-[#46cdc6] px-1.5 py-1 rounded shrink-0">
+                    <ChevronDown className={`w-4 h-4 text-white transition-transform duration-200 ${dropdownAOpen ? 'rotate-180' : ''}`} strokeWidth={2} />
+                  </div>
+                </button>
+                {dropdownAOpen && !loadingList && (
+                  <div className="absolute w-full mt-1 rounded shadow-sm border border-gray-100 overflow-hidden z-[60] bg-white">
+                    <div className="max-h-48 overflow-y-auto">
+                      {optionsForA.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-gray-500">No assessments available</div>
+                      ) : (
+                        optionsForA.map((a) => (
+                          <button
+                            key={a.id}
+                            type="button"
+                            className={`
+                              w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors
+                              ${selectedIdA === a.id ? 'text-[#46cdc6] bg-[#46cdc6]/5' : 'text-[#1a1a1a]'}
+                            `}
+                            onClick={(e) => { e.stopPropagation(); setSelectedIdA(a.id); setDropdownAOpen(false); }}
+                          >
+                            {a.name || 'Assessment'} — {formatDate(a.completed_at)}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              {hasCompareData && (
+                <>
+                  <p className="text-lg font-semibold text-slate-900 mt-3 break-words">
+                    {assessmentAData.assessment_name || '—'}
+                  </p>
+                  <p className="text-sm text-slate-600">{formatDate(assessmentAData.completed_at)}</p>
+                </>
+              )}
             </CardHeader>
           </Card>
-          <Card className="border-2 border-slate-200 bg-white">
-            <CardHeader className="pb-2">
-              <CardDescription className="text-slate-600 font-semibold">Assessment B (Previous)</CardDescription>
-              <CardTitle className="text-xl">{assessmentB.assessment_name}</CardTitle>
-              <p className="text-sm text-slate-500">{formatDate(assessmentB.completed_at)}</p>
+          <Card className="border-2 border-slate-200 bg-white min-w-0 overflow-visible">
+            <CardHeader className="pb-2 min-w-0 overflow-visible">
+              <CardDescription className="text-slate-600 font-semibold mb-2">Assessment B (Previous)</CardDescription>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Select assessment</label>
+              <div className="relative comparison-dropdown-b min-w-0">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setDropdownAOpen(false); setDropdownBOpen((v) => !v); }}
+                  disabled={loadingList || completedList.length === 0}
+                  className={`
+                    w-full min-w-0 overflow-hidden px-4 py-3 bg-white text-left rounded shadow-sm tracking-[0.05rem]
+                    border border-gray-100 flex justify-between items-center gap-2
+                    transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed
+                    ${dropdownBOpen ? 'ring-2 ring-[#46cdc6]' : 'hover:border-[#46cdc6]'}
+                  `}
+                >
+                  <span className={`min-w-0 flex-1 truncate block overflow-hidden text-ellipsis ${selectedIdB ? 'text-[#1a1a1a]' : 'text-gray-400'}`}>
+                    {selectedIdB
+                      ? (() => {
+                          const a = completedList.find((x) => x.id === selectedIdB);
+                          return a ? `${a.name || 'Assessment'} — ${formatDate(a.completed_at)}` : 'Select assessment';
+                        })()
+                      : 'Select assessment'}
+                  </span>
+                  <div className="bg-[#46cdc6] px-1.5 py-1 rounded shrink-0">
+                    <ChevronDown className={`w-4 h-4 text-white transition-transform duration-200 ${dropdownBOpen ? 'rotate-180' : ''}`} strokeWidth={2} />
+                  </div>
+                </button>
+                {dropdownBOpen && !loadingList && (
+                  <div className="absolute w-full mt-1 rounded shadow-sm border border-gray-100 overflow-hidden z-[60] bg-white">
+                    <div className="max-h-48 overflow-y-auto">
+                      {optionsForB.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-gray-500">No assessments available</div>
+                      ) : (
+                        optionsForB.map((a) => (
+                          <button
+                            key={a.id}
+                            type="button"
+                            className={`
+                              w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors
+                              ${selectedIdB === a.id ? 'text-[#46cdc6] bg-[#46cdc6]/5' : 'text-[#1a1a1a]'}
+                            `}
+                            onClick={(e) => { e.stopPropagation(); setSelectedIdB(a.id); setDropdownBOpen(false); }}
+                          >
+                            {a.name || 'Assessment'} — {formatDate(a.completed_at)}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              {hasCompareData && (
+                <>
+                  <p className="text-lg font-semibold text-slate-900 mt-3 break-words">
+                    {assessmentBData.assessment_name || '—'}
+                  </p>
+                  <p className="text-sm text-slate-600">{formatDate(assessmentBData.completed_at)}</p>
+                </>
+              )}
             </CardHeader>
           </Card>
         </motion.div>
+        {listError && (
+          <p className="mt-4 text-sm text-red-600 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" /> {listError}
+          </p>
+        )}
+        {loadingCompare && selectedIdA && selectedIdB && selectedIdA !== selectedIdB && (
+          <p className="mt-4 flex items-center gap-2 text-slate-600">
+            <Loader2 className="w-5 h-5 animate-spin shrink-0" /> Loading comparison…
+          </p>
+        )}
+        {compareError && (
+          <p className="mt-4 text-sm text-red-600 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" /> {compareError}
+          </p>
+        )}
+        {!hasCompareData && !loadingCompare && (
+          <p className="mt-6 text-center text-slate-500 font-medium">
+            Select two assessments above to view the comparison.
+          </p>
+        )}
       </section>
 
+      {/* Comparison content — only when we have compare API result */}
+      {hasCompareData && (
+        <>
       {/* Overall Score Comparison */}
       <section className="px-8 pb-10 relative z-10">
         <h2 className="text-2xl font-bold text-slate-900 mb-6">Overall Score Comparison</h2>
@@ -245,18 +508,21 @@ export function ComparisonAssessmentResultsPage() {
           transition={{ delay: 0.15 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-6"
         >
-          <Card className="border-2 border-[#46cdc6]/20">
+          <Card className="border-2 bg-[#2563eb]/5" style={{ borderColor: 'rgba(37, 99, 235, 0.25)' }}>
             <CardHeader className="pb-2">
-              <CardDescription className="text-slate-800 font-semibold">Assessment A</CardDescription>
+              <CardDescription className="font-semibold" style={{ color: ASSESSMENT_A_COLOR }}>Assessment A</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-[#2563eb]">
-                {assessmentA.overall_score?.toFixed(1)} <span className="text-lg font-normal text-slate-500">/ 5</span>
+              <div className="text-3xl font-bold" style={{ color: ASSESSMENT_A_COLOR }}>
+                {assessmentAData.overall_score?.toFixed(1)} <span className="text-lg font-normal text-slate-500">/ 5</span>
               </div>
-              <div className="mt-2 h-3 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-[#2563eb]"
-                  style={{ width: `${Math.min(100, (assessmentA.overall_score / 5) * 100)}%` }}
+              <div className="mt-2 h-3 rounded-full overflow-hidden bg-[#2563eb]/20">
+                <motion.div
+                  className="h-full rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(100, ((assessmentAData.overall_score ?? 0) / 5) * 100)}%` }}
+                  transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                  style={{ backgroundColor: ASSESSMENT_A_COLOR }}
                 />
               </div>
             </CardContent>
@@ -275,18 +541,21 @@ export function ComparisonAssessmentResultsPage() {
               </p>
             </CardContent>
           </Card>
-          <Card className="border-2 border-slate-200">
+          <Card className="border-2 bg-[#6b7280]/10" style={{ borderColor: 'rgba(107, 114, 128, 0.3)' }}>
             <CardHeader className="pb-2">
-              <CardDescription className="text-slate-800 font-semibold">Assessment B</CardDescription>
+              <CardDescription className="font-semibold text-slate-700">Assessment B</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-slate-700">
-                {assessmentB.overall_score?.toFixed(1)} <span className="text-lg font-normal text-slate-500">/ 5</span>
+                {assessmentBData.overall_score?.toFixed(1)} <span className="text-lg font-normal text-slate-500">/ 5</span>
               </div>
-              <div className="mt-2 h-3 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-slate-500"
-                  style={{ width: `${Math.min(100, (assessmentB.overall_score / 5) * 100)}%` }}
+              <div className="mt-2 h-3 rounded-full overflow-hidden bg-[#6b7280]/25">
+                <motion.div
+                  className="h-full rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(100, ((assessmentBData.overall_score ?? 0) / 5) * 100)}%` }}
+                  transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                  style={{ backgroundColor: ASSESSMENT_B_COLOR }}
                 />
               </div>
             </CardContent>
@@ -319,11 +588,14 @@ export function ComparisonAssessmentResultsPage() {
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <span className="text-sm text-slate-700 font-medium w-24 shrink-0">Assessment A</span>
-                      <div className="flex-1 h-6 bg-slate-100 rounded overflow-hidden">
-                        <div
-                          className="h-full rounded bg-[#2563eb]"
-                          style={{ width: `${Math.min(100, (p.scoreA / 5) * 100)}%` }}
+                      <span className="text-sm font-medium w-24 shrink-0" style={{ color: ASSESSMENT_A_COLOR }}>Assessment A</span>
+                      <div className="flex-1 h-6 rounded overflow-hidden bg-[#2563eb]/20">
+                        <motion.div
+                          className="h-full rounded"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.min(100, (p.scoreA / 5) * 100)}%` }}
+                          transition={{ duration: 0.7, delay: 0.05 * idx, ease: [0.22, 1, 0.36, 1] }}
+                          style={{ backgroundColor: ASSESSMENT_A_COLOR }}
                         />
                       </div>
                       <span
@@ -335,11 +607,14 @@ export function ComparisonAssessmentResultsPage() {
                       <span className="text-sm font-medium text-slate-700 w-16">{p.scoreA.toFixed(2)} / 5</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-sm text-slate-700 font-medium w-24 shrink-0">Assessment B</span>
-                      <div className="flex-1 h-6 bg-slate-100 rounded overflow-hidden">
-                        <div
-                          className="h-full rounded bg-slate-500"
-                          style={{ width: `${Math.min(100, (p.scoreB / 5) * 100)}%` }}
+                      <span className="text-sm font-medium w-24 shrink-0 text-slate-600">Assessment B</span>
+                      <div className="flex-1 h-6 rounded overflow-hidden bg-[#6b7280]/25">
+                        <motion.div
+                          className="h-full rounded"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.min(100, (p.scoreB / 5) * 100)}%` }}
+                          transition={{ duration: 0.7, delay: 0.05 * idx, ease: [0.22, 1, 0.36, 1] }}
+                          style={{ backgroundColor: ASSESSMENT_B_COLOR }}
                         />
                       </div>
                       <span
@@ -386,17 +661,17 @@ export function ComparisonAssessmentResultsPage() {
                     return null;
                   }}
                 />
-                <Radar name="Assessment A" dataKey="Assessment A" stroke="#2563eb" fill="#2563eb" fillOpacity={0.3} strokeWidth={2} dot={{ fill: '#2563eb', r: 4 }} />
-                <Radar name="Assessment B" dataKey="Assessment B" stroke="#6b7280" fill="#6b7280" fillOpacity={0.15} strokeWidth={2} dot={{ fill: '#6b7280', r: 4 }} />
+                <Radar name="Assessment A" dataKey="Assessment A" stroke={ASSESSMENT_A_COLOR} fill={ASSESSMENT_A_COLOR} fillOpacity={0.3} strokeWidth={2} dot={{ fill: ASSESSMENT_A_COLOR, r: 4 }} />
+                <Radar name="Assessment B" dataKey="Assessment B" stroke={ASSESSMENT_B_COLOR} fill={ASSESSMENT_B_COLOR} fillOpacity={0.15} strokeWidth={2} dot={{ fill: ASSESSMENT_B_COLOR, r: 4 }} />
               </RadarChart>
             </ResponsiveContainer>
             <div className="flex justify-center gap-6 mt-4">
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-[#2563eb]" />
+                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: ASSESSMENT_A_COLOR }} />
                 <span className="text-sm font-medium">Assessment A</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-slate-500" />
+                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: ASSESSMENT_B_COLOR }} />
                 <span className="text-sm font-medium">Assessment B</span>
               </div>
             </div>
@@ -426,7 +701,8 @@ export function ComparisonAssessmentResultsPage() {
                   {pillarComparison.map((p) => {
                     const idxA = MATURITY_LEVELS_ORDER.indexOf(p.maturityA);
                     const idxB = MATURITY_LEVELS_ORDER.indexOf(p.maturityB);
-                    const improved = idxA > idxB;
+                    const improved = p.improved === true || (p.improved !== false && idxA > idxB);
+                    const declined = p.declined === true || (p.declined !== false && idxA < idxB);
                     return (
                       <tr key={p.pillar_name} className="border-b border-slate-100 hover:bg-slate-50/50">
                         <td className="py-3 px-4 font-medium text-slate-900">{p.short_name}</td>
@@ -459,6 +735,10 @@ export function ComparisonAssessmentResultsPage() {
                           {improved ? (
                             <span className="text-emerald-600 font-medium flex items-center justify-end gap-1">
                               <CheckCircle2 className="w-4 h-4" /> Improved
+                            </span>
+                          ) : declined ? (
+                            <span className="text-amber-600 font-medium flex items-center justify-end gap-1">
+                              <TrendingDown className="w-4 h-4" /> Declined
                             </span>
                           ) : (
                             <span className="text-slate-500">No Change</span>
@@ -594,6 +874,8 @@ export function ComparisonAssessmentResultsPage() {
           </Card>
         </div>
       </section>
+        </>
+      )}
     </div>
   );
 }

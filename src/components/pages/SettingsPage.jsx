@@ -29,7 +29,6 @@ import {
   getConfig,
   createCheckoutSession,
   getSubscription,
-  getPaymentMethods,
   getInvoices,
   createBillingPortalSession,
 } from '../../services/billingService';
@@ -111,7 +110,6 @@ export function SettingsPage() {
 
   // Billing tab: subscription, payment methods, invoices
   const [subscription, setSubscription] = useState(null);
-  const [paymentMethods, setPaymentMethods] = useState([]);
   const [invoices, setInvoices] = useState([]);
   const [billingLoading, setBillingLoading] = useState(false);
   const [billingError, setBillingError] = useState(null);
@@ -159,22 +157,19 @@ export function SettingsPage() {
     setBillingError(null);
     Promise.all([
       getSubscription(),
-      getPaymentMethods(),
       getInvoices(10),
     ])
-      .then(([subRes, pmRes, invRes]) => {
+      .then(([subRes, invRes]) => {
         const subPayload = subRes.success && subRes.data != null ? (subRes.data?.data ?? subRes.data) : null;
         setSubscription(subPayload);
-        setPaymentMethods(pmRes.success && Array.isArray(pmRes.data) ? pmRes.data : []);
         setInvoices(invRes.success && Array.isArray(invRes.data) ? invRes.data : []);
         if (!subRes.success && subRes.error) setBillingError(subRes.error);
-        else if (!pmRes.success && pmRes.error) setBillingError(pmRes.error);
+        else if (!invRes.success && invRes.error) setBillingError(invRes.error);
         else setBillingError(null);
       })
       .catch((err) => {
         setBillingError(err?.message || 'Failed to load billing data');
         setSubscription(null);
-        setPaymentMethods([]);
         setInvoices([]);
       })
       .finally(() => setBillingLoading(false));
@@ -599,7 +594,10 @@ export function SettingsPage() {
                             <div className="p-6 md:p-8">
                               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                                 <div>
-                                  <div className="flex items-center gap-3 mb-2">
+                                  <p className="text-slate-600 text-sm mb-2">
+                                    {subscription?.plan?.description ?? (subscription ? 'Your current plan' : 'Subscribe from the Pricing tab')}
+                                  </p>
+                                  <div className="flex items-center gap-3">
                                     <h4 className="text-2xl font-bold text-slate-900">
                                       {subscription?.plan?.name ?? subscription?.plan_name ?? 'No active plan'}
                                     </h4>
@@ -615,28 +613,15 @@ export function SettingsPage() {
                                       </span>
                                     )}
                                   </div>
-                                  <p className="text-slate-600 text-sm">
-                                    {subscription?.plan?.description ?? (subscription ? 'Your current plan' : 'Subscribe from the Pricing tab')}
-                                  </p>
                                 </div>
                                 {subscription?.plan && (
-                                  <div className="text-right flex-shrink-0 flex flex-col items-end gap-3">
-                                    <div>
-                                      <div className="text-3xl font-bold text-slate-900">
-                                        {formatPlanPrice(subscription.plan, subscription) ?? '—'}
-                                      </div>
-                                      <div className="text-sm text-slate-500">
-                                        per {(subscription.plan?.billing_interval ?? subscription.plan?.interval ?? subscription?.interval ?? 'month').replace(/ly$/, '')}
-                                      </div>
+                                  <div className="text-right flex-shrink-0">
+                                    <div className="text-3xl font-bold text-slate-900">
+                                      {formatPlanPrice(subscription.plan, subscription) ?? '—'}
                                     </div>
-                                    <Button
-                                      type="button"
-                                      onClick={() => setActiveTab('pricing')}
-                                      className="rounded-xl font-semibold"
-                                      style={{ backgroundColor: BILLING_TEAL, color: 'white' }}
-                                    >
-                                      Upgrade plan
-                                    </Button>
+                                    <div className="text-sm text-slate-500">
+                                      per {(subscription.plan?.billing_interval ?? subscription.plan?.interval ?? subscription?.interval ?? 'month').replace(/ly$/, '')}
+                                    </div>
                                   </div>
                                 )}
                               </div>
@@ -660,100 +645,106 @@ export function SettingsPage() {
                             </div>
                           </div>
 
-                          {/* Plan features */}
-                          {subscription?.plan?.features && typeof subscription.plan.features === 'object' && (
-                            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                              <h4 className="flex items-center gap-2 font-bold text-slate-900 mb-4">
-                                <Sparkles className="w-4 h-4" style={{ color: BILLING_TEAL }} />
-                                Plan features
-                              </h4>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {FEATURE_BOOLEAN_KEYS.filter((key) => key in subscription.plan.features).map((key) => {
-                                  const value = subscription.plan.features[key];
-                                  if (typeof value !== 'boolean') return null;
-                                  const tooltips = subscription.plan.features?.feature_tooltips ?? {};
-                                  const label = snakeToTitleCase(key);
-                                  const tooltip = tooltips[key];
-                                  return (
-                                    <div
-                                      key={key}
-                                      className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/80 border border-slate-100"
-                                      title={tooltip || undefined}
-                                    >
-                                      {value ? (
-                                        <span className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(70,205,207,0.2)' }}>
-                                          <Check className="w-3.5 h-3.5" style={{ color: BILLING_TEAL }} />
-                                        </span>
-                                      ) : (
-                                        <span className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
-                                          <X className="w-3 h-3 text-slate-400" />
-                                        </span>
-                                      )}
-                                      <span className={`text-sm font-medium ${value ? 'text-slate-800' : 'text-slate-400'}`}>{label}</span>
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                          {/* Plan features + Upgrade features side by side */}
+                          {((subscription?.plan?.features && typeof subscription.plan.features === 'object') || (subscription?.upgrade_features && typeof subscription.upgrade_features === 'object' && Object.keys(subscription.upgrade_features).length > 0)) && (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                              {/* Plan features (current plan) */}
+                              {subscription?.plan?.features && typeof subscription.plan.features === 'object' && (
+                                <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                                  <h4 className="flex items-center gap-2 font-bold text-slate-900 mb-4">
+                                    <Sparkles className="w-4 h-4" style={{ color: BILLING_TEAL }} />
+                                    Plan features
+                                  </h4>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {FEATURE_BOOLEAN_KEYS.filter((key) => key in subscription.plan.features).map((key) => {
+                                      const value = subscription.plan.features[key];
+                                      if (typeof value !== 'boolean') return null;
+                                      const tooltips = subscription.plan.features?.feature_tooltips ?? {};
+                                      const label = snakeToTitleCase(key);
+                                      const tooltip = tooltips[key];
+                                      return (
+                                        <div
+                                          key={key}
+                                          className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/80 border border-slate-100"
+                                          title={tooltip || undefined}
+                                        >
+                                          {value ? (
+                                            <span className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: 'rgba(70,205,207,0.2)' }}>
+                                              <Check className="w-3.5 h-3.5" style={{ color: BILLING_TEAL }} />
+                                            </span>
+                                          ) : (
+                                            <span className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
+                                              <X className="w-3 h-3 text-slate-400" />
+                                            </span>
+                                          )}
+                                          <span className={`text-sm font-medium ${value ? 'text-slate-800' : 'text-slate-400'}`}>{label}</span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Upgrade features (available in next plan) */}
+                              {subscription?.upgrade_features && typeof subscription.upgrade_features === 'object' && Object.keys(subscription.upgrade_features).length > 0 && (
+                                <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                                  <h4 className="flex items-center gap-2 font-bold text-slate-900 mb-4">
+                                    <CheckCircle2 className="w-4 h-4" style={{ color: BILLING_TEAL }} />
+                                    Upgrade features
+                                  </h4>
+                                  <p className="text-sm text-slate-600 mb-1">
+                                    Features you get when you upgrade to a higher plan.
+                                  </p>
+                                  {(() => {
+                                    const first = Object.values(subscription.upgrade_features).find((f) => f && typeof f === 'object');
+                                    const availableIn = first?.available_in ?? first?.available_in_plan ?? 'Higher plan';
+                                    const planPrice = first?.plan_price;
+                                    return (availableIn !== 'Higher plan' || planPrice != null) ? (
+                                      <p className="text-sm font-medium text-slate-600 mb-4">
+                                        Available in {availableIn}
+                                        {planPrice != null && (
+                                          <span className="text-slate-500 font-normal"> · ${Number(planPrice).toFixed(0)}/mo</span>
+                                        )}
+                                      </p>
+                                    ) : null;
+                                  })()}
+                                  <div className="space-y-3">
+                                    {Object.entries(subscription.upgrade_features).map(([key, feature]) => {
+                                      if (!feature || typeof feature !== 'object') return null;
+                                      const tooltip = feature.tooltip ?? '';
+                                      const label = key.toLowerCase() === 'sso' ? 'SSO' : snakeToTitleCase(key);
+                                      return (
+                                        <div
+                                          key={key}
+                                          className="flex flex-col gap-1 p-3 rounded-xl bg-slate-50/80 border border-slate-100"
+                                          title={tooltip || undefined}
+                                        >
+                                          <div className="flex items-center gap-2">
+                                            <span className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 border-2 border-slate-300 bg-white">
+                                              <span className="w-2 h-2 rounded-full bg-slate-400" />
+                                            </span>
+                                            <span className="text-sm font-medium text-slate-800">{label}</span>
+                                          </div>
+                                          {tooltip && (
+                                            <p className="pl-8 text-xs text-slate-500 leading-relaxed">{tooltip}</p>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    onClick={() => setActiveTab('pricing')}
+                                    variant="outline"
+                                    className="mt-4 rounded-xl border-2 w-full sm:w-auto"
+                                    style={{ borderColor: BILLING_TEAL, color: BILLING_TEAL }}
+                                  >
+                                    View upgrade options
+                                  </Button>
+                                </div>
+                              )}
                             </div>
                           )}
-
-                          {/* Payment methods — card style */}
-                          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                            <h4 className="flex items-center gap-2 font-bold text-slate-900 mb-4">
-                              <CreditCard className="w-4 h-4" style={{ color: BILLING_TEAL }} />
-                              Payment methods
-                            </h4>
-                            {paymentMethods.length === 0 ? (
-                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-5 rounded-xl bg-slate-50 border border-slate-100">
-                                <p className="text-slate-600">No payment method on file.</p>
-                                <Button
-                                  variant="outline"
-                                  className="rounded-xl border-2 self-start sm:self-center"
-                                  onClick={handleOpenBillingPortal}
-                                  disabled={portalLoading}
-                                  style={{ borderColor: BILLING_TEAL, color: BILLING_TEAL }}
-                                >
-                                  {portalLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add payment method'}
-                                </Button>
-                              </div>
-                            ) : (
-                              <div className="grid gap-4 sm:grid-cols-2">
-                                {paymentMethods.map((pm) => {
-                                  const brand = (pm.card?.brand ?? pm.brand ?? 'card').toLowerCase();
-                                  const last4 = pm.card?.last4 ?? pm.last4 ?? '••••';
-                                  const expMonth = pm.card?.exp_month ?? pm.exp_month;
-                                  const expYear = pm.card?.exp_year ?? pm.exp_year;
-                                  const exp = expMonth != null && expYear != null
-                                    ? `${String(expMonth).padStart(2, '0')}/${String(expYear).slice(-2)}`
-                                    : null;
-                                  const brandLabel = (pm.card?.brand ?? pm.brand ?? 'CARD').toUpperCase();
-                                  return (
-                                    <div
-                                      key={pm.id}
-                                      className="relative overflow-hidden rounded-xl border-2 border-slate-200 bg-gradient-to-br from-slate-800 to-slate-900 p-5 text-white min-h-[100px] flex flex-col justify-between"
-                                    >
-                                      <div className="flex items-start justify-between">
-                                        <span className="text-xs font-bold uppercase tracking-widest text-white/70">{brandLabel}</span>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-8 text-white/80 hover:text-white hover:bg-white/10 rounded-lg"
-                                          onClick={handleOpenBillingPortal}
-                                          disabled={portalLoading}
-                                        >
-                                          {portalLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Update'}
-                                        </Button>
-                                      </div>
-                                      <div>
-                                        <p className="font-mono text-lg tracking-widest">•••• •••• •••• {last4}</p>
-                                        {exp && <p className="text-xs text-white/60 mt-1">Expires {exp}</p>}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
 
                           {/* Invoices */}
                           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

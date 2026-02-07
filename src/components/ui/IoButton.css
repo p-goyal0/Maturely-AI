@@ -1,0 +1,88 @@
+/* IoButton – reusable CTA style (from Uiverse.io by adamgiebl) */
+
+.io-button {
+  background: #a370f0;
+  color: white;
+  font-family: inherit;
+  padding: 0.35em;
+  padding-left: 1.2em;
+  font-size: 17px;
+  font-weight: 500;
+  border-radius: 0.9em;
+  border: none;
+  letter-spacing: 0.05em;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: inset 0 0 1.6em -0.6em #714da6;
+  overflow: hidden;
+  position: relative;
+  height: 2.8em;
+  padding-right: 3.3em;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.io-button:hover {
+  background: #8f5fe8;
+}
+
+.io-button:active {
+  transform: scale(0.98);
+}
+
+.io-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.io-button__icon {
+  background: white;
+  margin-left: 1em;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.2em;
+  width: 2.2em;
+  border-radius: 0.7em;
+  box-shadow: 0.1em 0.1em 0.6em 0.2em #7b52b9;
+  right: 0.3em;
+  transition: all 0.3s;
+}
+
+.io-button:hover .io-button__icon {
+  width: calc(100% - 0.6em);
+}
+
+.io-button:hover .io-button__icon svg {
+  transform: translateX(0.1em);
+}
+
+.io-button:active .io-button__icon {
+  transform: scale(0.95);
+}
+
+.io-button__icon svg {
+  width: 1.1em;
+  height: 1.1em;
+  transition: transform 0.3s;
+  color: #7b52b9;
+}
+
+/* Optional variant: teal (for Compare / app theme) */
+.io-button--teal {
+  background: #46cdc6;
+  box-shadow: inset 0 0 1.6em -0.6em #15ae99;
+}
+
+.io-button--teal:hover {
+  background: #3ab8b1;
+}
+
+.io-button--teal .io-button__icon {
+  box-shadow: 0.1em 0.1em 0.6em 0.2em #15ae99;
+}
+
+.io-button--teal .io-button__icon svg {
+  color: #15ae99;
+}

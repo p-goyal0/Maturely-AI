@@ -12,8 +12,6 @@ import { OfferingsPage } from "./components/pages/OfferingsPage";
 import { ResultsDashboard } from "./components/pages/ResultsDashboard";
 import { RoadmapGenerator } from "./components/pages/RoadmapGenerator";
 import { UseCaseLibrary } from "./components/pages/UseCaseLibrary";
-import { ProjectInitiationPage } from "./components/pages/ProjectInitiationPage";
-import { UseCasesBankPage } from "./components/pages/UseCasesBankPage";
 import { RoleManagementPage } from "./components/pages/RoleManagementPage";
 import { TeamManagementPage } from "./components/pages/TeamManagementPage";
 import { SettingsPage } from "./components/pages/SettingsPage";
@@ -157,10 +155,6 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          {/* Standalone: Project Initiation / Studio — choose new use case vs start from scratch */}
-          <Route path="/studio" element={<ProjectInitiationPage />} />
-          {/* Use Case Explorer / Inspire Me — list from API, expandable cards */}
-          <Route path="/use-case-explorer" element={<UseCasesBankPage />} />
           <Route
             path="/role-management"
             element={

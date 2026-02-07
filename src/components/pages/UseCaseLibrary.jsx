@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { ChevronRight, Sparkles, PenTool, Plus, Save, Building2, Zap, TrendingUp, Shield, CheckCircle2, X, Lock, Globe, Loader2, Search, ChevronDown } from 'lucide-react';
+import { ChevronRight, Sparkles, PenTool, Plus, Save, Building2, Zap, TrendingUp, Shield, CheckCircle2, X, Lock, Globe, Loader2, Search, ChevronDown, AlertCircle, Share2, FileText } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
 import { Button } from '../ui/button';
-import { getUseCaseList } from '../../services/useCaseService';
+import { getUseCaseList, getUseCaseDetail } from '../../services/useCaseService';
+
+const PRIMARY = '#2DD4BF';
+const ACCENT_PURPLE = '#8B5CF6';
+const ACCENT_ORANGE = '#FF914D';
 
 const industryUseCases = {
   healthcare: [
@@ -70,6 +74,34 @@ export function UseCaseLibrary() {
   const [inspireSearchQuery, setInspireSearchQuery] = useState('');
   const [inspireDisplayCount, setInspireDisplayCount] = useState(6);
   const [expandedInspireCardKey, setExpandedInspireCardKey] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [detailUuid, setDetailUuid] = useState(null);
+  const [detailData, setDetailData] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState(null);
+
+  const openDetailDrawer = (uuid) => {
+    if (!uuid) return;
+    setDetailUuid(uuid);
+    setDrawerOpen(true);
+    setDetailData(null);
+    setDetailError(null);
+    setDetailLoading(true);
+    getUseCaseDetail(uuid)
+      .then((res) => {
+        if (res.success) setDetailData(res.data);
+        else setDetailError(res.error || 'Failed to load details');
+      })
+      .catch((err) => setDetailError(err?.message || 'Failed to load details'))
+      .finally(() => setDetailLoading(false));
+  };
+
+  const closeDrawer = () => {
+    setDrawerOpen(false);
+    setDetailUuid(null);
+    setDetailData(null);
+    setDetailError(null);
+  };
 
   const handleFormChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
 
@@ -133,12 +165,15 @@ export function UseCaseLibrary() {
       : Object.values(industryUseCases).flat();
 
   const inspireFilteredList = inspireListToShow.filter((uc) => {
-    const name = (uc.name ?? uc.title ?? uc.use_case_name ?? '').toLowerCase();
-    const desc = (uc.description ?? uc.desc ?? '').toLowerCase();
-    const cat = (uc.category ?? uc.category_name ?? '').toLowerCase();
     const q = inspireSearchQuery.trim().toLowerCase();
     if (!q) return true;
-    return name.includes(q) || desc.includes(q) || cat.includes(q);
+    const name = (uc.name ?? uc.title ?? uc.use_case_name ?? '').toLowerCase();
+    const desc = (uc.short_description ?? uc.description ?? uc.desc ?? '').toLowerCase();
+    const industry = (uc.industry ?? '').toLowerCase();
+    const fn = (uc.function ?? '').toLowerCase();
+    const aiType = (uc.ai_type ?? '').toLowerCase();
+    const cat = (uc.category ?? uc.category_name ?? '').toLowerCase();
+    return name.includes(q) || desc.includes(q) || industry.includes(q) || fn.includes(q) || aiType.includes(q) || cat.includes(q);
   });
 
   const inspireDisplayedList = inspireFilteredList.slice(0, inspireDisplayCount);
@@ -269,30 +304,31 @@ export function UseCaseLibrary() {
                   </div>
                 </section>
 
-                {/* Expandable use case list */}
+                {/* Use case list — same as Use Case Explorer: click opens detail drawer */}
                 <div className="space-y-3">
                   {inspireDisplayedList.map((uc, index) => {
-                    const cardKey = uc.id ?? uc.use_case_id ?? index;
-                    const isExpanded = expandedInspireCardKey === cardKey;
-                    const name = uc.name ?? uc.title ?? uc.use_case_name ?? 'Untitled';
-                    const description = uc.description ?? uc.desc ?? '';
-                    const category = uc.category ?? uc.category_name ?? '';
-                    const impact = uc.impact ?? 'Medium';
-                    const feasibility = uc.feasibility ?? 'Medium';
-                    const impactPct = impact === 'High' ? 84 : impact === 'Medium' ? 55 : 31;
+                    const key = uc.id ?? uc.use_case_id ?? index;
+                    const isExpanded = expandedInspireCardKey === key;
+                    const name = uc.name ?? uc.title ?? uc.use_case_name ?? '';
+                    const description = uc.short_description ?? uc.description ?? uc.desc ?? '';
+                    const industry = uc.industry ?? uc.category ?? uc.category_name ?? '';
+                    const aiType = uc.ai_type ?? '';
                     const tagVariant = index % 3;
-                    const accentTagClass = tagVariant === 0 ? 'bg-[#2DD4BF]/10 text-[#2DD4BF]' : tagVariant === 1 ? 'bg-[#8B5CF6]/10 text-[#8B5CF6]' : 'bg-[#FF914D]/10 text-[#FF914D]';
-                    const accentTagLabel = tagVariant === 0 ? 'NLP' : tagVariant === 1 ? 'Agentic AI' : 'Predictive';
+                    const accentClass = tagVariant === 0 ? PRIMARY : tagVariant === 1 ? ACCENT_PURPLE : ACCENT_ORANGE;
+                    const accentBg = `${accentClass}18`;
+                    const detailId = uc.id ?? uc.use_case_id ?? uc.uuid;
                     return (
                       <motion.div
-                        key={cardKey}
+                        key={key}
                         layout
                         initial={false}
                         transition={{ duration: 0.3, ease: [0.19, 1, 0.22, 1] }}
-                        className={`use-case-item group bg-white border-2 p-6 rounded-2xl transition-all cursor-pointer shadow-sm ${
-                          isExpanded ? 'border-[#2DD4BF] shadow-lg' : 'border-slate-100 hover:border-slate-200 hover:translate-y-[-4px]'
+                        className={`group bg-white border-2 p-6 rounded-2xl transition-all cursor-pointer shadow-sm ${
+                          isExpanded ? 'border-[#2DD4BF] shadow-lg' : 'border-slate-100 hover:border-slate-200 hover:-translate-y-1'
                         }`}
-                        onClick={() => setExpandedInspireCardKey(isExpanded ? null : cardKey)}
+                        onMouseEnter={() => setExpandedInspireCardKey(key)}
+                        onMouseLeave={() => setExpandedInspireCardKey(null)}
+                        onClick={(e) => { e.stopPropagation(); if (detailId) openDetailDrawer(detailId); }}
                       >
                         <div className="flex items-center justify-between gap-4">
                           <div className="flex items-center gap-4 md:gap-6 min-w-0">
@@ -300,27 +336,34 @@ export function UseCaseLibrary() {
                               {String(index + 1).padStart(2, '0')}
                             </span>
                             <h3 className="font-bold text-xl md:text-2xl text-slate-900 truncate">
-                              {name}
+                              {name || 'Untitled'}
                             </h3>
                             <div className="hidden md:flex gap-2 flex-shrink-0">
-                              <span className="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-bold uppercase text-slate-500 tracking-wider">
-                                {(category || 'Use Case').toUpperCase().slice(0, 12)}
-                              </span>
-                              <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${accentTagClass}`}>
-                                {accentTagLabel}
-                              </span>
+                              {industry ? (
+                                <span className="px-2 py-0.5 rounded bg-slate-100 text-[10px] font-bold uppercase text-slate-500 tracking-wider max-w-[180px] truncate" title={industry}>
+                                  {industry}
+                                </span>
+                              ) : null}
+                              {aiType ? (
+                                <span
+                                  className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
+                                  style={{ backgroundColor: accentBg, color: accentClass }}
+                                >
+                                  {aiType}
+                                </span>
+                              ) : null}
                             </div>
                           </div>
                           <span
                             className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
-                              isExpanded ? 'text-[#2DD4BF] rotate-45' : 'text-slate-300 group-hover:text-[#2DD4BF]'
+                              isExpanded ? 'rotate-45' : ''
                             }`}
+                            style={{ color: isExpanded ? PRIMARY : '#cbd5e1' }}
                           >
                             <Plus className="w-6 h-6" strokeWidth={2.5} />
                           </span>
                         </div>
 
-                        {/* Bento content - expand/collapse animation */}
                         <motion.div
                           initial={false}
                           animate={{
@@ -335,27 +378,40 @@ export function UseCaseLibrary() {
                             <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
                               <h4 className="text-xs font-bold uppercase text-slate-400 mb-3 tracking-widest">Description</h4>
                               <p className="text-slate-600 leading-relaxed text-sm">
-                                {description || 'No description available for this use case.'}
+                                {description || '—'}
                               </p>
                             </div>
                             <div
-                              className="p-6 rounded-xl border flex flex-col justify-between"
-                              style={{ backgroundColor: 'rgba(45, 212, 191, 0.05)', borderColor: 'rgba(45, 212, 191, 0.2)' }}
+                              className="p-6 rounded-xl border flex flex-col gap-3"
+                              style={{ backgroundColor: `${PRIMARY}0D`, borderColor: `${PRIMARY}33` }}
                             >
-                              <h4 className="text-xs font-bold uppercase mb-3 tracking-widest" style={{ color: '#2DD4BF' }}>
-                                Impact / Efficiency
+                              <h4 className="text-xs font-bold uppercase mb-1 tracking-widest" style={{ color: PRIMARY }}>
+                                Details
                               </h4>
-                              <div className="text-4xl font-bold" style={{ color: '#2DD4BF' }}>
-                                +{impactPct}%
-                              </div>
-                              <div className="h-1.5 w-full rounded-full mt-4 overflow-hidden bg-[#2DD4BF]/20">
-                                <motion.div
-                                  className="h-full rounded-full bg-[#2DD4BF]"
-                                  initial={{ width: 0 }}
-                                  animate={{ width: isExpanded ? `${impactPct}%` : 0 }}
-                                  transition={{ duration: 0.6, delay: 0.2, ease: [0.19, 1, 0.22, 1] }}
-                                />
-                              </div>
+                              <dl className="space-y-2 text-sm">
+                                {uc.function ? (
+                                  <div>
+                                    <dt className="text-slate-500 font-medium">Function</dt>
+                                    <dd className="text-slate-800 font-medium">{uc.function}</dd>
+                                  </div>
+                                ) : null}
+                                {(uc.maturity_level || uc.priority) ? (
+                                  <div className="flex gap-6">
+                                    {uc.maturity_level ? (
+                                      <div>
+                                        <dt className="text-slate-500 font-medium">Maturity</dt>
+                                        <dd className="text-slate-800 font-medium">{uc.maturity_level}</dd>
+                                      </div>
+                                    ) : null}
+                                    {uc.priority ? (
+                                      <div>
+                                        <dt className="text-slate-500 font-medium">Priority</dt>
+                                        <dd className="text-slate-800 font-medium">{uc.priority}</dd>
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                ) : null}
+                              </dl>
                             </div>
                           </div>
                         </motion.div>
@@ -888,6 +944,286 @@ export function UseCaseLibrary() {
             </motion.div>
           </motion.div>
         )}
+
+      {/* Detail drawer — same as Use Case Explorer: click use case opens full detail */}
+      <AnimatePresence>
+        {drawerOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30"
+              onClick={closeDrawer}
+              aria-hidden
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'tween', duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              className="fixed top-0 right-0 bottom-0 z-40 flex flex-col overflow-hidden shadow-2xl font-sans w-full lg:w-[65%] lg:max-w-[900px] lg:rounded-l-2xl"
+              style={{ backgroundColor: '#F8F9FA' }}
+            >
+              {(!detailData || detailLoading || detailError) && (
+                <div className="absolute top-6 right-6 z-50">
+                  <button type="button" onClick={closeDrawer} className="w-10 h-10 rounded-full bg-slate-200/80 hover:bg-slate-300 flex items-center justify-center text-slate-600 hover:text-slate-800 transition-colors" aria-label="Close">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
+              {detailLoading && (
+                <div className="flex-1 flex flex-col items-center justify-center gap-4 text-slate-500 bg-[#F8F9FA]">
+                  <Loader2 className="w-10 h-10 animate-spin" style={{ color: PRIMARY }} />
+                  <span>Loading details…</span>
+                </div>
+              )}
+              {detailError && !detailLoading && (
+                <div className="flex-1 flex items-center justify-center p-8 bg-[#F8F9FA]">
+                  <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 max-w-md">
+                    <AlertCircle className="w-5 h-5 flex-shrink-0" />
+                    <span>{detailError}</span>
+                  </div>
+                </div>
+              )}
+              {detailData && !detailLoading && (
+                <>
+                  <header
+                    className="pt-12 pb-6 px-8 md:px-12 relative flex-shrink-0"
+                    style={{ background: 'linear-gradient(180deg, #2DD4BF 0%, #159a8a 100%)' }}
+                  >
+                    <div className="absolute top-6 right-6 flex gap-3">
+                      <button type="button" className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors" aria-label="Share">
+                        <Share2 className="w-5 h-5" />
+                      </button>
+                      <button type="button" onClick={closeDrawer} className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors" aria-label="Close">
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <div className="flex items-end gap-6">
+                      <div className="w-16 h-16 md:w-20 md:h-20 bg-white/20 backdrop-blur-md rounded-xl shadow-xl flex items-center justify-center border border-white/30 flex-shrink-0">
+                        <FileText className="w-8 h-8 md:w-9 md:h-9 text-white" strokeWidth={1.5} />
+                      </div>
+                      <div className="flex-1 text-white min-w-0">
+                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] mb-1 block opacity-80">Use Case Archive</span>
+                        <h1 className="text-xl md:text-2xl lg:text-3xl font-black tracking-normal leading-tight">
+                          {detailData.name ?? detailData.title ?? 'Untitled'}
+                        </h1>
+                      </div>
+                    </div>
+                  </header>
+
+                  <div className="flex-1 overflow-y-auto px-8 md:px-12 py-8 bg-[#F8F9FA] scrollbar-thin">
+                    <div className="space-y-8 pb-24">
+                      {(detailData.function ?? detailData.industry ?? detailData.priority ?? detailData.maturity_level) && (
+                        <div className="bg-white px-4 py-3 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap items-center gap-2 text-sm">
+                          {detailData.function ? (
+                            <span className="inline-flex items-center gap-2 rounded-full px-4 py-2 bg-slate-100 font-bold text-slate-800">
+                              <span className="w-5 h-5 rounded-full bg-white flex items-center justify-center border border-slate-200" style={{ color: PRIMARY }}>
+                                <Zap className="w-3 h-3" />
+                              </span>
+                              {detailData.function}
+                            </span>
+                          ) : null}
+                          {detailData.industry ? (
+                            <span className="inline-flex items-center rounded-full px-4 py-2 bg-slate-100 font-bold text-slate-800">
+                              {detailData.industry}
+                            </span>
+                          ) : null}
+                          {detailData.priority ? (
+                            <span className="inline-flex items-center rounded-full px-4 py-2 bg-slate-100 font-bold text-slate-800">
+                              Priority {detailData.priority}
+                            </span>
+                          ) : null}
+                          {detailData.maturity_level && !detailData.priority ? (
+                            <span className="inline-flex items-center rounded-full px-4 py-2 bg-slate-100 font-bold text-slate-800">
+                              {detailData.maturity_level}
+                            </span>
+                          ) : null}
+                        </div>
+                      )}
+                      <section>
+                        <div className="flex items-center gap-4 mb-6">
+                          <span className="text-3xl font-black text-slate-200 tracking-tight">01</span>
+                          <h2 className="text-xl font-bold tracking-tight text-slate-900 italic">The Vision</h2>
+                          <div className="h-px flex-1 bg-slate-200" />
+                        </div>
+                        <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-slate-100 space-y-6">
+                          <div>
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Short Description</h4>
+                            <p className="text-base md:text-lg text-slate-600 leading-relaxed font-medium">
+                              {detailData.short_description ?? detailData.description ?? '—'}
+                            </p>
+                          </div>
+                          {(detailData.primary_problem_solved ?? detailData.primary_problem) && (
+                            <div className="pt-6 border-t border-slate-100">
+                              <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Primary problem solved</h4>
+                              <p className="text-slate-500 leading-relaxed">{detailData.primary_problem_solved ?? detailData.primary_problem}</p>
+                            </div>
+                          )}
+                          {(detailData.problem ?? detailData.the_problem) && (
+                            <div className="pt-6 border-t border-slate-100">
+                              <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">The Problem</h4>
+                              <p className="text-slate-500 leading-relaxed">{detailData.problem ?? detailData.the_problem}</p>
+                            </div>
+                          )}
+                        </div>
+                      </section>
+
+                      <section>
+                        <div className="flex items-center gap-4 mb-6">
+                          <span className="text-3xl font-black text-slate-200 tracking-tight">02</span>
+                          <h2 className="text-xl font-bold tracking-tight text-slate-900 italic">The Engine</h2>
+                          <div className="h-px flex-1 bg-slate-200" />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">AI Type</h4>
+                            <div className="text-2xl md:text-3xl font-bold" style={{ color: PRIMARY }}>
+                              {detailData.ai_type ?? '—'}
+                            </div>
+                          </div>
+                          <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Capabilities</h4>
+                            {Array.isArray(detailData.capabilities) && detailData.capabilities.length > 0 ? (
+                              <ul className="space-y-3">
+                                {detailData.capabilities.map((cap, i) => (
+                                  <li key={i} className="flex items-center gap-3 text-sm font-bold text-slate-700">
+                                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: PRIMARY }} />
+                                    {typeof cap === 'string' ? cap : cap?.label ?? cap?.name ?? '—'}
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className="text-slate-500 text-sm">—</p>
+                            )}
+                          </div>
+                          <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                            <div className="flex items-start justify-between gap-2 mb-3">
+                              <h4 className="text-sm font-bold text-slate-900">Time to Value</h4>
+                              {(detailData.time_to_value ?? detailData.time_to_value_label) && (
+                                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500 flex-shrink-0">
+                                  {detailData.time_to_value ?? detailData.time_to_value_label}
+                                </span>
+                              )}
+                            </div>
+                            <div className="h-2 w-full rounded-full overflow-hidden bg-slate-100">
+                              <div
+                                className="h-full rounded-full transition-all duration-500"
+                                style={{
+                                  width: `${Math.min(100, Math.max(0, Number(detailData.time_to_value_percent) || 85))}%`,
+                                  backgroundColor: PRIMARY,
+                                }}
+                              />
+                            </div>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-2">
+                              {detailData.time_to_value_deployment ?? (detailData.time_to_value_weeks != null && detailData.time_to_value_weeks !== ''
+                                ? (typeof detailData.time_to_value_weeks === 'number'
+                                    ? `< ${detailData.time_to_value_weeks} WEEKS DEPLOYMENT`
+                                    : String(detailData.time_to_value_weeks).toUpperCase())
+                                : '< 4 WEEKS DEPLOYMENT')}
+                            </p>
+                          </div>
+                          <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                            <div className="flex items-start justify-between gap-2 mb-3">
+                              <h4 className="text-sm font-bold text-slate-900">Implementation Complexity</h4>
+                              {(detailData.implementation_complexity ?? detailData.implementation_complexity_level) && (
+                                <span className="text-[10px] font-bold text-slate-500 flex-shrink-0">
+                                  {detailData.implementation_complexity ?? detailData.implementation_complexity_level}
+                                  {(detailData.implementation_complexity_score ?? detailData.complexity_score) != null &&
+                                    detailData.implementation_complexity_score !== '' && (
+                                      <span className="font-medium text-slate-400">
+                                        {' '}({detailData.implementation_complexity_score ?? detailData.complexity_score})
+                                      </span>
+                                    )}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex gap-0.5 w-full">
+                              {(() => {
+                                const scoreRaw = detailData.implementation_complexity_filled ?? detailData.implementation_complexity_score ?? detailData.complexity_score;
+                                const filled = Number(scoreRaw) || (typeof scoreRaw === 'string' ? parseInt(scoreRaw.split('/')[0], 10) : 0) || 4;
+                                const total = 6;
+                                return [1, 2, 3, 4, 5, 6].map((i) => {
+                                  const isFilled = i <= Math.min(total, Math.max(0, filled));
+                                  return (
+                                    <div
+                                      key={i}
+                                      className="h-2 flex-1 rounded-sm"
+                                      style={{ backgroundColor: isFilled ? PRIMARY : '#e2e8f0' }}
+                                    />
+                                  );
+                                });
+                              })()}
+                            </div>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-2">
+                              {detailData.implementation_complexity_description ?? detailData.complexity_description ?? '—'}
+                            </p>
+                          </div>
+                        </div>
+                      </section>
+
+                      <section>
+                        <div className="flex items-center gap-4 mb-6">
+                          <span className="text-3xl font-black text-slate-200 tracking-tight">03</span>
+                          <h2 className="text-xl font-bold tracking-tight text-slate-900 italic">The Governance</h2>
+                          <div className="h-px flex-1 bg-slate-200" />
+                        </div>
+                        <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-slate-100">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+                            {detailData.maturity_level && (
+                              <div>
+                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Maturity</h4>
+                                <div className="text-sm font-bold text-slate-900">{detailData.maturity_level}</div>
+                              </div>
+                            )}
+                            {detailData.current_status && (
+                              <div>
+                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Status</h4>
+                                <div className="text-sm font-bold text-slate-900">{detailData.current_status}</div>
+                              </div>
+                            )}
+                            {detailData.priority && (
+                              <div>
+                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Priority</h4>
+                                <div className="text-sm font-bold text-slate-900">{detailData.priority}</div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </section>
+                    </div>
+                  </div>
+
+                  <footer className="h-16 bg-white border-t border-slate-100 px-8 md:px-12 flex items-center justify-between flex-shrink-0">
+                    <button type="button" onClick={closeDrawer} className="px-5 py-2.5 text-slate-400 font-bold uppercase tracking-widest text-xs hover:text-slate-600 transition-colors">
+                      Cancel
+                    </button>
+                    <div className="flex items-center gap-5">
+                      <div className="text-right hidden sm:block">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-300">Available to deploy</p>
+                        <p className="text-xs font-bold text-slate-500">{detailData.maturity_level ?? '—'}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { useAsTemplate(detailData); closeDrawer(); }}
+                        className="rounded-full font-black text-xs uppercase tracking-widest px-8 py-3.5 text-white transition-transform hover:scale-105 active:scale-95"
+                        style={{
+                          backgroundColor: PRIMARY,
+                          boxShadow: `0 8px 24px rgba(45, 212, 191, 0.35), 0 4px 12px rgba(45, 212, 191, 0.2)`,
+                        }}
+                      >
+                        Use this template
+                      </button>
+                    </div>
+                  </footer>
+                </>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Personalize Use Cases Modal */}
       <AnimatePresence>

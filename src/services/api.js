@@ -7,7 +7,7 @@ import { handleError, isAuthError } from './errorHandler';
 
 // Get API configuration from environment variables
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
-const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '60000', 10); // Increased to 60 seconds default
+const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT || '100000', 10); // Increased to 60 seconds default
 
 /**
  * Get authentication token from storage
