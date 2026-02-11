@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ClipboardList, Sparkles, ArrowUpRight, AlertCircle, Loader2, Plus, Clock, CheckCircle2, Calendar, FileText } from 'lucide-react';
+import { ClipboardList, Sparkles, ArrowUpRight, AlertCircle, Loader2, Plus, Clock, ClipboardCheck, Calendar, FileText } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
 import { SignInLoader } from '../shared/SignInLoader';
 import { DeleteButton } from '../ui/DeleteButton';
@@ -259,7 +259,15 @@ export function AssessmentListPage() {
               {/* Section 2: Ongoing – Offerings-style cards with progress, date, model name */}
               <div className="mb-12">
                 <div className="flex items-center gap-3 mb-4">
-                  <h2 className="text-2xl font-bold text-slate-900">Ongoing</h2>
+                  <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                    <span
+                      className="flex items-center justify-center w-9 h-9 rounded-lg flex-shrink-0"
+                      style={{ backgroundColor: accentColorOngoing }}
+                    >
+                      <Clock className="w-5 h-5" style={{ color: '#fff' }} strokeWidth={2.5} />
+                    </span>
+                    Ongoing
+                  </h2>
                   {ongoingAssessments.length > 0 && (
                     <span
                       className="px-2.5 py-0.5 rounded-full text-sm font-semibold"
@@ -413,7 +421,12 @@ export function AssessmentListPage() {
               <div>
                 <div className="flex items-center gap-3 mb-4">
                   <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                    <CheckCircle2 className="w-7 h-7" style={{ color: accentColorCompleted }} />
+                    <span
+                      className="flex items-center justify-center w-9 h-9 rounded-lg flex-shrink-0"
+                      style={{ backgroundColor: accentColorCompleted }}
+                    >
+                      <ClipboardCheck className="w-5 h-5" style={{ color: '#fff' }} strokeWidth={2.5} />
+                    </span>
                     Completed
                   </h2>
                   {completedAssessments.length > 0 && (

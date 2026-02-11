@@ -57,6 +57,23 @@ const useCasesHeaderLinks = [
   { label: 'Use Cases', path: '/usecases' },
 ];
 
+/** Normalize industry from API: supports object { Industry, SubIndustry } or legacy string */
+function getIndustryDisplay(industry) {
+  if (industry == null) return '';
+  if (typeof industry === 'string') return industry;
+  return industry.Industry ?? industry.industry ?? '';
+}
+
+/** Flatten industry to a single string for search (Industry + SubIndustry) */
+function getIndustrySearchText(industry) {
+  if (industry == null) return '';
+  if (typeof industry === 'string') return industry;
+  const name = industry.Industry ?? industry.industry ?? '';
+  const sub = industry.SubIndustry;
+  const subText = Array.isArray(sub) ? sub.join(' ') : '';
+  return [name, subText].filter(Boolean).join(' ');
+}
+
 export function UseCaseLibrary() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -169,7 +186,7 @@ export function UseCaseLibrary() {
     if (!q) return true;
     const name = (uc.name ?? uc.title ?? uc.use_case_name ?? '').toLowerCase();
     const desc = (uc.short_description ?? uc.description ?? uc.desc ?? '').toLowerCase();
-    const industry = (uc.industry ?? '').toLowerCase();
+    const industry = getIndustrySearchText(uc.industry).toLowerCase();
     const fn = (uc.function ?? '').toLowerCase();
     const aiType = (uc.ai_type ?? '').toLowerCase();
     const cat = (uc.category ?? uc.category_name ?? '').toLowerCase();
@@ -311,7 +328,7 @@ export function UseCaseLibrary() {
                     const isExpanded = expandedInspireCardKey === key;
                     const name = uc.name ?? uc.title ?? uc.use_case_name ?? '';
                     const description = uc.short_description ?? uc.description ?? uc.desc ?? '';
-                    const industry = uc.industry ?? uc.category ?? uc.category_name ?? '';
+                    const industry = getIndustryDisplay(uc.industry) || (uc.category ?? uc.category_name ?? '');
                     const aiType = uc.ai_type ?? '';
                     const tagVariant = index % 3;
                     const accentClass = tagVariant === 0 ? PRIMARY : tagVariant === 1 ? ACCENT_PURPLE : ACCENT_ORANGE;
@@ -1016,7 +1033,7 @@ export function UseCaseLibrary() {
 
                   <div className="flex-1 overflow-y-auto px-8 md:px-12 py-8 bg-[#F8F9FA] scrollbar-thin">
                     <div className="space-y-8 pb-24">
-                      {(detailData.function ?? detailData.industry ?? detailData.priority ?? detailData.maturity_level) && (
+                      {(detailData.function ?? getIndustryDisplay(detailData.industry) ?? detailData.priority ?? detailData.maturity_level) && (
                         <div className="bg-white px-4 py-3 rounded-2xl shadow-sm border border-slate-100 flex flex-wrap items-center gap-2 text-sm">
                           {detailData.function ? (
                             <span className="inline-flex items-center gap-2 rounded-full px-4 py-2 bg-slate-100 font-bold text-slate-800">
@@ -1026,9 +1043,14 @@ export function UseCaseLibrary() {
                               {detailData.function}
                             </span>
                           ) : null}
-                          {detailData.industry ? (
-                            <span className="inline-flex items-center rounded-full px-4 py-2 bg-slate-100 font-bold text-slate-800">
-                              {detailData.industry}
+                          {getIndustryDisplay(detailData.industry) ? (
+                            <span className="inline-flex flex-col items-start rounded-full px-4 py-2 bg-slate-100 font-bold text-slate-800">
+                              <span>{getIndustryDisplay(detailData.industry)}</span>
+                              {detailData.industry?.SubIndustry?.length > 0 ? (
+                                <span className="text-xs font-normal text-slate-600 mt-0.5">
+                                  {detailData.industry.SubIndustry.join(' · ')}
+                                </span>
+                              ) : null}
                             </span>
                           ) : null}
                           {detailData.priority ? (

@@ -65,16 +65,46 @@ const PILLAR_COLORS = [
   '#f59e0b',
 ];
 
+// Score-based colors for radar (1 = red, 5 = teal) — matches reference maturity profile chart
+const SCORE_COLORS = {
+  low: '#ef4444',      // red
+  midLow: '#f97316',   // orange
+  mid: '#f59e0b',      // amber
+  midHigh: '#10b981',  // emerald
+  high: '#0d9488',     // teal
+};
+function scoreToColor(score) {
+  const s = Math.max(0, Math.min(5, Number(score) || 0));
+  if (s <= 1) return SCORE_COLORS.low;
+  if (s <= 2) return interpolateHex(SCORE_COLORS.low, SCORE_COLORS.midLow, (s - 1) / 1);
+  if (s <= 3) return interpolateHex(SCORE_COLORS.midLow, SCORE_COLORS.mid, (s - 2) / 1);
+  if (s <= 4) return interpolateHex(SCORE_COLORS.mid, SCORE_COLORS.midHigh, (s - 3) / 1);
+  return interpolateHex(SCORE_COLORS.midHigh, SCORE_COLORS.high, (s - 4) / 1);
+}
+function hexToRgb(hex) {
+  const m = hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+  return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : [0, 0, 0];
+}
+function rgbToHex(r, g, b) {
+  return '#' + [r, g, b].map(x => Math.round(x).toString(16).padStart(2, '0')).join('');
+}
+function interpolateHex(hex1, hex2, t) {
+  const [r1, g1, b1] = hexToRgb(hex1);
+  const [r2, g2, b2] = hexToRgb(hex2);
+  return rgbToHex(r1 + (r2 - r1) * t, g1 + (g2 - g1) * t, b1 + (b2 - b1) * t);
+}
+
 // Custom tick component for radar chart to show full pillar names without truncation
 const CustomPolarAngleAxisTick = ({ payload, x, y, cx, cy, ...props }) => {
   const RADIAN = Math.PI / 180;
   const sin = Math.sin(-payload.coordinate * RADIAN);
   const cos = Math.cos(-payload.coordinate * RADIAN);
   const radius = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
-  const outerRadius = radius + 50;
+  const outerRadius = radius + 14;
   const textX = cx + outerRadius * cos;
   const textY = cy + outerRadius * sin;
-  const textAnchor = cos >= 0 ? 'start' : 'end';
+  // Center text on axis when axis is nearly vertical (top/bottom pillars e.g. Strategy & Governance)
+  const textAnchor = Math.abs(cos) < 0.4 ? 'middle' : (cos >= 0 ? 'start' : 'end');
 
   return (
     <g>
@@ -144,6 +174,68 @@ function RadarPolygonWithGradients({ points = [], colors = [], gradientIdBase, .
         stroke="rgba(55,65,81,0.35)"
         strokeWidth={2}
       />
+    </g>
+  );
+}
+
+// Radar polygon with vertical gradient fill (teal bottom → yellow → red top) and score-based segment stroke.
+// Matches reference: maturity profile with score-based coloring.
+function RadarPolygonVerticalGradientFill({ points = [], strokeColors = [], gradientIdBase, ...rest }) {
+  if (!points.length) return null;
+  const cx = points[0]?.cx ?? points.reduce((s, p) => s + p.x, 0) / points.length;
+  const cy = points[0]?.cy ?? points.reduce((s, p) => s + p.y, 0) / points.length;
+  const ys = points.map((p) => p.y);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  const base = gradientIdBase || 'radar-vert';
+  const polygonPath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z';
+  return (
+    <g {...rest}>
+      <defs>
+        <linearGradient
+          id={`${base}-fill`}
+          x1={cx}
+          y1={maxY}
+          x2={cx}
+          y2={minY}
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop offset="0%" stopColor="#99f6e4" />
+          <stop offset="45%" stopColor="#fde68a" />
+          <stop offset="100%" stopColor="#fecaca" />
+        </linearGradient>
+        {strokeColors.length === points.length && points.map((_, i) => {
+          const next = (i + 1) % points.length;
+          return (
+            <linearGradient
+              key={i}
+              id={`${base}-stroke-${i}`}
+              x1={points[i].x}
+              y1={points[i].y}
+              x2={points[next].x}
+              y2={points[next].y}
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0%" stopColor={strokeColors[i]} />
+              <stop offset="100%" stopColor={strokeColors[next]} />
+            </linearGradient>
+          );
+        })}
+      </defs>
+      <path d={polygonPath} fill={`url(#${base}-fill)`} fillOpacity={0.32} />
+      {strokeColors.length === points.length && points.map((_, i) => {
+        const next = (i + 1) % points.length;
+        return (
+          <path
+            key={i}
+            d={`M ${points[i].x} ${points[i].y} L ${points[next].x} ${points[next].y}`}
+            fill="none"
+            stroke={`url(#${base}-stroke-${i})`}
+            strokeWidth={2.5}
+            strokeLinecap="round"
+          />
+        );
+      })}
     </g>
   );
 }
@@ -234,6 +326,7 @@ export function ResultsDashboard() {
   const [selectedSegment, setSelectedSegment] = useState(null);
   const [animatedSections, setAnimatedSections] = useState(new Set());
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [animatedOverallScore, setAnimatedOverallScore] = useState(0);
   
   // Refs for scroll detection - defined at component level to prevent re-creation
   const pillarScoresRef = useRef(null);
@@ -294,6 +387,23 @@ export function ResultsDashboard() {
     }
   }, [recommendationsInView]);
 
+  // Animate overall score on load / when results change
+  useEffect(() => {
+    const target = Number(assessmentResults?.overall_score) || 0;
+    const duration = 1200;
+    let start;
+    let raf;
+    const step = (ts) => {
+      if (!start) start = ts;
+      const progress = Math.min(1, (ts - start) / duration);
+      setAnimatedOverallScore(target * progress);
+      if (progress < 1) raf = requestAnimationFrame(step);
+    };
+    setAnimatedOverallScore(0);
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [assessmentResults?.overall_score]);
+
   // Transform API data to component format
   const pieChartData = useMemo(() => {
     if (!assessmentResults?.pillar_results) return [];
@@ -342,7 +452,7 @@ export function ResultsDashboard() {
     }
   }, [pieChartData]);
 
-  // Radar chart data - using average_score and maturity color per pillar
+  // Radar chart data - average_score, maturity color (for legend), and score-based color (for chart)
   const radarData = useMemo(() => {
     if (!assessmentResults?.pillar_results) return [];
     
@@ -357,6 +467,7 @@ export function ResultsDashboard() {
           score,
           fullMark: 5,
           color,
+          scoreColor: scoreToColor(score),
           maturityLevel: maturityLevel || 'Established',
         };
       })
@@ -586,9 +697,19 @@ export function ResultsDashboard() {
                 <TrendingUp className="w-7 h-7 text-white" />
               </motion.div>
               <div className="flex-1">
-                <div className="text-sm text-gray-600 mb-1 font-medium">Readiness Level</div>
-                <div className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
-                  {overallMaturityLevel}
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-sm text-gray-600 mb-1 font-medium">Readiness Level</div>
+                    <div className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
+                      {overallMaturityLevel}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-xs text-slate-500">Overall Score</div>
+                    <div className="text-2xl font-bold text-[#46cdc6] tracking-tight">
+                      {animatedOverallScore.toFixed(2)} <span className="text-base font-semibold text-slate-400">/ 5.0</span>
+                    </div>
+                  </div>
                 </div>
                 <div className="text-sm text-gray-600 leading-relaxed">
                   Your organization shows {overallMaturityLevel.toLowerCase()} readiness for AI transformation. Continue reading for detailed insights.
@@ -843,14 +964,17 @@ export function ResultsDashboard() {
                                     <div className="flex items-center gap-2">
                                       <div
                                         className="w-3 h-3 rounded-full"
-                                        style={{ backgroundColor: entry.color }}
+                                        style={{ backgroundColor: scoreToColor(entry.value) }}
                                       />
                                       <span className="text-sm text-gray-600 font-medium">
                                         {entry.name}
                                       </span>
                                     </div>
                                     <span className="text-sm font-bold text-gray-900">
-                                      {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value} / 5.0
+                                      <span style={{ color: scoreToColor(entry.value) }}>
+                                        {typeof entry.value === 'number' ? entry.value.toFixed(2) : entry.value}
+                                      </span>
+                                      {' '}/ 5.0
                                     </span>
                                   </div>
                                 ))}
@@ -869,37 +993,29 @@ export function ResultsDashboard() {
                       fill="transparent"
                       strokeWidth={0}
                       shape={
-                        <RadarPolygonWithGradients
-                          colors={radarData.map((d) => d.color)}
-                          gradientIdBase={radarGradientId.replace(/:/g, '')}
+                        <RadarPolygonGradientStroke
+                          colors={radarData.map((d) => d.scoreColor ?? scoreToColor(d.score))}
+                          gradientIdBase={`maturity-profile-${radarGradientId.replace(/:/g, '')}`}
                         />
                       }
                       dot={({ cx, cy, payload, index }) => {
-                        const color = radarData[index]?.color ?? payload?.color ?? DEFAULT_MATURITY_COLOR;
+                        const color = radarData[index]?.scoreColor ?? scoreToColor(radarData[index]?.score ?? payload?.score) ?? DEFAULT_MATURITY_COLOR;
                         return (
-                          <circle
-                            cx={cx}
-                            cy={cy}
-                            r={6}
-                            fill={color}
-                            stroke="#ffffff"
-                            strokeWidth={2}
-                          />
+                          <g>
+                            <circle cx={cx} cy={cy} r={12} fill={color} fillOpacity={0.35} />
+                            <circle cx={cx} cy={cy} r={7} fill={color} stroke="#fff" strokeWidth={2} />
+                          </g>
                         );
                       }}
                       connectNulls={true}
                       isAnimationActive={false}
                       activeDot={({ cx, cy, payload, index }) => {
-                        const color = radarData[index]?.color ?? payload?.color ?? DEFAULT_MATURITY_COLOR;
+                        const color = radarData[index]?.scoreColor ?? scoreToColor(radarData[index]?.score ?? payload?.score) ?? DEFAULT_MATURITY_COLOR;
                         return (
-                          <circle
-                            cx={cx}
-                            cy={cy}
-                            r={8}
-                            fill={color}
-                            stroke="#ffffff"
-                            strokeWidth={2}
-                          />
+                          <g>
+                            <circle cx={cx} cy={cy} r={14} fill={color} fillOpacity={0.35} />
+                            <circle cx={cx} cy={cy} r={8} fill={color} stroke="#fff" strokeWidth={2} />
+                          </g>
                         );
                       }}
                     />
@@ -971,59 +1087,6 @@ export function ResultsDashboard() {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </section>
-
-      {/* Second radar chart — gradient overview (image-style) */}
-      <section className="py-16 bg-white">
-        <div className="mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-lg p-6 md:p-10" data-radar-chart style={{ overflow: 'visible' }}>
-            <h3 className="text-xl font-bold text-gray-900 mb-2 text-center">Pillar Maturity Overview</h3>
-            <p className="text-sm text-gray-500 mb-8 text-center max-w-lg mx-auto">Scores across dimensions with maturity-based gradient</p>
-            <div className="flex justify-center" style={{ height: '520px', maxWidth: '720px', margin: '0 auto' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={radarData} outerRadius="72%" margin={{ top: 40, right: 50, bottom: 40, left: 50 }}>
-                  <PolarGrid stroke="#e5e7eb" strokeWidth={1} />
-                  <PolarAngleAxis
-                    dataKey="pillar"
-                    tick={CustomPolarAngleAxisTick}
-                    tickLine={false}
-                  />
-                  <PolarRadiusAxis
-                    angle={90}
-                    domain={[0, 5]}
-                    ticks={[1, 2, 3, 4, 5]}
-                    tick={{ fill: '#9ca3af', fontSize: 11 }}
-                    axisLine={{ stroke: '#e5e7eb' }}
-                  />
-                  <Radar
-                    name="Maturity"
-                    dataKey="score"
-                    stroke="transparent"
-                    fill="transparent"
-                    strokeWidth={0}
-                    shape={
-                      <RadarPolygonGradientStroke
-                        colors={radarData.map((d) => d.color)}
-                        gradientIdBase={`radar-overview-${radarGradientId.replace(/:/g, '')}`}
-                      />
-                    }
-                    dot={({ cx, cy, payload, index }) => {
-                      const color = radarData[index]?.color ?? payload?.color ?? DEFAULT_MATURITY_COLOR;
-                      return (
-                        <g>
-                          <circle cx={cx} cy={cy} r={12} fill={color} fillOpacity={0.35} />
-                          <circle cx={cx} cy={cy} r={7} fill={color} stroke="#fff" strokeWidth={2} />
-                        </g>
-                      );
-                    }}
-                    connectNulls={true}
-                    isAnimationActive={false}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
         </div>
       </section>
 

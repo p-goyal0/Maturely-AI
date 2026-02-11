@@ -149,8 +149,8 @@ export function CreatePasswordPage() {
                   type="email"
                   placeholder=""
                   value={email}
-                  readOnly
-                  className="pl-10 h-12 bg-white border border-slate-200 text-slate-800 rounded-xl cursor-not-allowed focus:outline-none focus:ring-0"
+                  disabled
+                  className="pl-10 h-12 bg-slate-200 border border-slate-200 text-slate-500 rounded-xl cursor-not-allowed focus:outline-none focus:ring-0"
                   required
                 />
               </div>

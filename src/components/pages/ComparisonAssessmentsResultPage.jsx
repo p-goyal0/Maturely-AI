@@ -11,6 +11,12 @@ import {
   Minus,
   Loader2,
   ChevronDown,
+  Landmark,
+  Users,
+  Database,
+  ShieldCheck,
+  Shield,
+  Settings,
 } from 'lucide-react';
 import { PageHeader } from '../shared/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -135,16 +141,46 @@ function normalizeCompareResponse(data, idA, idB, completedList) {
   return { assessmentA, assessmentB, comparison: raw.comparison ?? null };
 }
 
+// Score-based colors for radar (1 = red, 5 = teal) — matches Results page radar styling
+const SCORE_COLORS = {
+  low: '#ef4444',      // red
+  midLow: '#f97316',   // orange
+  mid: '#f59e0b',      // amber
+  midHigh: '#10b981',  // emerald
+  high: '#0d9488',     // teal
+};
+function hexToRgb(hex) {
+  const m = hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+  return m ? [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)] : [0, 0, 0];
+}
+function rgbToHex(r, g, b) {
+  return '#' + [r, g, b].map((x) => Math.round(x).toString(16).padStart(2, '0')).join('');
+}
+function interpolateHex(hex1, hex2, t) {
+  const [r1, g1, b1] = hexToRgb(hex1);
+  const [r2, g2, b2] = hexToRgb(hex2);
+  return rgbToHex(r1 + (r2 - r1) * t, g1 + (g2 - g1) * t, b1 + (b2 - b1) * t);
+}
+function scoreToColor(score) {
+  const s = Math.max(0, Math.min(5, Number(score) || 0));
+  if (s <= 1) return SCORE_COLORS.low;
+  if (s <= 2) return interpolateHex(SCORE_COLORS.low, SCORE_COLORS.midLow, (s - 1) / 1);
+  if (s <= 3) return interpolateHex(SCORE_COLORS.midLow, SCORE_COLORS.mid, (s - 2) / 1);
+  if (s <= 4) return interpolateHex(SCORE_COLORS.mid, SCORE_COLORS.midHigh, (s - 3) / 1);
+  return interpolateHex(SCORE_COLORS.midHigh, SCORE_COLORS.high, (s - 4) / 1);
+}
+
 // Custom tick for radar
 const CustomPolarAngleAxisTick = ({ payload, x, y, cx, cy }) => {
   const RADIAN = Math.PI / 180;
   const sin = Math.sin(-payload.coordinate * RADIAN);
   const cos = Math.cos(-payload.coordinate * RADIAN);
   const radius = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
-  const outerRadius = radius + 50;
+  const outerRadius = radius + 14;
   const textX = cx + outerRadius * cos;
   const textY = cy + outerRadius * sin;
-  const textAnchor = cos >= 0 ? 'start' : 'end';
+  // Center text on axis when axis is nearly vertical (top/bottom pillars)
+  const textAnchor = Math.abs(cos) < 0.4 ? 'middle' : (cos >= 0 ? 'start' : 'end');
   return (
     <g>
       <text x={textX} y={textY} textAnchor={textAnchor} fill="#374151" fontSize={11} fontWeight={500}>
@@ -153,6 +189,116 @@ const CustomPolarAngleAxisTick = ({ payload, x, y, cx, cy }) => {
     </g>
   );
 };
+
+// Same radar polygon rendering used on Results page: light wedge fill + gradient stroke along edges
+function RadarPolygonGradientStroke({
+  points = [],
+  colors = [],
+  fillColors = [],
+  gradientIdBase,
+  fillOpacity = 0.18,
+  strokeWidth = 2.5,
+  strokeDasharray,
+  outlineColor,
+  outlineWidth,
+  outlineDasharray,
+  ...rest
+}) {
+  if (!points.length) return null;
+  const cx = points[0]?.cx ?? points.reduce((s, p) => s + p.x, 0) / points.length;
+  const cy = points[0]?.cy ?? points.reduce((s, p) => s + p.y, 0) / points.length;
+  const base = gradientIdBase || 'radar-stroke';
+  return (
+    <g {...rest}>
+      <defs>
+        {points.map((_, i) => {
+          const next = (i + 1) % points.length;
+          const strokeStart = (colors && colors.length === points.length) ? colors[i] : '#e6e6e6';
+          const strokeEnd = (colors && colors.length === points.length) ? colors[next] : '#e6e6e6';
+          return (
+            <linearGradient
+              key={`stroke-${i}`}
+              id={`${base}-stroke-${i}`}
+              x1={points[i].x}
+              y1={points[i].y}
+              x2={points[next].x}
+              y2={points[next].y}
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0%" stopColor={strokeStart} />
+              <stop offset="100%" stopColor={strokeEnd} />
+            </linearGradient>
+          );
+        })}
+        {points.map((_, i) => {
+          const next = (i + 1) % points.length;
+          const fillStart = (fillColors && fillColors.length === points.length) ? fillColors[i] : ((colors && colors.length === points.length) ? colors[i] : '#f3f4f6');
+          const fillEnd = (fillColors && fillColors.length === points.length) ? fillColors[next] : ((colors && colors.length === points.length) ? colors[next] : '#f3f4f6');
+          return (
+            <linearGradient
+              key={`fill-${i}`}
+              id={`${base}-fill-${i}`}
+              x1={points[i].x}
+              y1={points[i].y}
+              x2={points[next].x}
+              y2={points[next].y}
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0%" stopColor={fillStart} />
+              <stop offset="100%" stopColor={fillEnd} />
+            </linearGradient>
+          );
+        })}
+      </defs>
+      {/* Light fill (wedge triangles) */}
+      {points.map((_, i) => {
+        const next = (i + 1) % points.length;
+        const d = `M ${cx} ${cy} L ${points[i].x} ${points[i].y} L ${points[next].x} ${points[next].y} Z`;
+        return (
+          <path
+            key={`fill-${i}`}
+            d={d}
+            fill={`url(#${base}-fill-${i})`}
+            fillOpacity={fillOpacity}
+          />
+        );
+      })}
+      {/* Outline (thicker) drawn per-edge using the same per-edge gradients so the outline transitions colors between adjacent points */}
+      {typeof outlineWidth === 'number' && outlineWidth > 0 && points.map((_, i) => {
+        const next = (i + 1) % points.length;
+        const d = `M ${points[i].x} ${points[i].y} L ${points[next].x} ${points[next].y}`;
+        return (
+          <path
+            key={`outline-${i}`}
+            d={d}
+            fill="none"
+            stroke={`url(#${base}-stroke-${i})`}
+            strokeWidth={outlineWidth}
+            strokeLinecap="round"
+            strokeDasharray={outlineDasharray || strokeDasharray}
+            opacity={0.95}
+          />
+        );
+      })}
+      {/* Gradient stroke along each edge (narrower, drawn on top of the outline) */}
+      {points.map((_, i) => {
+        const next = (i + 1) % points.length;
+        const d = `M ${points[i].x} ${points[i].y} L ${points[next].x} ${points[next].y}`;
+        return (
+          <path
+            key={`stroke-${i}`}
+            d={d}
+            fill="none"
+            stroke={`url(#${base}-stroke-${i})`}
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            strokeDasharray={strokeDasharray}
+          />
+        );
+      })}
+    </g>
+  );
+}
 
 export function ComparisonAssessmentResultsPage() {
   const navigate = useNavigate();
@@ -237,6 +383,15 @@ export function ComparisonAssessmentResultsPage() {
   const assessmentAData = assessmentADataRaw ?? ASSESSMENT_A;
   const assessmentBData = assessmentBDataRaw ?? ASSESSMENT_B;
   const hasCompareData = compareResult != null && assessmentADataRaw && assessmentBDataRaw;
+  const shouldSwapAssessments = useMemo(() => {
+    if (!selectedIdA || !selectedIdB) return false;
+    const aId = assessmentADataRaw?.assessment_id ?? assessmentADataRaw?.id ?? assessmentAData?.assessment_id ?? assessmentAData?.id;
+    const bId = assessmentBDataRaw?.assessment_id ?? assessmentBDataRaw?.id ?? assessmentBData?.assessment_id ?? assessmentBData?.id;
+    if (!aId || !bId) return false;
+    return aId !== selectedIdA && bId === selectedIdA;
+  }, [assessmentADataRaw, assessmentBDataRaw, assessmentAData, assessmentBData, selectedIdA, selectedIdB]);
+  const displayAssessmentA = shouldSwapAssessments ? assessmentBData : assessmentAData;
+  const displayAssessmentB = shouldSwapAssessments ? assessmentAData : assessmentBData;
 
   const optionsForA = completedList.filter((a) => a.id !== selectedIdB);
   const optionsForB = completedList.filter((a) => a.id !== selectedIdA);
@@ -251,32 +406,34 @@ export function ComparisonAssessmentResultsPage() {
   }, [dropdownAOpen, dropdownBOpen]);
 
   const scoreChange = useMemo(() => {
-    const a = assessmentAData.overall_score ?? 0;
-    const b = assessmentBData.overall_score ?? 0;
+    const a = displayAssessmentA.overall_score ?? 0;
+    const b = displayAssessmentB.overall_score ?? 0;
     const diff = Math.round((a - b) * 100) / 100;
     const pct = b !== 0 ? Math.round(((a - b) / b) * 1000) / 10 : 0;
     return { diff, pct };
-  }, [assessmentAData.overall_score, assessmentBData.overall_score]);
+  }, [displayAssessmentA.overall_score, displayAssessmentB.overall_score]);
 
   const pillarComparison = useMemo(() => {
     if (Array.isArray(comparisonData?.pillar_comparison) && comparisonData.pillar_comparison.length > 0) {
       return comparisonData.pillar_comparison
+        .filter((p) => p?.pillar_name)
         .sort((x, y) => (x.pillar_order ?? 0) - (y.pillar_order ?? 0))
         .map((p) => ({
           pillar_name: p.pillar_name,
           short_name: PILLAR_SHORT_NAMES[p.pillar_name] || p.pillar_name,
           pillar_order: p.pillar_order ?? 0,
-          scoreA: Number(p.assessment_1_score) ?? 0,
-          scoreB: Number(p.assessment_2_score) ?? 0,
-          maturityA: p.assessment_1_maturity || 'Established',
-          maturityB: p.assessment_2_maturity || 'Established',
+          scoreA: Number(shouldSwapAssessments ? p.assessment_2_score : p.assessment_1_score) ?? 0,
+          scoreB: Number(shouldSwapAssessments ? p.assessment_1_score : p.assessment_2_score) ?? 0,
+          maturityA: (shouldSwapAssessments ? p.assessment_2_maturity : p.assessment_1_maturity) || 'Established',
+          maturityB: (shouldSwapAssessments ? p.assessment_1_maturity : p.assessment_2_maturity) || 'Established',
           diff: Math.round(Number(p.score_difference) * 100) / 100,
           improved: p.improved,
           declined: p.declined,
-        }));
+        }))
+        .filter((p) => p?.pillar_name);
     }
-    const aPillars = (assessmentAData.pillar_results || []).sort((x, y) => x.pillar_order - y.pillar_order);
-    const bPillars = (assessmentBData.pillar_results || []).sort((x, y) => x.pillar_order - y.pillar_order);
+    const aPillars = (displayAssessmentA.pillar_results || []).sort((x, y) => x.pillar_order - y.pillar_order);
+    const bPillars = (displayAssessmentB.pillar_results || []).sort((x, y) => x.pillar_order - y.pillar_order);
     return aPillars.map((pa, i) => {
       const pb = bPillars.find((p) => p.pillar_id === pa.pillar_id) || bPillars[i];
       const scoreA = Number(pa.average_score) || 0;
@@ -292,8 +449,8 @@ export function ComparisonAssessmentResultsPage() {
         maturityB: pb?.maturity_level || 'Established',
         diff,
       };
-    });
-  }, [comparisonData?.pillar_comparison, assessmentAData.pillar_results, assessmentBData.pillar_results]);
+    }).filter((p) => p?.pillar_name);
+  }, [comparisonData?.pillar_comparison, displayAssessmentA.pillar_results, displayAssessmentB.pillar_results, shouldSwapAssessments]);
 
   const radarData = useMemo(
     () =>
@@ -305,6 +462,9 @@ export function ComparisonAssessmentResultsPage() {
       })),
     [pillarComparison]
   );
+  // Maturity colors per pillar for Assessment A / B (used for fill gradients)
+  const maturityFillA = useMemo(() => pillarComparison.map((p) => MATURITY_COLORS[p.maturityA] || DEFAULT_MATURITY_COLOR), [pillarComparison]);
+  const maturityFillB = useMemo(() => pillarComparison.map((p) => MATURITY_COLORS[p.maturityB] || DEFAULT_MATURITY_COLOR), [pillarComparison]);
 
   const topImprovements = useMemo(() => {
     const list = pillarComparison.filter((p) => p.improved === true || (p.improved !== false && p.diff > 0));
@@ -349,7 +509,7 @@ export function ComparisonAssessmentResultsPage() {
           transition={{ delay: 0.1 }}
           className="grid grid-cols-1 md:grid-cols-2 gap-6"
         >
-          <Card className="border-2 border-[#46cdc6]/30 bg-[#46cdc6]/5 min-w-0 overflow-visible">
+          <Card className="glass bg-[#eff6ff]/80 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/50 min-w-0 overflow-visible">
             <CardHeader className="pb-2 min-w-0 overflow-visible">
               <CardDescription className="font-semibold mb-2" style={{ color: ASSESSMENT_A_COLOR }}>Assessment A (Latest)</CardDescription>
               <label className="block text-sm font-medium text-slate-700 mb-1">Select assessment</label>
@@ -360,26 +520,33 @@ export function ComparisonAssessmentResultsPage() {
                   disabled={loadingList || completedList.length === 0}
                   className={`
                     w-full min-w-0 overflow-hidden px-4 py-3 bg-white text-left rounded shadow-sm tracking-[0.05rem]
-                    border border-gray-100 flex justify-between items-center gap-2
+                    border border-blue-200 flex justify-between items-center gap-2
                     transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed
-                    ${dropdownAOpen ? 'ring-2 ring-[#46cdc6]' : 'hover:border-[#46cdc6]'}
+                    ${dropdownAOpen ? 'ring-2 ring-[#3b82f6]' : 'hover:border-[#3b82f6]'}
                   `}
                 >
                   <span className={`min-w-0 flex-1 truncate block overflow-hidden text-ellipsis ${selectedIdA ? 'text-[#1a1a1a]' : 'text-gray-400'}`}>
                     {selectedIdA
                       ? (() => {
-                          const a = completedList.find((x) => x.id === selectedIdA);
-                          return a ? `${a.name || 'Assessment'} — ${formatDate(a.completed_at)}` : 'Select assessment';
-                        })()
+                        const a = completedList.find((x) => x.id === selectedIdA);
+                        return a ? `${a.name || 'Assessment'} — ${formatDate(a.completed_at)}` : 'Select assessment';
+                      })()
                       : 'Select assessment'}
                   </span>
-                  <div className="bg-[#46cdc6] px-1.5 py-1 rounded shrink-0">
+                  <div className="bg-[#3b82f6] px-1.5 py-1 rounded shrink-0">
                     <ChevronDown className={`w-4 h-4 text-white transition-transform duration-200 ${dropdownAOpen ? 'rotate-180' : ''}`} strokeWidth={2} />
                   </div>
                 </button>
                 {dropdownAOpen && !loadingList && (
-                  <div className="absolute w-full mt-1 rounded shadow-sm border border-gray-100 overflow-hidden z-[60] bg-white">
+                    <div className="absolute w-full mt-1 rounded shadow-sm border border-blue-200 overflow-hidden z-[60] bg-white">
                     <div className="max-h-48 overflow-y-auto">
+                      <button
+                        type="button"
+                        className="w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors text-slate-700"
+                        onClick={(e) => { e.stopPropagation(); setSelectedIdA(''); setDropdownAOpen(false); }}
+                      >
+                        Select assessment
+                      </button>
                       {optionsForA.length === 0 ? (
                         <div className="px-4 py-3 text-sm text-gray-500">No assessments available</div>
                       ) : (
@@ -388,8 +555,8 @@ export function ComparisonAssessmentResultsPage() {
                             key={a.id}
                             type="button"
                             className={`
-                              w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors
-                              ${selectedIdA === a.id ? 'text-[#46cdc6] bg-[#46cdc6]/5' : 'text-[#1a1a1a]'}
+                              w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors
+                              ${selectedIdA === a.id ? 'text-[#3b82f6] bg-blue-50' : 'text-[#1a1a1a]'}
                             `}
                             onClick={(e) => { e.stopPropagation(); setSelectedIdA(a.id); setDropdownAOpen(false); }}
                           >
@@ -404,14 +571,14 @@ export function ComparisonAssessmentResultsPage() {
               {hasCompareData && (
                 <>
                   <p className="text-lg font-semibold text-slate-900 mt-3 break-words">
-                    {assessmentAData.assessment_name || '—'}
+                    {displayAssessmentA.assessment_name || '—'}
                   </p>
-                  <p className="text-sm text-slate-600">{formatDate(assessmentAData.completed_at)}</p>
+                  <p className="text-sm text-slate-600">{formatDate(displayAssessmentA.completed_at)}</p>
                 </>
               )}
             </CardHeader>
           </Card>
-          <Card className="border-2 border-slate-200 bg-white min-w-0 overflow-visible">
+          <Card className="glass bg-[#f1f5f9]/80 dark:bg-slate-900/40 border border-slate-300 dark:border-slate-700 min-w-0 overflow-visible">
             <CardHeader className="pb-2 min-w-0 overflow-visible">
               <CardDescription className="text-slate-600 font-semibold mb-2">Assessment B (Previous)</CardDescription>
               <label className="block text-sm font-medium text-slate-700 mb-1">Select assessment</label>
@@ -422,26 +589,33 @@ export function ComparisonAssessmentResultsPage() {
                   disabled={loadingList || completedList.length === 0}
                   className={`
                     w-full min-w-0 overflow-hidden px-4 py-3 bg-white text-left rounded shadow-sm tracking-[0.05rem]
-                    border border-gray-100 flex justify-between items-center gap-2
+                    border border-slate-300 flex justify-between items-center gap-2
                     transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed
-                    ${dropdownBOpen ? 'ring-2 ring-[#46cdc6]' : 'hover:border-[#46cdc6]'}
+                    ${dropdownBOpen ? 'ring-2 ring-[#334155]' : 'hover:border-[#334155]'}
                   `}
                 >
                   <span className={`min-w-0 flex-1 truncate block overflow-hidden text-ellipsis ${selectedIdB ? 'text-[#1a1a1a]' : 'text-gray-400'}`}>
                     {selectedIdB
                       ? (() => {
-                          const a = completedList.find((x) => x.id === selectedIdB);
-                          return a ? `${a.name || 'Assessment'} — ${formatDate(a.completed_at)}` : 'Select assessment';
-                        })()
+                        const a = completedList.find((x) => x.id === selectedIdB);
+                        return a ? `${a.name || 'Assessment'} — ${formatDate(a.completed_at)}` : 'Select assessment';
+                      })()
                       : 'Select assessment'}
                   </span>
-                  <div className="bg-[#46cdc6] px-1.5 py-1 rounded shrink-0">
+                  <div className="bg-[#334155] px-1.5 py-1 rounded shrink-0">
                     <ChevronDown className={`w-4 h-4 text-white transition-transform duration-200 ${dropdownBOpen ? 'rotate-180' : ''}`} strokeWidth={2} />
                   </div>
                 </button>
                 {dropdownBOpen && !loadingList && (
-                  <div className="absolute w-full mt-1 rounded shadow-sm border border-gray-100 overflow-hidden z-[60] bg-white">
+                    <div className="absolute w-full mt-1 rounded shadow-sm border border-slate-300 overflow-hidden z-[60] bg-white">
                     <div className="max-h-48 overflow-y-auto">
+                      <button
+                        type="button"
+                        className="w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors text-slate-700"
+                        onClick={(e) => { e.stopPropagation(); setSelectedIdB(''); setDropdownBOpen(false); }}
+                      >
+                        Select assessment
+                      </button>
                       {optionsForB.length === 0 ? (
                         <div className="px-4 py-3 text-sm text-gray-500">No assessments available</div>
                       ) : (
@@ -450,8 +624,8 @@ export function ComparisonAssessmentResultsPage() {
                             key={a.id}
                             type="button"
                             className={`
-                              w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors
-                              ${selectedIdB === a.id ? 'text-[#46cdc6] bg-[#46cdc6]/5' : 'text-[#1a1a1a]'}
+                              w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors
+                              ${selectedIdB === a.id ? 'text-[#334155] bg-slate-100' : 'text-[#1a1a1a]'}
                             `}
                             onClick={(e) => { e.stopPropagation(); setSelectedIdB(a.id); setDropdownBOpen(false); }}
                           >
@@ -466,9 +640,9 @@ export function ComparisonAssessmentResultsPage() {
               {hasCompareData && (
                 <>
                   <p className="text-lg font-semibold text-slate-900 mt-3 break-words">
-                    {assessmentBData.assessment_name || '—'}
+                    {displayAssessmentB.assessment_name || '—'}
                   </p>
-                  <p className="text-sm text-slate-600">{formatDate(assessmentBData.completed_at)}</p>
+                  <p className="text-sm text-slate-600">{formatDate(displayAssessmentB.completed_at)}</p>
                 </>
               )}
             </CardHeader>
@@ -499,381 +673,627 @@ export function ComparisonAssessmentResultsPage() {
       {/* Comparison content — only when we have compare API result */}
       {hasCompareData && (
         <>
-      {/* Overall Score Comparison */}
-      <section className="px-8 pb-10 relative z-10">
-        <h2 className="text-2xl font-bold text-slate-900 mb-6">Overall Score Comparison</h2>
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6"
-        >
-          <Card className="border-2 bg-[#2563eb]/5" style={{ borderColor: 'rgba(37, 99, 235, 0.25)' }}>
-            <CardHeader className="pb-2">
-              <CardDescription className="font-semibold" style={{ color: ASSESSMENT_A_COLOR }}>Assessment A</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold" style={{ color: ASSESSMENT_A_COLOR }}>
-                {assessmentAData.overall_score?.toFixed(1)} <span className="text-lg font-normal text-slate-500">/ 5</span>
-              </div>
-              <div className="mt-2 h-3 rounded-full overflow-hidden bg-[#2563eb]/20">
-                <motion.div
-                  className="h-full rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.min(100, ((assessmentAData.overall_score ?? 0) / 5) * 100)}%` }}
-                  transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                  style={{ backgroundColor: ASSESSMENT_A_COLOR }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-2 border-slate-200">
-            <CardHeader className="pb-2">
-              <CardDescription className="text-slate-800 font-semibold">Change</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold flex items-center gap-1 ${scoreChange.diff >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                {scoreChange.diff >= 0 ? <TrendingUp className="w-6 h-6" /> : <TrendingDown className="w-6 h-6" />}
-                {scoreChange.diff >= 0 ? '↑' : '↓'} {Math.abs(scoreChange.diff).toFixed(2)}
-              </div>
-              <p className={`text-sm mt-1 ${scoreChange.pct >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                {scoreChange.pct >= 0 ? '+' : ''}{scoreChange.pct}% change
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="border-2 bg-[#6b7280]/10" style={{ borderColor: 'rgba(107, 114, 128, 0.3)' }}>
-            <CardHeader className="pb-2">
-              <CardDescription className="font-semibold text-slate-700">Assessment B</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-slate-700">
-                {assessmentBData.overall_score?.toFixed(1)} <span className="text-lg font-normal text-slate-500">/ 5</span>
-              </div>
-              <div className="mt-2 h-3 rounded-full overflow-hidden bg-[#6b7280]/25">
-                <motion.div
-                  className="h-full rounded-full"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.min(100, ((assessmentBData.overall_score ?? 0) / 5) * 100)}%` }}
-                  transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                  style={{ backgroundColor: ASSESSMENT_B_COLOR }}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </section>
+          {/* Overall Score Comparison */}
+          <section className="px-8 pb-12 relative z-10 w-full">
+            <header className="mb-6">
+              <h2 className="text-2xl font-bold text-slate-900">
+                Overall Score Comparison
+              </h2>
+            </header>
 
-      {/* Pillar-by-Pillar Performance */}
-      <section className="px-8 pb-10 relative z-10">
-        <h2 className="text-2xl font-bold text-slate-900 mb-6">Pillar-by-Pillar Performance</h2>
-        <div className="space-y-4">
-          {pillarComparison.map((p, idx) => (
-            <motion.div
-              key={p.pillar_name || idx}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 * idx }}
-            >
-              <Card className="border border-slate-200 overflow-hidden">
-                <CardContent className="p-5">
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="font-bold text-slate-900">{p.short_name}</h3>
-                    <span
-                      className={`text-sm font-semibold flex items-center gap-0.5 ${
-                        p.diff >= 0 ? 'text-emerald-600' : 'text-red-600'
-                      }`}
-                    >
-                      {p.diff >= 0 ? '↑' : '↓'} {Math.abs(p.diff).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium w-24 shrink-0" style={{ color: ASSESSMENT_A_COLOR }}>Assessment A</span>
-                      <div className="flex-1 h-6 rounded overflow-hidden bg-[#2563eb]/20">
-                        <motion.div
-                          className="h-full rounded"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${Math.min(100, (p.scoreA / 5) * 100)}%` }}
-                          transition={{ duration: 0.7, delay: 0.05 * idx, ease: [0.22, 1, 0.36, 1] }}
-                          style={{ backgroundColor: ASSESSMENT_A_COLOR }}
-                        />
-                      </div>
-                      <span
-                        className="text-xs font-medium text-white px-2 py-1 rounded shrink-0"
-                        style={{ backgroundColor: MATURITY_COLORS[p.maturityA] || '#6b7280' }}
-                      >
-                        {p.maturityA}
+            <div className="bg-white dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800 rounded-2xl shadow-sm p-8">
+              <div className="hidden md:block absolute left-0 top-1/2 w-full h-px bg-slate-100 dark:bg-slate-800 -translate-y-1/2"></div>
+              <div className="relative flex flex-col md:flex-row items-center justify-between gap-10 md:gap-4">
+                <div className="flex items-center gap-6 bg-white dark:bg-slate-900/60 pr-6">
+                  <div className="relative w-24 h-24">
+                    <svg className="w-full h-full text-slate-100 dark:text-slate-800">
+                      <circle cx="48" cy="48" r="44" fill="transparent" stroke="currentColor" strokeWidth="4"></circle>
+                      <circle
+                        cx="48"
+                        cy="48"
+                        r="44"
+                        fill="transparent"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        className="text-[#3b82f6]"
+                        style={{
+                          strokeDasharray: 276,
+                          strokeDashoffset: 276 - (276 * (displayAssessmentA.overall_score ?? 0)) / 5,
+                          transform: 'rotate(-90deg)',
+                          transformOrigin: '50% 50%',
+                        }}
+                      ></circle>
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-2xl font-bold text-[#3b82f6]">
+                        {displayAssessmentA.overall_score?.toFixed(1) || '0.0'}
                       </span>
-                      <span className="text-sm font-medium text-slate-700 w-16">{p.scoreA.toFixed(2)} / 5</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium w-24 shrink-0 text-slate-600">Assessment B</span>
-                      <div className="flex-1 h-6 rounded overflow-hidden bg-[#6b7280]/25">
-                        <motion.div
-                          className="h-full rounded"
-                          initial={{ width: 0 }}
-                          animate={{ width: `${Math.min(100, (p.scoreB / 5) * 100)}%` }}
-                          transition={{ duration: 0.7, delay: 0.05 * idx, ease: [0.22, 1, 0.36, 1] }}
-                          style={{ backgroundColor: ASSESSMENT_B_COLOR }}
-                        />
-                      </div>
-                      <span
-                        className="text-xs font-medium text-white px-2 py-1 rounded shrink-0"
-                        style={{ backgroundColor: MATURITY_COLORS[p.maturityB] || '#6b7280' }}
-                      >
-                        {p.maturityB}
-                      </span>
-                      <span className="text-sm font-medium text-slate-700 w-16">{p.scoreB.toFixed(2)} / 5</span>
+                      <span className="text-[10px] text-slate-400 uppercase tracking-tighter">out of 5</span>
                     </div>
                   </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">Assessment A</p>
+                    <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">
+                      {displayAssessmentA.assessment_name || 'Assessment A'}
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center px-8 py-2 bg-white dark:bg-slate-900/60">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4">Performance Gap</p>
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="flex items-end gap-2">
+                      <span className="text-5xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight leading-none">
+                        {Math.abs(scoreChange.diff).toFixed(2)}
+                      </span>
+                      <div className="flex flex-col">
+                        {scoreChange.diff >= 0 ? (
+                          <TrendingUp className="w-5 h-5 text-emerald-500 -mb-1" />
+                        ) : (
+                          <TrendingDown className="w-5 h-5 text-rose-500 -mb-1" />
+                        )}
+                        <span className={`text-sm font-bold ${scoreChange.diff >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                          {scoreChange.pct >= 0 ? '+' : ''}{scoreChange.pct}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className={`mt-4 px-3 py-1 text-xs font-semibold rounded-full border ${scoreChange.diff >= 0 ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'}`}>
+                      {scoreChange.diff >= 0 ? 'Variance Improvement' : 'Variance Decline'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col md:flex-row-reverse items-center gap-6 bg-white dark:bg-slate-900/60 pl-6 text-center md:text-right">
+                  <div className="relative w-24 h-24">
+                    <svg className="w-full h-full text-slate-100 dark:text-slate-800">
+                      <circle cx="48" cy="48" r="44" fill="transparent" stroke="currentColor" strokeWidth="4"></circle>
+                      <circle
+                        cx="48"
+                        cy="48"
+                        r="44"
+                        fill="transparent"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        className="text-slate-600 dark:text-slate-400"
+                        style={{
+                          strokeDasharray: 276,
+                          strokeDashoffset: 276 - (276 * (displayAssessmentB.overall_score ?? 0)) / 5,
+                          transform: 'rotate(-90deg)',
+                          transformOrigin: '50% 50%',
+                        }}
+                      ></circle>
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-2xl font-bold text-slate-700 dark:text-slate-200">
+                        {displayAssessmentB.overall_score?.toFixed(1) || '0.0'}
+                      </span>
+                      <span className="text-[10px] text-slate-400 uppercase tracking-tighter">out of 5</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">Assessment B</p>
+                    <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">
+                      {displayAssessmentB.assessment_name || 'Assessment B'}
+                    </h3>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+
+          {/* Pillar-by-Pillar Performance */}
+          <section className="px-8 pb-12 relative z-10 w-full">
+            <header className="mb-6">
+              <h2 className="text-2xl font-bold text-slate-900">
+                Pillar-by-Pillar Performance
+              </h2>
+            </header>
+
+            <div className="space-y-6">
+              {pillarComparison.map((p, idx) => {
+                const PILLAR_ICONS = {
+                  'Strategic Value & Governance': Landmark,
+                  'Workforce Skillset & Organization Structure': Users,
+                  'Technology & Data': Database,
+                  'Resilience, Performance & Impact': TrendingUp,
+                  'Ethics, Trust & Responsible AI': ShieldCheck,
+                  'Compliance, Security & Risk': Shield,
+                  'Operations & Implementation': Settings,
+                };
+
+                const MATURITY_STYLE_MAP = {
+                  'Initial': 'badge-glow-initial',
+                  'Adopting': 'badge-glow-adopting',
+                  'Established': 'badge-glow-established',
+                  'Advanced': 'badge-glow-advanced',
+                  'Transformational': 'badge-glow-transformational',
+                  'Developing': 'badge-glow-developing',
+                };
+
+                const Icon = PILLAR_ICONS[p.pillar_name] || AlertCircle;
+                const maturityAClass = MATURITY_STYLE_MAP[p.maturityA] || 'badge-glow-established';
+                const maturityBClass = MATURITY_STYLE_MAP[p.maturityB] || 'badge-glow-established';
+
+                return (
+                  <div
+                    key={p.pillar_name || idx}
+                    className="relative bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 p-8 rounded-[2.5rem] shadow-lg hover:shadow-xl transition-shadow"
+                  >
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="w-10 h-10 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                            <Icon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                          </div>
+                          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{p.pillar_name}</h2>
+                        </div>
+
+                        <div className="space-y-8">
+                          {/* Assessment A */}
+                          <div className="group">
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-xs font-bold uppercase tracking-wider text-[#3b82f6]">Assessment A</span>
+                              <div className="flex items-center gap-3">
+                                <div className={`maturity-badge ${maturityAClass}`}>{p.maturityA}</div>
+                                <span className="text-sm font-bold text-slate-600 dark:text-slate-400">{p.scoreA?.toFixed(2)} / 5.0</span>
+                              </div>
+                            </div>
+                            <div className="capsule-bar">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${(p.scoreA / 5) * 100}%` }}
+                                transition={{ duration: 1, delay: 0.2 + idx * 0.1 }}
+                                className="capsule-fill bg-[#3b82f6]"
+                              ></motion.div>
+                            </div>
+                          </div>
+
+                          {/* Assessment B */}
+                          <div className="group">
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-xs font-bold uppercase tracking-wider text-[#64748b]">Assessment B</span>
+                              <div className="flex items-center gap-3">
+                                <div className={`maturity-badge ${maturityBClass}`}>{p.maturityB}</div>
+                                <span className="text-sm font-bold text-slate-600 dark:text-slate-400">{p.scoreB?.toFixed(2)} / 5.0</span>
+                              </div>
+                            </div>
+                            <div className="capsule-bar">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${(p.scoreB / 5) * 100}%` }}
+                                transition={{ duration: 1, delay: 0.3 + idx * 0.1 }}
+                                className="capsule-fill bg-[#64748b]"
+                              ></motion.div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Variance */}
+                      <div className="flex flex-col items-center justify-center px-8 border-l border-slate-200 dark:border-slate-800 ml-0 md:ml-4">
+                        <div className="flex flex-col items-center group">
+                          {p.diff >= 0 ? (
+                            <TrendingUp className="w-7 h-7 text-emerald-500 mb-1" />
+                          ) : (
+                            <TrendingDown className="w-7 h-7 text-rose-500 mb-1" />
+                          )}
+                          <div className="text-2xl font-black text-slate-800 dark:text-slate-100">{Math.abs(p.diff).toFixed(2)}</div>
+                          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Variance</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Maturity Profile Comparison - Radar */}
+          <section className="px-8 pb-10 relative z-10">
+            <h2 className="text-2xl font-bold text-slate-900 mb-6">Maturity Profile Comparison</h2>
+            <Card className="border border-slate-200 overflow-visible">
+              <CardContent className="pt-6 pb-8 px-4" style={{ height: '480px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart data={radarData} outerRadius="70%">
+                    <PolarGrid stroke="rgba(107,114,128,0.2)" strokeWidth={1.5} />
+                    <PolarAngleAxis dataKey="pillar" tick={CustomPolarAngleAxisTick} />
+                    <PolarRadiusAxis angle={90} domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} tick={{ fill: '#6b7280', fontSize: 11 }} />
+                    <Tooltip
+                      content={({ active, payload, label }) => {
+                        if (active && payload?.length) {
+                          return (
+                            <div className="bg-white border border-slate-200 rounded-lg shadow-lg p-3 min-w-[180px]">
+                              <p className="font-semibold text-slate-900 mb-2">{label}</p>
+                              {payload.map((entry) => (
+                                <div key={entry.name} className="flex justify-between gap-4 text-sm">
+                                  <span className="text-slate-600">{entry.name}:</span>
+                                  <span className="font-semibold">
+                                    <span style={{ color: scoreToColor(entry.value) }}>{Number(entry.value).toFixed(2)}</span>
+                                    <span style={{ color: '#374151' }}> / 5</span>
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Radar
+                      name="Assessment A"
+                      dataKey="Assessment A"
+                      stroke="transparent"
+                      fill="transparent"
+                      strokeWidth={0}
+                      shape={
+                        <RadarPolygonGradientStroke
+                          colors={radarData.map((d) => scoreToColor(d['Assessment A']))}
+                          fillColors={maturityFillA}
+                          gradientIdBase="cmp-radar-a"
+                          fillOpacity={0.30}
+                          strokeWidth={2.5}
+                          outlineColor={ASSESSMENT_A_COLOR}
+                          outlineWidth={3}
+                        />
+                      }
+                      dot={({ cx, cy, value }) => {
+                        const color = scoreToColor(value);
+                        return (
+                          <g>
+                            <circle cx={cx} cy={cy} r={12} fill={color} fillOpacity={0.35} />
+                            <circle cx={cx} cy={cy} r={7} fill={color} stroke="#fff" strokeWidth={2} />
+                          </g>
+                        );
+                      }}
+                      activeDot={({ cx, cy, value }) => {
+                        const color = scoreToColor(value);
+                        return (
+                          <g>
+                            <circle cx={cx} cy={cy} r={14} fill={color} fillOpacity={0.35} />
+                            <circle cx={cx} cy={cy} r={8} fill={color} stroke="#fff" strokeWidth={2} />
+                          </g>
+                        );
+                      }}
+                      connectNulls
+                      isAnimationActive={false}
+                    />
+                    <Radar
+                      name="Assessment B"
+                      dataKey="Assessment B"
+                      stroke="transparent"
+                      fill="transparent"
+                      strokeWidth={0}
+                      shape={
+                        <RadarPolygonGradientStroke
+                          colors={radarData.map((d) => scoreToColor(d['Assessment B']))}
+                          fillColors={maturityFillB}
+                          gradientIdBase="cmp-radar-b"
+                          fillOpacity={0.10}
+                          strokeWidth={2.5}
+                          outlineColor={ASSESSMENT_B_COLOR}
+                          outlineWidth={3}
+                          outlineDasharray="1 6"
+                        />
+                      }
+                      dot={({ cx, cy, value }) => {
+                        const color = scoreToColor(value);
+                        return (
+                          <g opacity={0.9}>
+                            <circle cx={cx} cy={cy} r={11} fill={color} fillOpacity={0.3} />
+                            <circle cx={cx} cy={cy} r={6.5} fill={color} stroke="#fff" strokeWidth={2} />
+                          </g>
+                        );
+                      }}
+                      activeDot={({ cx, cy, value }) => {
+                        const color = scoreToColor(value);
+                        return (
+                          <g opacity={0.95}>
+                            <circle cx={cx} cy={cy} r={13} fill={color} fillOpacity={0.3} />
+                            <circle cx={cx} cy={cy} r={7.5} fill={color} stroke="#fff" strokeWidth={2} />
+                          </g>
+                        );
+                      }}
+                      connectNulls
+                      isAnimationActive={false}
+                    />
+                  </RadarChart>
+                </ResponsiveContainer>
+                <div className="flex justify-center gap-6 mt-4 items-center">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-12"
+                      style={{
+                        height: 8,
+                        display: 'inline-block',
+                        borderRadius: 6,
+                        background: `linear-gradient(90deg, ${MATURITY_COLORS.Initial}, ${MATURITY_COLORS.Adopting}, ${MATURITY_COLORS.Established}, ${MATURITY_COLORS.Advanced}, ${MATURITY_COLORS.Transformational})`,
+                        boxShadow: `0 2px 6px rgba(0,0,0,0.06)`,
+                      }}
+                    />
+                    <span className="text-sm font-medium text-slate-700">Assessment A</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-12"
+                      style={{
+                        height: 8,
+                        display: 'inline-block',
+                        borderRadius: 6,
+                        background: `linear-gradient(90deg, ${MATURITY_COLORS.Initial}, ${MATURITY_COLORS.Adopting}, ${MATURITY_COLORS.Established}, ${MATURITY_COLORS.Advanced}, ${MATURITY_COLORS.Transformational})`,
+                        WebkitMaskImage: `repeating-linear-gradient(90deg, black 0 4px, transparent 4px 9px)`,
+                        maskImage: `repeating-linear-gradient(90deg, black 0 4px, transparent 4px 9px)`,
+                        transform: 'translateY(1px)',
+                      }}
+                    />
+                    <span className="text-sm font-medium text-slate-700">Assessment B</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+
+          {/* Maturity Level Progression */}
+          <section className="px-8 pb-10 relative z-10">
+            <h2 className="text-2xl font-bold text-slate-900 mb-6">Maturity Level Progression</h2>
+            <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 lg:p-10 shadow-xl">
+              <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr] gap-4 mb-6 pb-6 border-b border-slate-200/70">
+                <div className="text-xs font-bold uppercase tracking-widest text-slate-400 px-2">Pillar</div>
+                {MATURITY_LEVELS_ORDER.map((l) => (
+                  <div key={l} className="text-xs font-bold uppercase tracking-widest text-slate-400 text-center">
+                    {l}
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-6">
+                {pillarComparison.map((p) => {
+                  const PILLAR_ICONS = {
+                    'Strategic Value & Governance': Landmark,
+                    'Workforce Skillset & Organization Structure': Users,
+                    'Technology & Data': Database,
+                    'Resilience, Performance & Impact': TrendingUp,
+                    'Ethics, Trust & Responsible AI': ShieldCheck,
+                    'Compliance, Security & Risk': Shield,
+                    'Operations & Implementation': Settings,
+                  };
+                  const Icon = PILLAR_ICONS[p.pillar_name] || AlertCircle;
+                  const idxA = Math.max(0, MATURITY_LEVELS_ORDER.indexOf(p.maturityA));
+                  const idxB = Math.max(0, MATURITY_LEVELS_ORDER.indexOf(p.maturityB));
+                  const improved = p.improved === true || (p.improved !== false && idxA > idxB);
+                  const declined = p.declined === true || (p.declined !== false && idxA < idxB);
+                  const noChange = !improved && !declined;
+                  const maxIndex = MATURITY_LEVELS_ORDER.length - 1;
+                  const posA = maxIndex ? (idxA / maxIndex) * 100 : 0;
+                  const posB = maxIndex ? (idxB / maxIndex) * 100 : 0;
+                  const left = Math.min(posA, posB);
+                  const width = Math.abs(posA - posB);
+                  const mid = (posA + posB) / 2;
+                  const diffValue = Number.isFinite(p.diff) ? p.diff : 0;
+                  const diffLabel = `${diffValue >= 0 ? '+' : ''}${diffValue.toFixed(2)}`;
+
+                  return (
+                    <div key={p.pillar_name} className="grid grid-cols-[1.5fr_1fr_1fr_1fr_1fr_1fr] gap-4 items-center">
+                      <div className="flex items-center gap-4 px-2">
+                        <div className="w-10 h-10 rounded-2xl bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+                          <Icon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-slate-800 dark:text-slate-100">{p.short_name}</h3>
+                          <div className={`flex items-center gap-1 text-[10px] font-bold uppercase ${improved ? 'text-emerald-500' : declined ? 'text-rose-500' : 'text-slate-400'}`}>
+                            {improved ? <TrendingUp className="w-3 h-3" /> : declined ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
+                            {improved ? 'Improved' : declined ? 'Declined' : 'No Change'}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="col-span-5 relative h-20">
+                        <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-1.5 bg-slate-100 dark:bg-slate-700/50 rounded-full z-0"></div>
+
+                        {noChange ? (
+                          <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex flex-col items-center" style={{ left: `${posA}%` }}>
+                            <div className="text-[10px] font-bold text-slate-500 bg-slate-200/70 rounded-full px-2 py-0.5 mb-2 shadow-sm">
+                              {diffLabel}
+                            </div>
+                            <div
+                              className="w-7 h-7 rounded-full flex items-center justify-center shadow-lg border-4 border-white dark:border-slate-800"
+                              style={{ backgroundColor: ASSESSMENT_A_COLOR }}
+                            >
+                              <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: ASSESSMENT_B_COLOR }} />
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-20" style={{ left: `${posB}%` }}>
+                              <div
+                                className="w-6 h-6 rounded-full border-4 border-white dark:border-slate-800 shadow-lg"
+                                style={{ backgroundColor: ASSESSMENT_B_COLOR }}
+                              />
+                            </div>
+                            <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-20" style={{ left: `${posA}%` }}>
+                              <div
+                                className="w-6 h-6 rounded-full border-4 border-white dark:border-slate-800 shadow-lg"
+                                style={{ backgroundColor: ASSESSMENT_A_COLOR }}
+                              />
+                            </div>
+                            <div
+                              className={`absolute top-1/2 -translate-y-1/2 h-2 rounded-full z-10 ${improved ? 'bg-emerald-500' : 'bg-rose-500'}`}
+                              style={{ left: `${left}%`, width: `${width}%` }}
+                            />
+                            <div
+                              className={`absolute -top-2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white shadow-sm border border-white/70 ${improved ? 'bg-emerald-500' : 'bg-rose-500'}`}
+                              style={{ left: `${mid}%` }}
+                            >
+                              {diffLabel}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-10 flex flex-wrap items-center justify-center gap-6 border-t border-slate-200/70 pt-6">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: ASSESSMENT_A_COLOR }} />
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Assessment A (Blue)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: ASSESSMENT_B_COLOR }} />
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Assessment B (Grey)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-1.5 rounded-full bg-emerald-500" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Improved</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-1.5 rounded-full bg-rose-500" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Declined</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 rounded-full border-2 flex items-center justify-center" style={{ borderColor: ASSESSMENT_A_COLOR }}>
+                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: ASSESSMENT_B_COLOR }} />
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500">No Change</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Key Changes & Insights */}
+          <section className="px-8 pb-16 relative z-10">
+            <h2 className="text-2xl font-bold text-slate-900 mb-6">Key Changes & Insights</h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <Card className="border-2 border-emerald-200 bg-emerald-50/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2 text-emerald-800">
+                    <Plus className="w-5 h-5" /> New Strengths Achieved
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm text-emerald-800">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 shrink-0" /> Advanced Security Infrastructure
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 shrink-0" /> Robust Technology Stack
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 shrink-0" /> Clear Strategic Vision
+                    </li>
+                  </ul>
                 </CardContent>
               </Card>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* Maturity Profile Comparison - Radar */}
-      <section className="px-8 pb-10 relative z-10">
-        <h2 className="text-2xl font-bold text-slate-900 mb-6">Maturity Profile Comparison</h2>
-        <Card className="border border-slate-200 overflow-visible">
-          <CardContent className="pt-6 pb-8 px-4" style={{ height: '480px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={radarData} outerRadius="70%">
-                <PolarGrid stroke="rgba(107,114,128,0.2)" strokeWidth={1.5} />
-                <PolarAngleAxis dataKey="pillar" tick={CustomPolarAngleAxisTick} />
-                <PolarRadiusAxis angle={90} domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} tick={{ fill: '#6b7280', fontSize: 11 }} />
-                <Tooltip
-                  content={({ active, payload, label }) => {
-                    if (active && payload?.length) {
-                      return (
-                        <div className="bg-white border border-slate-200 rounded-lg shadow-lg p-3 min-w-[180px]">
-                          <p className="font-semibold text-slate-900 mb-2">{label}</p>
-                          {payload.map((entry) => (
-                            <div key={entry.name} className="flex justify-between gap-4 text-sm">
-                              <span className="text-slate-600">{entry.name}:</span>
-                              <span className="font-semibold">{Number(entry.value).toFixed(2)} / 5</span>
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Radar name="Assessment A" dataKey="Assessment A" stroke={ASSESSMENT_A_COLOR} fill={ASSESSMENT_A_COLOR} fillOpacity={0.3} strokeWidth={2} dot={{ fill: ASSESSMENT_A_COLOR, r: 4 }} />
-                <Radar name="Assessment B" dataKey="Assessment B" stroke={ASSESSMENT_B_COLOR} fill={ASSESSMENT_B_COLOR} fillOpacity={0.15} strokeWidth={2} dot={{ fill: ASSESSMENT_B_COLOR, r: 4 }} />
-              </RadarChart>
-            </ResponsiveContainer>
-            <div className="flex justify-center gap-6 mt-4">
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: ASSESSMENT_A_COLOR }} />
-                <span className="text-sm font-medium">Assessment A</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full" style={{ backgroundColor: ASSESSMENT_B_COLOR }} />
-                <span className="text-sm font-medium">Assessment B</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* Maturity Level Progression */}
-      <section className="px-8 pb-10 relative z-10">
-        <h2 className="text-2xl font-bold text-slate-900 mb-6">Maturity Level Progression</h2>
-        <Card className="border border-slate-200 overflow-hidden">
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50">
-                    <th className="text-left py-3 px-4 font-semibold text-slate-900">Pillar</th>
-                    {MATURITY_LEVELS_ORDER.map((l) => (
-                      <th key={l} className="py-3 px-2 text-center font-medium text-slate-700 min-w-[100px]">
-                        {l}
-                      </th>
-                    ))}
-                    <th className="py-3 px-4 text-right font-semibold text-slate-900">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pillarComparison.map((p) => {
-                    const idxA = MATURITY_LEVELS_ORDER.indexOf(p.maturityA);
-                    const idxB = MATURITY_LEVELS_ORDER.indexOf(p.maturityB);
-                    const improved = p.improved === true || (p.improved !== false && idxA > idxB);
-                    const declined = p.declined === true || (p.declined !== false && idxA < idxB);
-                    return (
-                      <tr key={p.pillar_name} className="border-b border-slate-100 hover:bg-slate-50/50">
-                        <td className="py-3 px-4 font-medium text-slate-900">{p.short_name}</td>
-                        {MATURITY_LEVELS_ORDER.map((level, i) => {
-                          const isCurrent = level === p.maturityA;
-                          const isPrevious = level === p.maturityB && p.maturityB !== p.maturityA;
-                          return (
-                            <td key={level} className="py-2 px-2 text-center">
-                              {isCurrent ? (
-                                <span
-                                  className="inline-block px-2 py-1 rounded font-medium text-white text-xs"
-                                  style={{ backgroundColor: MATURITY_COLORS[level] || '#6b7280' }}
-                                >
-                                  Current
-                                </span>
-                              ) : isPrevious ? (
-                                <span
-                                  className="inline-block px-2 py-1 rounded font-medium text-white/90 text-xs"
-                                  style={{ backgroundColor: `${MATURITY_COLORS[level] || '#6b7280'}99` }}
-                                >
-                                  Previous
-                                </span>
-                              ) : (
-                                <span className="text-slate-300">—</span>
-                              )}
-                            </td>
-                          );
-                        })}
-                        <td className="py-3 px-4 text-right">
-                          {improved ? (
-                            <span className="text-emerald-600 font-medium flex items-center justify-end gap-1">
-                              <CheckCircle2 className="w-4 h-4" /> Improved
-                            </span>
-                          ) : declined ? (
-                            <span className="text-amber-600 font-medium flex items-center justify-end gap-1">
-                              <TrendingDown className="w-4 h-4" /> Declined
-                            </span>
-                          ) : (
-                            <span className="text-slate-500">No Change</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* Key Changes & Insights */}
-      <section className="px-8 pb-16 relative z-10">
-        <h2 className="text-2xl font-bold text-slate-900 mb-6">Key Changes & Insights</h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <Card className="border-2 border-emerald-200 bg-emerald-50/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2 text-emerald-800">
-                <Plus className="w-5 h-5" /> New Strengths Achieved
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-emerald-800">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" /> Advanced Security Infrastructure
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" /> Robust Technology Stack
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" /> Clear Strategic Vision
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-          <Card className="border-2 border-amber-200 bg-amber-50/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2 text-amber-800">
-                <Minus className="w-5 h-5" /> Strengths Lost
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-amber-800">
-                <li className="flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" /> Strong Technology Foundation
-                </li>
-                <li className="flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" /> Good Security Practices
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-          <Card className="border-2 border-blue-200 bg-blue-50/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2 text-blue-800">
-                <CheckCircle2 className="w-5 h-5" /> Improvements Addressed
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-blue-800">
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" /> Strategic Planning
-                </li>
-                <li className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" /> Workforce Development
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-          <Card className="border-2 border-red-200 bg-red-50/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2 text-red-800">
-                <AlertCircle className="w-5 h-5" /> New Improvement Areas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-red-800">
-                <li className="flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" /> Workforce Skills Gap
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="border-2 border-emerald-200 bg-emerald-50/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2 text-emerald-800">
-                <TrendingUp className="w-5 h-5" /> Top Improvements
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-emerald-800">
-                {topImprovements.length > 0 ? (
-                  topImprovements.map((item) => (
-                    <li key={item.name} className="flex justify-between">
-                      <span>{item.name}</span>
-                      <span className="font-semibold">+{item.change.toFixed(2)}</span>
+              <Card className="border-2 border-amber-200 bg-amber-50/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2 text-amber-800">
+                    <Minus className="w-5 h-5" /> Strengths Lost
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm text-amber-800">
+                    <li className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" /> Strong Technology Foundation
                     </li>
-                  ))
-                ) : (
-                  <li className="text-slate-500">No improvements in this period</li>
-                )}
-              </ul>
-            </CardContent>
-          </Card>
-          <Card className="border-2 border-amber-200 bg-amber-50/50">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2 text-amber-800">
-                <TrendingDown className="w-5 h-5" /> Areas Needing Attention
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm text-amber-800">
-                {areasNeedingAttention.length > 0 ? (
-                  areasNeedingAttention.map((item) => (
-                    <li key={item.name} className="flex justify-between">
-                      <span>{item.name}</span>
-                      <span className="font-semibold">{item.change.toFixed(2)}</span>
+                    <li className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" /> Good Security Practices
                     </li>
-                  ))
-                ) : (
-                  <li className="text-slate-500">No areas needing attention</li>
-                )}
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
+                  </ul>
+                </CardContent>
+              </Card>
+              <Card className="border-2 border-blue-200 bg-blue-50/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2 text-blue-800">
+                    <CheckCircle2 className="w-5 h-5" /> Improvements Addressed
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm text-blue-800">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 shrink-0" /> Strategic Planning
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 shrink-0" /> Workforce Development
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+              <Card className="border-2 border-red-200 bg-red-50/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2 text-red-800">
+                    <AlertCircle className="w-5 h-5" /> New Improvement Areas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm text-red-800">
+                    <li className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 shrink-0" /> Workforce Skills Gap
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="border-2 border-emerald-200 bg-emerald-50/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2 text-emerald-800">
+                    <TrendingUp className="w-5 h-5" /> Top Improvements
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm text-emerald-800">
+                    {topImprovements.length > 0 ? (
+                      topImprovements.map((item) => (
+                        <li key={item.name} className="flex justify-between">
+                          <span>{item.name}</span>
+                          <span className="font-semibold">+{item.change.toFixed(2)}</span>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="text-slate-500">No improvements in this period</li>
+                    )}
+                  </ul>
+                </CardContent>
+              </Card>
+              <Card className="border-2 border-amber-200 bg-amber-50/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2 text-amber-800">
+                    <TrendingDown className="w-5 h-5" /> Areas Needing Attention
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm text-amber-800">
+                    {areasNeedingAttention.length > 0 ? (
+                      areasNeedingAttention.map((item) => (
+                        <li key={item.name} className="flex justify-between">
+                          <span>{item.name}</span>
+                          <span className="font-semibold">{item.change.toFixed(2)}</span>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="text-slate-500">No areas needing attention</li>
+                    )}
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
+          {/* Background Blobs */}
+          <div className="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none opacity-20 dark:opacity-10 overflow-hidden">
+            <div className="absolute top-[-10%] left-[-5%] w-[600px] h-[600px] bg-[#3b82f6] blur-[160px] rounded-full"></div>
+            <div className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] bg-[#64748b] blur-[160px] rounded-full"></div>
+          </div>
+          {/* Action Footer */}
+          <footer className="mt-12 mb-20 flex justify-center relative z-10">
+            <button className="px-10 py-4 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full font-bold shadow-xl hover:-translate-y-1 transition-all active:translate-y-0 flex items-center gap-3">
+              <span className="material-symbols-outlined">analytics</span>
+              Export Detailed Assessment
+            </button>
+          </footer>
         </>
       )}
     </div>

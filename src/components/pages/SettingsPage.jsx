@@ -653,7 +653,7 @@ export function SettingsPage() {
                                 <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                                   <h4 className="flex items-center gap-2 font-bold text-slate-900 mb-4">
                                     <Sparkles className="w-4 h-4" style={{ color: BILLING_TEAL }} />
-                                    Plan features
+                                    Current plan features
                                   </h4>
                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     {FEATURE_BOOLEAN_KEYS.filter((key) => key in subscription.plan.features).map((key) => {

@@ -5,36 +5,44 @@
 :root {
   /* Font family */
   font-family: 'Segoe UI', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-  
+
   /* Premium color palette */
   --bg-primary: #0f172a;
   --bg-secondary: #1a202c;
   --bg-tertiary: #2d3748;
   --bg-light: #f8fafc;
   --bg-light-secondary: #f1f5f9;
-  
+
   /* Text colors */
   --text-primary: #f1f5f9;
   --text-secondary: #cbd5e1;
   --text-muted: #94a3b8;
-  
+
   /* Accent colors */
   --accent-blue: #0ea5e9;
   --accent-cyan: #06b6d4;
   --accent-purple: #a855f7;
   --accent-green: #10b981;
-  
+
+  /* Maturity Colors */
+  --maturity-initial: #ef4444;
+  --maturity-adopting: #f97316;
+  --maturity-established: #f59e0b;
+  --maturity-developing: #f59e0b;
+  --maturity-advanced: #10b981;
+  --maturity-transformational: #059669;
+
   /* Input styling */
   --input-bg: #1e293b;
   --input-bg-focus: #334155;
   --input-border: rgba(203, 213, 225, 0.15);
   --input-text: #f1f5f9;
   --input-placeholder: #64748b;
-  
+
   /* Border and shadow */
   --border-color: rgba(148, 163, 184, 0.1);
   --border-light: rgba(148, 163, 184, 0.2);
-  
+
   /* Shadcn variables */
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -174,5 +182,85 @@
     border-color: #15ae99 !important;
     box-shadow: none !important;
     outline: none !important;
+  }
+
+  /* Comparison Page Design Utilities */
+  .glass {
+    @apply backdrop-blur-xl;
+  }
+
+  .neon-border-blue {
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+  }
+
+  .neon-border-grey {
+    box-shadow: 0 0 15px rgba(51, 65, 85, 0.15);
+  }
+
+  .circular-progress {
+    transform: rotate(-90deg);
+  }
+
+  .circle-bg {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 8;
+    opacity: 0.15;
+  }
+
+  .circle-bar {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 8;
+    stroke-linecap: round;
+  }
+
+  .capsule-bar {
+    @apply h-4 rounded-full relative overflow-hidden bg-slate-200/50 dark:bg-slate-700/50 shadow-inner;
+  }
+
+  .capsule-fill {
+    @apply h-full rounded-full transition-all duration-1000 relative;
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.3);
+  }
+
+  .capsule-fill::after {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-b from-white/30 to-transparent;
+  }
+
+  .maturity-badge {
+    @apply px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+  }
+
+  .badge-glow-initial {
+    @apply bg-[var(--maturity-initial)]/10 text-[var(--maturity-initial)] border border-[var(--maturity-initial)]/30;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+  }
+
+  .badge-glow-adopting {
+    @apply bg-[var(--maturity-adopting)]/10 text-[var(--maturity-adopting)] border border-[var(--maturity-adopting)]/30;
+    box-shadow: 0 0 8px rgba(249, 115, 22, 0.3);
+  }
+
+  .badge-glow-established {
+    @apply bg-[var(--maturity-established)]/10 text-[var(--maturity-established)] border border-[var(--maturity-established)]/30;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+  }
+
+  .badge-glow-developing {
+    @apply bg-[var(--maturity-developing)]/10 text-[var(--maturity-developing)] border border-[var(--maturity-developing)]/30;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.3);
+  }
+
+  .badge-glow-advanced {
+    @apply bg-[var(--maturity-advanced)]/10 text-[var(--maturity-advanced)] border border-[var(--maturity-advanced)]/30;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+  }
+
+  .badge-glow-transformational {
+    @apply bg-[var(--maturity-transformational)]/10 text-[var(--maturity-transformational)] border border-[var(--maturity-transformational)]/30;
+    box-shadow: 0 0 8px rgba(5, 150, 105, 0.3);
   }
 }
